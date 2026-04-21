@@ -149,6 +149,16 @@ LRESULT CALLBACK Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
                 InvalidateRect(hwnd, NULL, FALSE);
             }
             return 0;
+        case WM_MOUSEWHEEL:
+            if (win && effectiveRoot) {
+                POINT pt = { LOWORD(lp), HIWORD(lp) };
+                ScreenToClient(hwnd, &pt);
+                float delta = GET_WHEEL_DELTA_WPARAM(wp) / (float)WHEEL_DELTA;
+                if (effectiveRoot->onMouseWheel((float)pt.x, (float)pt.y, delta)) {
+                    InvalidateRect(hwnd, NULL, FALSE);
+                }
+            }
+            return 0;
         case WM_SIZE:
             if (win) win->onSize(LOWORD(lp), HIWORD(lp));
             return 0;

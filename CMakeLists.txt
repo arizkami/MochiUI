@@ -27,6 +27,10 @@ set(SOURCES
     src/gui/MenuBar.cpp
     src/gui/Components/TextNode.cpp
     src/gui/Components/CheckboxNode.cpp
+    src/gui/Components/SliderNode.cpp
+    src/gui/Components/KnobNode.cpp
+    src/gui/Components/VUMeterNode.cpp
+    src/gui/Components/ScrollAreaNode.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp
 )

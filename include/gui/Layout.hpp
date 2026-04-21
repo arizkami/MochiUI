@@ -208,4 +208,11 @@ public:
         isPressed = false;
         for (auto& child : children) child->onMouseUp(x, y);
     }
+    
+    virtual bool onMouseWheel(float x, float y, float delta) {
+        for (auto& child : children) {
+            if (child->onMouseWheel(x, y, delta)) return true;
+        }
+        return false;
+    }
 };

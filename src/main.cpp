@@ -120,8 +120,141 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
 
     mainContent->addChild(checkboxSection);
 
+    // Slider Section
+    auto sliderSection = FlexNode::Column();
+    sliderSection->style.widthMode = SizingMode::Flex;
+    sliderSection->style.heightMode = SizingMode::Hug;
+    sliderSection->style.padding = 20;
+    sliderSection->style.gap = 12;
+
+    auto sliderTitle = std::make_shared<TextNode>();
+    sliderTitle->text = "Slider Components";
+    sliderTitle->color = Theme::TextPrimary;
+    sliderTitle->fontSize = 18;
+    sliderSection->addChild(sliderTitle);
+
+    // Horizontal slider
+    auto slider1 = std::make_shared<SliderNode>();
+    slider1->value = 0.7f;
+    slider1->style.widthMode = SizingMode::Fixed;
+    slider1->style.width = 300;
+    slider1->style.heightMode = SizingMode::Hug;
+    slider1->onValueChange = [](float val) {
+        // Handle slider value change
+    };
+    sliderSection->addChild(slider1);
+
+    // Vertical slider
+    auto slider2 = std::make_shared<SliderNode>();
+    slider2->value = 0.4f;
+    slider2->vertical = true;
+    slider2->style.widthMode = SizingMode::Hug;
+    slider2->style.heightMode = SizingMode::Fixed;
+    slider2->style.height = 150;
+    sliderSection->addChild(slider2);
+
+    mainContent->addChild(sliderSection);
+
+    // Knob Section
+    auto knobSection = FlexNode::Column();
+    knobSection->style.widthMode = SizingMode::Flex;
+    knobSection->style.heightMode = SizingMode::Hug;
+    knobSection->style.padding = 20;
+    knobSection->style.gap = 12;
+
+    auto knobTitle = std::make_shared<TextNode>();
+    knobTitle->text = "Knob Components";
+    knobTitle->color = Theme::TextPrimary;
+    knobTitle->fontSize = 18;
+    knobSection->addChild(knobTitle);
+
+    // Knobs row
+    auto knobsRow = FlexNode::Row();
+    knobsRow->style.widthMode = SizingMode::Flex;
+    knobsRow->style.heightMode = SizingMode::Hug;
+    knobsRow->style.gap = 20;
+
+    auto knob1 = std::make_shared<KnobNode>();
+    knob1->value = 0.5f;
+    knob1->knobSize = 70.0f;
+    knob1->onValueChange = [](float val) {
+        // Handle knob value change
+    };
+    knobsRow->addChild(knob1);
+
+    auto knob2 = std::make_shared<KnobNode>();
+    knob2->value = 0.75f;
+    knob2->knobSize = 70.0f;
+    knobsRow->addChild(knob2);
+
+    auto knob3 = std::make_shared<KnobNode>();
+    knob3->value = 0.25f;
+    knob3->knobSize = 70.0f;
+    knobsRow->addChild(knob3);
+
+    knobSection->addChild(knobsRow);
+    mainContent->addChild(knobSection);
+
+    // VU Meter Section
+    auto vuSection = FlexNode::Column();
+    vuSection->style.widthMode = SizingMode::Flex;
+    vuSection->style.heightMode = SizingMode::Hug;
+    vuSection->style.padding = 20;
+    vuSection->style.gap = 12;
+
+    auto vuTitle = std::make_shared<TextNode>();
+    vuTitle->text = "VU Meter Components";
+    vuTitle->color = Theme::TextPrimary;
+    vuTitle->fontSize = 18;
+    vuSection->addChild(vuTitle);
+
+    // VU Meters row
+    auto vuRow = FlexNode::Row();
+    vuRow->style.widthMode = SizingMode::Flex;
+    vuRow->style.heightMode = SizingMode::Hug;
+    vuRow->style.gap = 20;
+
+    // Vertical VU meters
+    auto vu1 = std::make_shared<VUMeterNode>();
+    vu1->setValue(0.5f);
+    vu1->vertical = true;
+    vu1->meterHeight = 150.0f;
+    vuRow->addChild(vu1);
+
+    auto vu2 = std::make_shared<VUMeterNode>();
+    vu2->setValue(0.75f);
+    vu2->vertical = true;
+    vu2->meterHeight = 150.0f;
+    vuRow->addChild(vu2);
+
+    auto vu3 = std::make_shared<VUMeterNode>();
+    vu3->setValue(0.95f);
+    vu3->vertical = true;
+    vu3->meterHeight = 150.0f;
+    vuRow->addChild(vu3);
+
+    vuSection->addChild(vuRow);
+
+    // Horizontal VU meter
+    auto vuHoriz = std::make_shared<VUMeterNode>();
+    vuHoriz->setValue(0.6f);
+    vuHoriz->vertical = false;
+    vuHoriz->meterHeight = 300.0f;
+    vuHoriz->style.widthMode = SizingMode::Fixed;
+    vuHoriz->style.width = 350;
+    vuSection->addChild(vuHoriz);
+
+    mainContent->addChild(vuSection);
+
+    // Wrap mainContent in a ScrollArea
+    auto scrollArea = std::make_shared<ScrollAreaNode>();
+    scrollArea->style.widthMode = SizingMode::Flex;
+    scrollArea->style.heightMode = SizingMode::Flex;
+    scrollArea->style.backgroundColor = Theme::Background;
+    scrollArea->setContent(mainContent);
+
     root->addChild(sidebar);
-    root->addChild(mainContent);
+    root->addChild(scrollArea);
     
     return root;
 }

@@ -12,9 +12,9 @@ public:
     FlexNode::Ptr content;
     
     // Scrollbar appearance
-    SkColor scrollbarTrackColor = SkColorSetARGB(30, 255, 255, 255);
-    SkColor scrollbarThumbColor = SkColorSetARGB(100, 255, 255, 255);
-    SkColor scrollbarThumbHoverColor = SkColorSetARGB(150, 255, 255, 255);
+    SkColor scrollbarTrackColor = SkColorSetARGB(60, 255, 255, 255);
+    SkColor scrollbarThumbColor = SkColorSetARGB(120, 255, 255, 255);
+    SkColor scrollbarThumbHoverColor = SkColorSetARGB(180, 255, 255, 255);
     
     float scrollbarWidth = 8.0f;
     float scrollbarPadding = 2.0f;

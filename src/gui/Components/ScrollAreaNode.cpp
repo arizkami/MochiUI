@@ -28,8 +28,6 @@ Size ScrollAreaNode::measure(Size available) {
     contentWidth = contentSize.width;
     contentHeight = contentSize.height;
     
-    updateScrollBounds();
-    
     // Return the available size (we'll scroll the content)
     float w = available.width;
     float h = available.height;
@@ -133,9 +131,12 @@ bool ScrollAreaNode::onMouseDown(float x, float y) {
         }
     }
     
-    // Pass to content
+    // Pass to content with adjusted coordinates
     if (content && hitTest(x, y)) {
-        return content->onMouseDown(x, y);
+        // Adjust mouse coordinates for scroll offset
+        float adjustedX = x + scrollX;
+        float adjustedY = y + scrollY;
+        return content->onMouseDown(adjustedX, adjustedY);
     }
     
     return false;
@@ -176,9 +177,11 @@ bool ScrollAreaNode::onMouseMove(float x, float y) {
         return true;
     }
     
-    // Pass to content
+    // Pass to content with adjusted coordinates
     if (content) {
-        return content->onMouseMove(x, y);
+        float adjustedX = x + scrollX;
+        float adjustedY = y + scrollY;
+        return content->onMouseMove(adjustedX, adjustedY);
     }
     
     return false;
@@ -189,7 +192,10 @@ void ScrollAreaNode::onMouseUp(float x, float y) {
     isDraggingHorizontal = false;
     
     if (content) {
-        content->onMouseUp(x, y);
+        // Adjust mouse coordinates for scroll offset
+        float adjustedX = x + scrollX;
+        float adjustedY = y + scrollY;
+        content->onMouseUp(adjustedX, adjustedY);
     }
 }
 

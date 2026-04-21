@@ -10,6 +10,7 @@
 #include <include/gui/Theme.hpp>
 #include <include/gui/TaskDialog.hpp>
 #include <include/utils/FontManager/FontMgr.hpp>
+#include <include/utils/Misc/ThemeSwitcher.hpp>
 
 using namespace MochiUI;
 
@@ -73,6 +74,52 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
     
     mainContent->addChild(hugContainer);
 
+    // Add checkbox examples
+    auto checkboxSection = FlexNode::Column();
+    checkboxSection->style.widthMode = SizingMode::Hug;
+    checkboxSection->style.heightMode = SizingMode::Hug;
+    checkboxSection->style.gap = 12;
+    checkboxSection->style.padding = 20;
+    checkboxSection->style.backgroundColor = Theme::Card;
+    checkboxSection->style.borderRadius = 8;
+
+    auto sectionTitle = std::make_shared<TextNode>();
+    sectionTitle->text = "Checkbox Components";
+    sectionTitle->style.widthMode = SizingMode::Hug;
+    sectionTitle->style.heightMode = SizingMode::Hug;
+    sectionTitle->color = Theme::TextPrimary;
+    sectionTitle->fontSize = 18;
+    checkboxSection->addChild(sectionTitle);
+
+    auto checkbox1 = std::make_shared<CheckboxNode>();
+    checkbox1->label = "Enable dark mode";
+    checkbox1->checked = true;
+    checkbox1->style.widthMode = SizingMode::Hug;
+    checkbox1->style.heightMode = SizingMode::Hug;
+    checkbox1->style.padding = 4;
+    checkbox1->onChanged = [](bool checked) {
+        // Handle checkbox state change
+    };
+    checkboxSection->addChild(checkbox1);
+
+    auto checkbox2 = std::make_shared<CheckboxNode>();
+    checkbox2->label = "Show notifications";
+    checkbox2->checked = false;
+    checkbox2->style.widthMode = SizingMode::Hug;
+    checkbox2->style.heightMode = SizingMode::Hug;
+    checkbox2->style.padding = 4;
+    checkboxSection->addChild(checkbox2);
+
+    auto checkbox3 = std::make_shared<CheckboxNode>();
+    checkbox3->label = "Auto-save changes";
+    checkbox3->checked = true;
+    checkbox3->style.widthMode = SizingMode::Hug;
+    checkbox3->style.heightMode = SizingMode::Hug;
+    checkbox3->style.padding = 4;
+    checkboxSection->addChild(checkbox3);
+
+    mainContent->addChild(checkboxSection);
+
     root->addChild(sidebar);
     root->addChild(mainContent);
     
@@ -107,7 +154,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         } }
     });
     menuBar->addMenu("View", {
-        { "Theme", 301, []() {
+        { "Theme", 301, [&window]() {
             ModernTaskDialog dialog;
             dialog.setTitle(L"Theme Settings");
             dialog.setMainInstruction(L"Choose a theme");
@@ -116,9 +163,31 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             dialog.addCustomButton(1, L"Dark Theme");
             dialog.addCustomButton(2, L"Light Theme");
             dialog.addCustomButton(3, L"Auto (System)");
-            dialog.setDefaultButton(1);
+            
+            auto& switcher = ThemeSwitcher::getInstance();
+            auto currentTheme = switcher.getCurrentTheme();
+            if (currentTheme == ThemeType::Dark) {
+                dialog.setDefaultButton(1);
+            } else if (currentTheme == ThemeType::Light) {
+                dialog.setDefaultButton(2);
+            } else {
+                dialog.setDefaultButton(3);
+            }
+            
             dialog.setAllowDialogCancellation(true);
-            auto result = dialog.show(nullptr);
+            int result = static_cast<int>(dialog.show(nullptr));
+            
+            // Apply selected theme
+            if (result == 1) {
+                switcher.setTheme(ThemeType::Dark);
+                InvalidateRect(window.getHwnd(), NULL, TRUE);
+            } else if (result == 2) {
+                switcher.setTheme(ThemeType::Light);
+                InvalidateRect(window.getHwnd(), NULL, TRUE);
+            } else if (result == 3) {
+                switcher.setTheme(ThemeType::Auto);
+                InvalidateRect(window.getHwnd(), NULL, TRUE);
+            }
         } }
     });
     menuBar->addMenu("Help", {

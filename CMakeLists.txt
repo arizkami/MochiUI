@@ -25,7 +25,10 @@ set(SOURCES
     src/main.cpp
     src/gui/MochiUI.cpp
     src/gui/MenuBar.cpp
+    src/gui/Components/TextNode.cpp
+    src/gui/Components/CheckboxNode.cpp
     src/utils/FontManager/FontMgr.cpp
+    src/utils/Misc/ThemeSwitcher.cpp
 )
 
 add_executable(SkiaGUIExample WIN32 ${SOURCES})

@@ -1,0 +1,29 @@
+#pragma once
+#include <include/gui/Layout.hpp>
+#include <include/gui/Theme.hpp>
+#include <include/utils/FontManager/FontMgr.hpp>
+#include <include/core/SkFont.h>
+#include <include/core/SkFontMetrics.h>
+#include <include/core/SkPath.h>
+#include <string>
+#include <functional>
+
+namespace MochiUI {
+
+class CheckboxNode : public FlexNode {
+public:
+    std::string label;
+    bool checked = false;
+    SkColor checkboxColor = Theme::Accent;
+    SkColor labelColor = Theme::TextPrimary;
+    float fontSize = 14.0f;
+    float checkboxSize = 18.0f;
+    float spacing = 8.0f;
+    std::function<void(bool)> onChanged;
+    
+    Size measure(Size available) override;
+    void draw(SkCanvas* canvas) override;
+    bool onMouseDown(float x, float y) override;
+};
+
+} // namespace MochiUI

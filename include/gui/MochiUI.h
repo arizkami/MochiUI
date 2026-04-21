@@ -27,6 +27,8 @@ public:
     void setMenuBar(std::unique_ptr<IMenuBar> bar);
     void setRoot(FlexNode::Ptr node) { root = node; }
     void run();
+    
+    HWND getHwnd() const { return hwnd; }
 
 protected:
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);

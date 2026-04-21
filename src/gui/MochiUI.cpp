@@ -1,5 +1,6 @@
 #include <include/gui/MochiUI.h>
 #include <include/utils/FontManager/FontMgr.hpp>
+#include <include/utils/Misc/ThemeSwitcher.hpp>
 #include <include/core/SkCanvas.h>
 #include <include/core/SkTypeface.h>
 #include <include/core/SkFontMgr.h>
@@ -157,6 +158,9 @@ LRESULT CALLBACK Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
 
 void App::init() {
     FontManager::getInstance().initialize();
+    
+    // Initialize theme system - auto-detect Windows theme by default
+    ThemeSwitcher::getInstance().applyTheme();
 }
 
 } // namespace MochiUI

@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.10)
-project(SkiaGUIExample)
+project(MochiUI)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 1. Match Skia's Official Build Runtime and Architecture
+# Match Skia's Official Build Runtime and Architecture
 if(MSVC)
     add_compile_options(
         $<$<CONFIG:Release>:/MT>
@@ -19,8 +19,10 @@ include_directories(
     External/skia/include
 )
 
-set(SOURCES
-    src/main.cpp
+set(SKIA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External/skia/lib)
+
+# MochiKit Static Library Sources
+set(MOCHIKIT_SOURCES
     src/gui/MochiUI.cpp
     src/gui/MenuBar.cpp
     src/gui/Components/TextNode.cpp
@@ -33,30 +35,26 @@ set(SOURCES
     src/utils/Misc/ThemeSwitcher.cpp
 )
 
-add_executable(SkiaGUIExample WIN32 ${SOURCES})
+# Create MochiKit static library
+add_library(MochiKit STATIC ${MOCHIKIT_SOURCES})
 
-set(SKIA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External/skia/lib)
-
-# 2. Updated Definitions to match modern Skia Builders
-target_compile_definitions(SkiaGUIExample PRIVATE
+# MochiKit compile definitions
+target_compile_definitions(MochiKit PUBLIC
     SKIA_STATIC
     SK_RELEASE
-    # Backend Alignment
     SK_D3D
     SK_DIRECTWRITE
-    # Force the headers to use the same logic as your .lib
     SK_DISABLE_LEGACY_PATH_METHODS
-    # Windows defaults
     NOMINMAX
     WIN32_LEAN_AND_MEAN
 )
 
-target_link_libraries(SkiaGUIExample
-    PRIVATE
+# MochiKit link libraries
+target_link_libraries(MochiKit
+    PUBLIC
     ${SKIA_LIB_DIR}/skia.lib
     ${SKIA_LIB_DIR}/libpng.lib
     ${SKIA_LIB_DIR}/zlib.lib
-    # Windows System Libraries
     d3d12.lib
     dxgi.lib
     d3dcompiler.lib
@@ -70,4 +68,13 @@ target_link_libraries(SkiaGUIExample
     Shlwapi.lib
     ComCtl32.lib
     Imm32.lib
+)
+
+# MochiExample executable
+add_executable(MochiExample WIN32 example/main.cpp)
+
+# Link MochiExample with MochiKit
+target_link_libraries(MochiExample
+    PRIVATE
+    MochiKit
 )

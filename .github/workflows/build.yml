@@ -30,7 +30,7 @@ jobs:
       
     - name: Configure CMake
       # Using NMake Makefiles as requested
-      run: cmake -B build -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
+      run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
       
     - name: Build MochiKit
       run: cmake --build build --target MochiKit --config Release

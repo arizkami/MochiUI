@@ -1,4 +1,9 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.15)
+
+# Set MSVC runtime library BEFORE project() to ensure it applies to all targets
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
+
 project(MochiUI)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -6,10 +11,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Match Skia's Official Build Runtime and Architecture
 if(MSVC)
+    # Remove /MD flags that CMake adds by default to prevent warning D9025
+    string(REPLACE "/MD" "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/MDd" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+    
     add_compile_options(
-        $<$<CONFIG:Release>:/MT>
-        $<$<CONFIG:Debug>:/MTd>
         /arch:AVX2  
+        /wd4244 
+        /wd4267
     )
 endif()
 

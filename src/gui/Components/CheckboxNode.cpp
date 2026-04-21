@@ -60,11 +60,11 @@ void CheckboxNode::draw(SkCanvas* canvas) {
         float cy = checkboxRect.centerY();
         float size = checkboxSize * 0.3f;
         
-        SkPath checkPath;
-        checkPath.moveTo(cx - size * 0.5f, cy);
-        checkPath.lineTo(cx - size * 0.1f, cy + size * 0.5f);
-        checkPath.lineTo(cx + size * 0.6f, cy - size * 0.4f);
-        canvas->drawPath(checkPath, checkPaint);
+        // Draw checkmark using lines
+        canvas->drawLine(cx - size * 0.5f, cy, 
+                        cx - size * 0.1f, cy + size * 0.5f, checkPaint);
+        canvas->drawLine(cx - size * 0.1f, cy + size * 0.5f, 
+                        cx + size * 0.6f, cy - size * 0.4f, checkPaint);
     }
     
     if (!label.empty()) {

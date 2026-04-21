@@ -1,0 +1,17 @@
+# Build artifacts
+build/
+bin/
+obj/
+
+# Prebuilt binaries
+External/skia/
+
+# Generated files
+src/gui/Theme.hpp
+
+# IDE files
+.vs/
+.vscode/
+*.user
+*.suo
+*.sln

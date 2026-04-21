@@ -1,0 +1,10 @@
+{
+    "background": [26, 27, 30],
+    "sidebar": [33, 34, 38],
+    "menubar": [43, 44, 48],
+    "accent": [208, 188, 255],
+    "text_primary": [230, 225, 229],
+    "text_secondary": [147, 143, 153],
+    "hover_overlay": [35, 255, 255, 255],
+    "card": [100, 73, 69, 79]
+}

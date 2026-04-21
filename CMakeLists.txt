@@ -13,13 +13,45 @@ if(MSVC)
     )
 endif()
 
+# Download and extract Skia prebuilt binaries if not present
+set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External/skia)
+set(SKIA_ZIP ${CMAKE_CURRENT_SOURCE_DIR}/External/skia-prebuilt-binary.zip)
+set(SKIA_URL "https://github.com/arizkami/MochiUI/releases/download/2026.04/skia-prebuilt-binary.zip")
+
+if(NOT EXISTS ${SKIA_DIR}/lib/skia.lib)
+    message(STATUS "Skia binaries not found. Downloading...")
+    
+    # Download the zip file
+    file(DOWNLOAD ${SKIA_URL} ${SKIA_ZIP}
+         SHOW_PROGRESS
+         STATUS DOWNLOAD_STATUS)
+    
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    if(NOT STATUS_CODE EQUAL 0)
+        message(FATAL_ERROR "Failed to download Skia binaries from ${SKIA_URL}")
+    endif()
+    
+    message(STATUS "Extracting Skia binaries...")
+    
+    # Extract the zip file
+    file(ARCHIVE_EXTRACT INPUT ${SKIA_ZIP}
+         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/External)
+    
+    # Clean up zip file
+    file(REMOVE ${SKIA_ZIP})
+    
+    message(STATUS "Skia binaries installed successfully!")
+else()
+    message(STATUS "Skia binaries found at ${SKIA_DIR}")
+endif()
+
 include_directories(
     .
     include
     External/skia/include
 )
 
-set(SKIA_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External/skia/lib)
+set(SKIA_LIB_DIR ${SKIA_DIR}/lib)
 
 # MochiKit Static Library Sources
 set(MOCHIKIT_SOURCES

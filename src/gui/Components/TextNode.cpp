@@ -20,8 +20,8 @@ Size TextNode::measure(Size available) {
 }
 
 void TextNode::draw(SkCanvas* canvas) {
-    // Draw hover effect
-    if (isHovered) {
+    // Draw hover effect only if enabled
+    if (enableHover && isHovered) {
         SkPaint hoverPaint;
         hoverPaint.setAntiAlias(true);
         hoverPaint.setColor(Theme::HoverOverlay);

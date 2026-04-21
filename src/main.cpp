@@ -180,12 +180,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             // Apply selected theme
             if (result == 1) {
                 switcher.setTheme(ThemeType::Dark);
+                window.setDarkMode(true);
                 InvalidateRect(window.getHwnd(), NULL, TRUE);
             } else if (result == 2) {
                 switcher.setTheme(ThemeType::Light);
+                window.setDarkMode(false);
                 InvalidateRect(window.getHwnd(), NULL, TRUE);
             } else if (result == 3) {
                 switcher.setTheme(ThemeType::Auto);
+                window.setDarkMode(switcher.isWindowsInDarkMode());
                 InvalidateRect(window.getHwnd(), NULL, TRUE);
             }
         } }

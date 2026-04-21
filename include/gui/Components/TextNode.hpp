@@ -14,6 +14,7 @@ public:
     std::string text;
     SkColor color = SK_ColorBLACK;
     float fontSize = 16.0f;
+    bool enableHover = false;  // Disable hover by default for text
 
     Size measure(Size available) override;
     void draw(SkCanvas* canvas) override;

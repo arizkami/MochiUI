@@ -28,7 +28,13 @@ Window::Window(const std::string& title, int width, int height) : width(width), 
 
     if (hwnd) {
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
-        setDarkMode(true); // Default to dark mode
+        
+        // Apply dark mode based on current theme (auto-detected or manual)
+        auto& switcher = ThemeSwitcher::getInstance();
+        bool isDark = (switcher.getCurrentTheme() == ThemeType::Auto) 
+                      ? switcher.isWindowsInDarkMode() 
+                      : (switcher.getCurrentTheme() == ThemeType::Dark);
+        setDarkMode(isDark);
     }
 }
 

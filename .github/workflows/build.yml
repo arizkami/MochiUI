@@ -15,6 +15,11 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       
+    - name: Setup MSVC Developer Command Prompt
+      uses: ilammy/msvc-dev-cmd@v1
+      with:
+        arch: x64
+
     - name: Setup Python
       uses: actions/setup-python@v5
       with:
@@ -24,13 +29,14 @@ jobs:
       run: python scripts/gen_theme.py
       
     - name: Configure CMake
-      run: cmake -B build -G "NMake Makefiles"
+      # Using NMake Makefiles as requested
+      run: cmake -B build -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=Release
       
     - name: Build MochiKit
-      run: cmake --build build --target MochiKit
+      run: cmake --build build --target MochiKit --config Release
       
     - name: Build MochiExample
-      run: cmake --build build --target MochiExample
+      run: cmake --build build --target MochiExample --config Release
       
     - name: Upload MochiKit library
       uses: actions/upload-artifact@v4

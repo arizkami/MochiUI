@@ -1,12 +1,11 @@
 #pragma once
-#include "Layout.hpp"
-#include "Theme.hpp"
+#include <include/gui/Layout.hpp>
+#include <include/gui/Theme.hpp>
+#include <include/utils/FontManager/FontMgr.hpp>
 #include <include/core/SkFont.h>
 #include <include/core/SkTypeface.h>
 #include <include/core/SkFontMgr.h>
 #include <string>
-
-extern sk_sp<SkFontMgr> gFontMgr;
 
 namespace MochiUI {
 
@@ -19,10 +18,8 @@ public:
     Size measure(Size available) override {
         if (text.empty()) return { 0, 0 };
         
-        sk_sp<SkTypeface> typeface = gFontMgr->matchFamilyStyle("Segoe UI", SkFontStyle());
-        if (!typeface) typeface = gFontMgr->legacyMakeTypeface(nullptr, SkFontStyle());
-        
-        SkFont font(typeface, fontSize);
+        SkFont font = FontManager::getInstance().createFont(
+            FontManager::DEFAULT_FONT, fontSize);
         SkRect bounds;
         font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8, &bounds);
         
@@ -46,10 +43,8 @@ public:
 
         FlexNode::draw(canvas);
         if (!text.empty()) {
-            sk_sp<SkTypeface> typeface = gFontMgr->matchFamilyStyle("Segoe UI", SkFontStyle());
-            if (!typeface) typeface = gFontMgr->legacyMakeTypeface(nullptr, SkFontStyle());
-            
-            SkFont font(typeface, fontSize);
+            SkFont font = FontManager::getInstance().createFont(
+                FontManager::DEFAULT_FONT, fontSize);
             SkPaint paint;
             paint.setAntiAlias(true);
             paint.setColor(color);

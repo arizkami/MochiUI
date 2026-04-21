@@ -15,6 +15,7 @@ endif()
 # Skia Include Directories
 include_directories(
     .
+    include
     External/skia/include
     External/skia/include/include
 )
@@ -24,6 +25,7 @@ set(SOURCES
     src/main.cpp
     src/gui/MochiUI.cpp
     src/gui/MenuBar.cpp
+    src/utils/FontManager/FontMgr.cpp
 )
 
 add_executable(SkiaGUIExample WIN32 ${SOURCES})
@@ -46,6 +48,7 @@ target_link_libraries(SkiaGUIExample
     Usp10.lib
     Dwmapi.lib
     Shlwapi.lib
+    ComCtl32.lib
 )
 
 # Preprocessor definitions often required for Skia on Windows

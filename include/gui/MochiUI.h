@@ -5,8 +5,8 @@
 #include <vector>
 #include <include/core/SkCanvas.h>
 #include <include/core/SkBitmap.h>
-#include "Layout.hpp"
-#include "MenuBar.hpp"
+#include <include/gui/Layout.hpp>
+#include <include/gui/MenuBar.hpp>
 
 namespace MochiUI {
 
@@ -51,9 +51,7 @@ public:
         return instance;
     }
     
-    void init() {
-        // Global initialization (Skia FontMgr, etc)
-    }
+    void init();
 };
 
 } // namespace MochiUI

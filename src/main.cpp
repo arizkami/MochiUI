@@ -4,14 +4,14 @@
 #include <include/core/SkTypeface.h>
 #include <include/core/SkFontMgr.h>
 #include <include/ports/SkTypeface_win.h>
-#include "gui/MochiUI.h"
-#include "gui/Layout.hpp"
-#include "gui/Components.hpp"
-#include "gui/Theme.hpp"
+#include <include/gui/MochiUI.h>
+#include <include/gui/Layout.hpp>
+#include <include/gui/Components.hpp>
+#include <include/gui/Theme.hpp>
+#include <include/gui/TaskDialog.hpp>
+#include <include/utils/FontManager/FontMgr.hpp>
 
 using namespace MochiUI;
-
-sk_sp<SkFontMgr> gFontMgr;
 
 FlexNode::Ptr CreateAppUI(int width, int height) {
     auto root = FlexNode::Row();
@@ -80,20 +80,65 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    gFontMgr = SkFontMgr_New_DirectWrite();
+    App::Get().init();
+    
     MochiUI::Window window("MochiUI Explorer", 1280, 800);
     window.enableMica(true);
 
     auto menuBar = MochiUI::MenuBarFactory::Create(MochiUI::MenuBackend::Skia);
     menuBar->addMenu("File", {
-        { "New", 101, []() {} },
-        { "Exit", 103, []() { PostQuitMessage(0); } }
+        { "New", 101, []() {
+            ModernTaskDialog::showMessage(nullptr, L"MochiUI", L"New File", 
+                                   L"Create a new file in the application.", 
+                                   TaskDialogIcon::Information);
+        } },
+        { "Exit", 103, []() { 
+            if (ModernTaskDialog::confirm(nullptr, L"Exit Application", 
+                                   L"Are you sure you want to exit?",
+                                   L"Any unsaved changes will be lost.")) {
+                PostQuitMessage(0);
+            }
+        } }
     });
     menuBar->addMenu("Edit", {
-        { "Undo", 201, []() {} }
+        { "Undo", 201, []() {
+            ModernTaskDialog::showWarning(nullptr, L"Undo", L"Nothing to undo",
+                                   L"There are no actions to undo.");
+        } }
     });
     menuBar->addMenu("View", {
-        { "Theme", 301, []() {} }
+        { "Theme", 301, []() {
+            ModernTaskDialog dialog;
+            dialog.setTitle(L"Theme Settings");
+            dialog.setMainInstruction(L"Choose a theme");
+            dialog.setContent(L"Select your preferred color theme for the application.");
+            dialog.setMainIcon(TaskDialogIcon::Information);
+            dialog.addCustomButton(1, L"Dark Theme");
+            dialog.addCustomButton(2, L"Light Theme");
+            dialog.addCustomButton(3, L"Auto (System)");
+            dialog.setDefaultButton(1);
+            dialog.setAllowDialogCancellation(true);
+            auto result = dialog.show(nullptr);
+        } }
+    });
+    menuBar->addMenu("Help", {
+        { "About", 401, []() {
+            ModernTaskDialog dialog;
+            dialog.setTitle(L"About MochiUI");
+            dialog.setMainInstruction(L"MochiUI Framework v1.0");
+            dialog.setContent(L"A modern UI framework built with Skia and Win32.");
+            dialog.setExpandedInfo(L"MochiUI combines the power of Skia's 2D graphics with "
+                                  L"native Windows controls to create beautiful, performant applications.\n\n"
+                                  L"Features:\n"
+                                  L"\u2022 Flexbox-based layout system\n"
+                                  L"\u2022 CPU-based rendering with Skia\n"
+                                  L"\u2022 Modern Windows 11 styling\n"
+                                  L"\u2022 Task Dialog integration");
+            dialog.setFooter(L"Built with \u2764\uFE0F using Skia");
+            dialog.setMainIcon(TaskDialogIcon::Information);
+            dialog.setCommonButtons(TDCBF_OK_BUTTON);
+            dialog.show(nullptr);
+        } }
     });
     
     window.setMenuBar(std::move(menuBar));

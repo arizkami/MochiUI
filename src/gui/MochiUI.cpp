@@ -1,10 +1,9 @@
-#include "MochiUI.h"
+#include <include/gui/MochiUI.h>
+#include <include/utils/FontManager/FontMgr.hpp>
 #include <include/core/SkCanvas.h>
 #include <include/core/SkTypeface.h>
 #include <include/core/SkFontMgr.h>
 #include <include/ports/SkTypeface_win.h>
-
-extern sk_sp<SkFontMgr> gFontMgr;
 
 namespace MochiUI {
 
@@ -154,6 +153,10 @@ LRESULT CALLBACK Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
             return 0;
     }
     return DefWindowProc(hwnd, msg, wp, lp);
+}
+
+void App::init() {
+    FontManager::getInstance().initialize();
 }
 
 } // namespace MochiUI

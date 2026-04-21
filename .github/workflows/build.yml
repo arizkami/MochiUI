@@ -9,7 +9,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest-vs2026
+    runs-on: windows-latest
     
     steps:
     - name: Checkout repository

@@ -44,7 +44,7 @@ if(NOT EXISTS ${SKIA_DIR}/lib/skia.lib)
     
     # Extract the zip file
     file(ARCHIVE_EXTRACT INPUT ${SKIA_ZIP}
-         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/External)
+         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/External/skia)
     
     # Clean up zip file
     file(REMOVE ${SKIA_ZIP})

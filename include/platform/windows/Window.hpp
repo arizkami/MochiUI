@@ -1,9 +1,20 @@
 #pragma once
 #include <include/core/Window.hpp>
 #include <windows.h>
-#include <include/core/SkBitmap.h>
+#include <d3d12.h>
+#include <dxgi1_4.h>
+#include <wrl/client.h>
+#include <include/core/SkSurface.h>
+#include <vector>
+
+class GrDirectContext;
 
 namespace MochiUI {
+
+struct FrameContext {
+    Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
+    sk_sp<SkSurface> surface;
+};
 
 class Win32Window : public IWindow {
 public:
@@ -25,12 +36,29 @@ private:
     void onPaint();
     void onSize(int w, int h);
     
+    bool initD3D12();
+    void cleanupD3D12();
+    void resizeBuffers(int width, int height);
+    
     HWND hwnd;
-    SkBitmap bitmap;
     FlexNode::Ptr root;
     FlexNode::Ptr masterRoot;
     std::unique_ptr<IMenuBar> menuBar;
     int width, height;
+
+    // D3D12 resources
+    Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice;
+    Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue;
+    Microsoft::WRL::ComPtr<IDXGISwapChain3> swapChain;
+    Microsoft::WRL::ComPtr<ID3D12Fence> fence;
+    HANDLE fenceEvent = nullptr;
+    uint64_t fenceValue = 0;
+    
+    static const int bufferCount = 2;
+    int currentFrameIndex = 0;
+    std::vector<FrameContext> frames;
+    
+    sk_sp<GrDirectContext> grContext;
 };
 
 } // namespace MochiUI

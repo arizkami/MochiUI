@@ -99,6 +99,7 @@ target_link_libraries(MochiKit
     ${SKIA_LIB_DIR}/skia.lib
     ${SKIA_LIB_DIR}/libpng.lib
     ${SKIA_LIB_DIR}/zlib.lib
+    ${SKIA_LIB_DIR}/d3d12allocator.lib
     d3d12.lib
     dxgi.lib
     d3dcompiler.lib

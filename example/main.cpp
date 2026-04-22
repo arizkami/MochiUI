@@ -1,9 +1,3 @@
-#include <windows.h>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkFont.h>
-#include <include/core/SkTypeface.h>
-#include <include/core/SkFontMgr.h>
-#include <include/ports/SkTypeface_win.h>
 #include <include/gui/MochiUI.h>
 #include <include/gui/Layout.hpp>
 #include <include/gui/Components.hpp>
@@ -248,6 +242,7 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
 
     // Wrap mainContent in a ScrollArea
     auto scrollArea = std::make_shared<ScrollAreaNode>();
+    scrollArea->style.flex = 1.0f;
     scrollArea->style.widthMode = SizingMode::Flex;
     scrollArea->style.heightMode = SizingMode::Flex;
     scrollArea->style.backgroundColor = Theme::Background;
@@ -260,7 +255,7 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    App::Get().init();
+    App::getInstance().init();
     
     MochiUI::Window window("MochiUI Explorer", 1280, 800);
     window.enableMica(true);
@@ -314,15 +309,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
             if (result == 1) {
                 switcher.setTheme(ThemeType::Dark);
                 window.setDarkMode(true);
-                InvalidateRect(window.getHwnd(), NULL, TRUE);
+                InvalidateRect((HWND)window.getNativeHandle(), NULL, TRUE);
             } else if (result == 2) {
                 switcher.setTheme(ThemeType::Light);
                 window.setDarkMode(false);
-                InvalidateRect(window.getHwnd(), NULL, TRUE);
+                InvalidateRect((HWND)window.getNativeHandle(), NULL, TRUE);
             } else if (result == 3) {
                 switcher.setTheme(ThemeType::Auto);
                 window.setDarkMode(switcher.isWindowsInDarkMode());
-                InvalidateRect(window.getHwnd(), NULL, TRUE);
+                InvalidateRect((HWND)window.getNativeHandle(), NULL, TRUE);
             }
         } }
     });

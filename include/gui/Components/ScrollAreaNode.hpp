@@ -31,12 +31,15 @@ public:
     void scrollBy(float dx, float dy);
     
     Size measure(Size available) override;
-    void layout(SkRect rect);
+    void calculateLayout(SkRect availableSpace) override;
     void draw(SkCanvas* canvas) override;
     bool onMouseDown(float x, float y) override;
     bool onMouseMove(float x, float y) override;
     void onMouseUp(float x, float y) override;
-    bool onMouseWheel(float x, float y, float delta);
+    bool onMouseWheel(float x, float y, float delta) override;
+    
+    void onMouseEnter() override;
+    void onMouseLeave() override;
 
 private:
     void updateScrollBounds();
@@ -51,6 +54,8 @@ private:
     float maxScrollY = 0.0f;
     float contentWidth = 0.0f;
     float contentHeight = 0.0f;
+    
+    float scrollbarOpacity = 0.0f; // For fade in/out
     
     bool isDraggingVertical = false;
     bool isDraggingHorizontal = false;

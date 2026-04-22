@@ -98,7 +98,7 @@ public:
     }
 
     // Pass 2: Final Layout
-    void calculateLayout(SkRect availableSpace) {
+    virtual void calculateLayout(SkRect availableSpace) {
         float padding = style.padding;
         float gap = style.gap;
 
@@ -181,6 +181,8 @@ public:
         
         if (isHovered != currentlyInside) {
             isHovered = currentlyInside;
+            if (isHovered) onMouseEnter();
+            else onMouseLeave();
             handled = true;
         }
 
@@ -189,6 +191,9 @@ public:
         }
         return handled;
     }
+
+    virtual void onMouseEnter() {}
+    virtual void onMouseLeave() {}
 
     virtual bool onMouseDown(float x, float y) {
         bool handled = false;

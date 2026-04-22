@@ -38,12 +38,37 @@ Size ScrollAreaNode::measure(Size available) {
     return { w, h };
 }
 
-void ScrollAreaNode::layout(SkRect rect) {
-    frame = rect;
-    
-    if (!content) return;
-    
-    // Update scroll bounds based on frame size
+void ScrollAreaNode::calculateLayout(SkRect availableSpace) {
+    // Standard FlexNode layout for self
+    float myW = availableSpace.width();
+    float myH = availableSpace.height();
+
+    if (style.widthMode == SizingMode::Fixed) myW = style.width;
+    else if (style.widthMode == SizingMode::Hug) {
+        myW = measure({availableSpace.width(), availableSpace.height()}).width;
+    }
+
+    if (style.heightMode == SizingMode::Fixed) myH = style.height;
+    else if (style.heightMode == SizingMode::Hug) {
+        myH = measure({availableSpace.width(), availableSpace.height()}).height;
+    }
+
+    frame = SkRect::MakeXYWH(availableSpace.left() + style.margin, 
+                             availableSpace.top() + style.margin, 
+                             myW, myH);
+
+    if (content) {
+        // Measure content again to get its true size
+        Size contentMeasured = content->measure({ myW, 999999.0f });
+        contentWidth = contentMeasured.width;
+        contentHeight = contentMeasured.height;
+
+        // Layout content at its full size, starting at (0,0) relative to viewport
+        // The draw method handles the translation
+        content->calculateLayout(SkRect::MakeXYWH(frame.left(), frame.top(), 
+                                                 contentWidth, contentHeight));
+    }
+
     updateScrollBounds();
 }
 
@@ -53,10 +78,11 @@ void ScrollAreaNode::draw(SkCanvas* canvas) {
     // Save canvas state
     canvas->save();
     
-    // Clip to viewport
+    // Clip to viewport (inner frame, accounting for padding if any)
     canvas->clipRect(frame);
     
     // Translate canvas for scrolling
+    // We translate relative to the frame origin
     canvas->translate(-scrollX, -scrollY);
     
     // Draw content
@@ -65,54 +91,78 @@ void ScrollAreaNode::draw(SkCanvas* canvas) {
     // Restore canvas
     canvas->restore();
     
+    // Derive scrollbar colors from TextPrimary to ensure visibility in any theme
+    SkColor trackCol = SkColorSetA(Theme::TextPrimary, 30);
+    SkColor thumbCol = SkColorSetA(Theme::TextPrimary, 80);
+    SkColor thumbHoverCol = SkColorSetA(Theme::TextPrimary, 140);
+
+    // Use isHovered to control opacity if not animated
+    float alpha = isHovered ? 1.0f : 0.0f;
+    if (isDraggingVertical || isDraggingHorizontal) alpha = 1.0f;
+    
+    if (alpha < 0.01f) return;
+
+    auto applyAlpha = [](SkColor c, float a) {
+        return SkColorSetA(c, (U8CPU)(SkColorGetA(c) * a));
+    };
+
     // Draw vertical scrollbar
     if (showVerticalScrollbar && maxScrollY > 0) {
         SkPaint trackPaint;
         trackPaint.setAntiAlias(true);
-        trackPaint.setColor(scrollbarTrackColor);
+        trackPaint.setColor(applyAlpha(trackCol, alpha));
         
         SkRect trackRect = getVerticalScrollbarRect();
-        SkRRect trackRRect = SkRRect::MakeRectXY(trackRect, scrollbarWidth / 2, scrollbarWidth / 2);
-        canvas->drawRRect(trackRRect, trackPaint);
+        canvas->drawRoundRect(trackRect, scrollbarWidth / 2, scrollbarWidth / 2, trackPaint);
         
         // Draw thumb
         SkPaint thumbPaint;
         thumbPaint.setAntiAlias(true);
-        thumbPaint.setColor(isHoveringVertical || isDraggingVertical ? 
-                           scrollbarThumbHoverColor : scrollbarThumbColor);
+        SkColor finalThumbCol = (isHoveringVertical || isDraggingVertical) ? 
+                               thumbHoverCol : thumbCol;
+        thumbPaint.setColor(applyAlpha(finalThumbCol, alpha));
         
         SkRect thumbRect = getVerticalThumbRect();
-        SkRRect thumbRRect = SkRRect::MakeRectXY(thumbRect, scrollbarWidth / 2, scrollbarWidth / 2);
-        canvas->drawRRect(thumbRRect, thumbPaint);
+        canvas->drawRoundRect(thumbRect, scrollbarWidth / 2, scrollbarWidth / 2, thumbPaint);
     }
     
     // Draw horizontal scrollbar
     if (showHorizontalScrollbar && maxScrollX > 0) {
         SkPaint trackPaint;
         trackPaint.setAntiAlias(true);
-        trackPaint.setColor(scrollbarTrackColor);
+        trackPaint.setColor(applyAlpha(trackCol, alpha));
         
         SkRect trackRect = getHorizontalScrollbarRect();
-        SkRRect trackRRect = SkRRect::MakeRectXY(trackRect, scrollbarWidth / 2, scrollbarWidth / 2);
-        canvas->drawRRect(trackRRect, trackPaint);
+        canvas->drawRoundRect(trackRect, scrollbarWidth / 2, scrollbarWidth / 2, trackPaint);
         
         // Draw thumb
         SkPaint thumbPaint;
         thumbPaint.setAntiAlias(true);
-        thumbPaint.setColor(isHoveringHorizontal || isDraggingHorizontal ? 
-                           scrollbarThumbHoverColor : scrollbarThumbColor);
+        SkColor finalThumbCol = (isHoveringHorizontal || isDraggingHorizontal) ? 
+                               thumbHoverCol : thumbCol;
+        thumbPaint.setColor(applyAlpha(finalThumbCol, alpha));
         
         SkRect thumbRect = getHorizontalThumbRect();
-        SkRRect thumbRRect = SkRRect::MakeRectXY(thumbRect, scrollbarWidth / 2, scrollbarWidth / 2);
-        canvas->drawRRect(thumbRRect, thumbPaint);
+        canvas->drawRoundRect(thumbRect, scrollbarWidth / 2, scrollbarWidth / 2, thumbPaint);
     }
 }
 
 bool ScrollAreaNode::onMouseDown(float x, float y) {
+    if (!hitTest(x, y)) return false;
+
     // Check if clicking on vertical scrollbar
     if (showVerticalScrollbar && isPointInVerticalScrollbar(x, y)) {
         SkRect thumbRect = getVerticalThumbRect();
         if (thumbRect.contains(x, y)) {
+            isDraggingVertical = true;
+            dragStartY = y;
+            dragStartScrollY = scrollY;
+            return true;
+        } else {
+            // Clicked track, jump scroll
+            SkRect trackRect = getVerticalScrollbarRect();
+            float clickRatio = std::clamp((y - trackRect.top()) / trackRect.height(), 0.0f, 1.0f);
+            scrollTo(scrollX, clickRatio * maxScrollY);
             isDraggingVertical = true;
             dragStartY = y;
             dragStartScrollY = scrollY;
@@ -128,11 +178,20 @@ bool ScrollAreaNode::onMouseDown(float x, float y) {
             dragStartX = x;
             dragStartScrollX = scrollX;
             return true;
+        } else {
+            // Clicked track, jump scroll
+            SkRect trackRect = getHorizontalScrollbarRect();
+            float clickRatio = std::clamp((x - trackRect.left()) / trackRect.width(), 0.0f, 1.0f);
+            scrollTo(clickRatio * maxScrollX, scrollY);
+            isDraggingHorizontal = true;
+            dragStartX = x;
+            dragStartScrollX = scrollX;
+            return true;
         }
     }
     
     // Pass to content with adjusted coordinates
-    if (content && hitTest(x, y)) {
+    if (content) {
         // Adjust mouse coordinates for scroll offset
         float adjustedX = x + scrollX;
         float adjustedY = y + scrollY;
@@ -143,6 +202,16 @@ bool ScrollAreaNode::onMouseDown(float x, float y) {
 }
 
 bool ScrollAreaNode::onMouseMove(float x, float y) {
+    bool handled = false;
+    
+    bool currentlyInside = hitTest(x, y);
+    if (isHovered != currentlyInside) {
+        isHovered = currentlyInside;
+        if (isHovered) onMouseEnter();
+        else onMouseLeave();
+        handled = true;
+    }
+
     // Update hover state
     isHoveringVertical = isPointInVerticalScrollbar(x, y);
     isHoveringHorizontal = isPointInHorizontalScrollbar(x, y);
@@ -181,10 +250,10 @@ bool ScrollAreaNode::onMouseMove(float x, float y) {
     if (content) {
         float adjustedX = x + scrollX;
         float adjustedY = y + scrollY;
-        return content->onMouseMove(adjustedX, adjustedY);
+        if (content->onMouseMove(adjustedX, adjustedY)) handled = true;
     }
     
-    return false;
+    return handled || isHoveringVertical || isHoveringHorizontal;
 }
 
 void ScrollAreaNode::onMouseUp(float x, float y) {
@@ -197,6 +266,14 @@ void ScrollAreaNode::onMouseUp(float x, float y) {
         float adjustedY = y + scrollY;
         content->onMouseUp(adjustedX, adjustedY);
     }
+}
+
+void ScrollAreaNode::onMouseEnter() {
+    scrollbarOpacity = 1.0f;
+}
+
+void ScrollAreaNode::onMouseLeave() {
+    scrollbarOpacity = 0.0f;
 }
 
 bool ScrollAreaNode::onMouseWheel(float x, float y, float delta) {

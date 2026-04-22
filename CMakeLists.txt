@@ -65,6 +65,7 @@ set(SKIA_LIB_DIR ${SKIA_DIR}/lib)
 
 # MochiKit Static Library Sources
 set(MOCHIKIT_SOURCES
+    src/core/Application.cpp
     src/gui/MochiUI.cpp
     src/gui/MenuBar.cpp
     src/gui/Components/TextNode.cpp
@@ -73,6 +74,7 @@ set(MOCHIKIT_SOURCES
     src/gui/Components/KnobNode.cpp
     src/gui/Components/VUMeterNode.cpp
     src/gui/Components/ScrollAreaNode.cpp
+    src/platform/windows/Window.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp
 )

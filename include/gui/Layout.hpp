@@ -220,4 +220,11 @@ public:
         }
         return false;
     }
+
+    virtual bool needsRedraw() {
+        for (auto& child : children) {
+            if (child->needsRedraw()) return true;
+        }
+        return false;
+    }
 };

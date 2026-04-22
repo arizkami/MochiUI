@@ -62,6 +62,7 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
     const char CLASS_NAME[] = "MochiUIWindow";
     
     WNDCLASS wc = {};
+    wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
     wc.lpfnWndProc = Win32Window::WndProc;
     wc.hInstance = GetModuleHandle(NULL);
     wc.lpszClassName = CLASS_NAME;
@@ -319,6 +320,11 @@ void Win32Window::onPaint() {
 
     swapChain->Present(1, 0);
 
+    FlexNode::Ptr effectiveRoot = masterRoot ? masterRoot : root;
+    if (effectiveRoot && effectiveRoot->needsRedraw()) {
+        InvalidateRect(hwnd, NULL, FALSE);
+    }
+
     // Wait for the frame to finish
     const uint64_t fenceVal = fenceValue;
     commandQueue->Signal(fence.Get(), fenceVal);
@@ -371,7 +377,7 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             return 0;
         case WM_MOUSEWHEEL:
             if (win && effectiveRoot) {
-                POINT pt = { LOWORD(lp), HIWORD(lp) };
+                POINT pt = { (short)LOWORD(lp), (short)HIWORD(lp) };
                 ScreenToClient(hwnd, &pt);
                 float delta = GET_WHEEL_DELTA_WPARAM(wp) / (float)WHEEL_DELTA;
                 if (effectiveRoot->onMouseWheel((float)pt.x, (float)pt.y, delta)) {

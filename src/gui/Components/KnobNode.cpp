@@ -1,5 +1,6 @@
 #include <include/gui/Components/KnobNode.hpp>
 #include <algorithm>
+#include <windows.h> // For GetTickCount and GetKeyState
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -8,7 +9,7 @@
 namespace MochiUI {
 
 Size KnobNode::measure(Size available) {
-    float size = knobSize + 20.0f;  // Add padding for arc
+    float size = knobSize + 30.0f;  // Increased padding for larger arc and effects
     
     if (style.widthMode == SizingMode::Fixed) size = style.width;
     if (style.heightMode == SizingMode::Fixed) size = style.height;
@@ -17,38 +18,20 @@ Size KnobNode::measure(Size available) {
 }
 
 void KnobNode::draw(SkCanvas* canvas) {
-    FlexNode::draw(canvas);
-    
     float centerX = frame.centerX();
     float centerY = frame.centerY();
     float radius = knobSize / 2.0f;
     float norm = getNormalizedValue();
     
-    // Draw outer shadow
-    SkPaint shadowPaint;
-    shadowPaint.setAntiAlias(true);
-    shadowPaint.setColor(SkColorSetARGB(50, 0, 0, 0));
-    canvas->drawCircle(centerX + 2, centerY + 3, radius + 2, shadowPaint);
-    
-    // Draw outer ring
-    SkPaint ringPaint;
-    ringPaint.setAntiAlias(true);
-    ringPaint.setColor(knobRingColor);
-    canvas->drawCircle(centerX, centerY, radius, ringPaint);
-    
-    // Draw inner knob body with gradient effect
-    SkPaint knobPaint;
-    knobPaint.setAntiAlias(true);
-    knobPaint.setColor(knobBodyColor);
-    canvas->drawCircle(centerX, centerY, radius - 4, knobPaint);
-    
-    // Draw subtle highlight on top
-    SkPaint highlightPaint;
-    highlightPaint.setAntiAlias(true);
-    highlightPaint.setColor(SkColorSetARGB(20, 255, 255, 255));
-    canvas->drawCircle(centerX, centerY - radius * 0.3f, radius * 0.4f, highlightPaint);
-    
-    // Draw arc track (background)
+    // 1. Draw Outer Glow (if dragging or hovered)
+    if (isDragging || isHovered) {
+        SkPaint glowPaint;
+        glowPaint.setAntiAlias(true);
+        glowPaint.setColor(SkColorSetA(arcFillColor, isDragging ? 40 : 20));
+        canvas->drawCircle(centerX, centerY, radius + 15, glowPaint);
+    }
+
+    // 2. Draw Arc Track (Background)
     SkPaint arcPaint;
     arcPaint.setAntiAlias(true);
     arcPaint.setStyle(SkPaint::kStroke_Style);
@@ -56,63 +39,79 @@ void KnobNode::draw(SkCanvas* canvas) {
     arcPaint.setStrokeCap(SkPaint::kRound_Cap);
     arcPaint.setColor(arcTrackColor);
     
-    float arcRadius = radius + 10;
+    float arcRadius = radius + 8;
     SkRect arcRect = SkRect::MakeXYWH(
         centerX - arcRadius,
         centerY - arcRadius,
         arcRadius * 2,
         arcRadius * 2
     );
-    
     canvas->drawArc(arcRect, startAngle, sweepAngle, false, arcPaint);
     
-    // Draw arc fill (value indicator)
+    // 3. Draw Arc Fill (Value)
     arcPaint.setColor(arcFillColor);
     arcPaint.setStrokeWidth(arcWidth + 1);
+    // Add a slight glow to the arc itself
+    if (isDragging) {
+        arcPaint.setAlphaf(1.0f);
+    }
     canvas->drawArc(arcRect, startAngle, sweepAngle * norm, false, arcPaint);
     
-    // Draw tick marks
-    SkPaint tickPaint;
-    tickPaint.setAntiAlias(true);
-    tickPaint.setColor(SkColorSetARGB(100, 255, 255, 255));
-    tickPaint.setStrokeWidth(1.5f);
+    // 4. Draw Knob Body Shadow
+    SkPaint shadowPaint;
+    shadowPaint.setAntiAlias(true);
+    shadowPaint.setColor(SkColorSetARGB(80, 0, 0, 0));
+    canvas->drawCircle(centerX, centerY + 3, radius, shadowPaint);
+
+    // 5. Draw Knob Outer Ring
+    SkPaint ringPaint;
+    ringPaint.setAntiAlias(true);
+    ringPaint.setColor(knobRingColor);
+    canvas->drawCircle(centerX, centerY, radius, ringPaint);
     
-    for (int i = 0; i <= 10; i++) {
-        float tickAngle = startAngle + (sweepAngle * i / 10.0f);
-        float tickRad = tickAngle * M_PI / 180.0f;
-        float tickStart = radius + 6;
-        float tickEnd = radius + 9;
-        
-        float x1 = centerX + std::cos(tickRad) * tickStart;
-        float y1 = centerY + std::sin(tickRad) * tickStart;
-        float x2 = centerX + std::cos(tickRad) * tickEnd;
-        float y2 = centerY + std::sin(tickRad) * tickEnd;
-        
-        canvas->drawLine(x1, y1, x2, y2, tickPaint);
-    }
-    
-    // Draw value indicator dot
+    // 6. Draw Knob Face (Gradient)
+    SkPaint facePaint;
+    facePaint.setAntiAlias(true);
+    facePaint.setColor(knobBodyColor);
+    canvas->drawCircle(centerX, centerY, radius - 3, facePaint);
+
+    // 7. Draw Indicator Line (instead of dot, for more professional look)
     float angle = getAngleForValue();
     float angleRad = angle * M_PI / 180.0f;
-    float dotRadius = radius - 10;
     
-    float dotX = centerX + std::cos(angleRad) * dotRadius;
-    float dotY = centerY + std::sin(angleRad) * dotRadius;
+    SkPaint indicatorPaint;
+    indicatorPaint.setAntiAlias(true);
+    indicatorPaint.setColor(indicatorColor);
+    indicatorPaint.setStrokeWidth(3.0f);
+    indicatorPaint.setStrokeCap(SkPaint::kRound_Cap);
     
-    SkPaint dotPaint;
-    dotPaint.setAntiAlias(true);
-    dotPaint.setColor(indicatorColor);
-    canvas->drawCircle(dotX, dotY, 4.0f, dotPaint);
+    float innerR = radius * 0.4f;
+    float outerR = radius - 8.0f;
     
-    // Draw glow around indicator dot
-    dotPaint.setColor(SkColorSetARGB(60, SkColorGetR(indicatorColor), 
-                                      SkColorGetG(indicatorColor), 
-                                      SkColorGetB(indicatorColor)));
-    canvas->drawCircle(dotX, dotY, 6.0f, dotPaint);
+    float x1 = centerX + std::cos(angleRad) * innerR;
+    float y1 = centerY + std::sin(angleRad) * innerR;
+    float x2 = centerX + std::cos(angleRad) * outerR;
+    float y2 = centerY + std::sin(angleRad) * outerR;
+    
+    canvas->drawLine(x1, y1, x2, y2, indicatorPaint);
+    
+    // 8. Draw Top Highlight / Cap Effect
+    SkPaint capPaint;
+    capPaint.setAntiAlias(true);
+    capPaint.setColor(SkColorSetARGB(30, 255, 255, 255));
+    canvas->drawCircle(centerX - radius * 0.2f, centerY - radius * 0.2f, radius * 0.3f, capPaint);
 }
 
 bool KnobNode::onMouseDown(float x, float y) {
     if (hitTest(x, y)) {
+        uint32_t currentTime = GetTickCount();
+        if (currentTime - lastClickTime < 300) { // Double click detection
+            onDoubleClick(x, y);
+            isDragging = false;
+            return true;
+        }
+        lastClickTime = currentTime;
+        
         isDragging = true;
         lastMouseY = y;
         return true;
@@ -121,11 +120,12 @@ bool KnobNode::onMouseDown(float x, float y) {
 }
 
 bool KnobNode::onMouseMove(float x, float y) {
+    bool handled = FlexNode::onMouseMove(x, y); // For hover state
     if (isDragging) {
         updateValueFromPosition(x, y);
         return true;
     }
-    return false;
+    return handled || isHovered; // Request redraw on hover
 }
 
 void KnobNode::onMouseUp(float x, float y) {
@@ -133,9 +133,17 @@ void KnobNode::onMouseUp(float x, float y) {
     FlexNode::onMouseUp(x, y);
 }
 
+bool KnobNode::onDoubleClick(float x, float y) {
+    value = defaultValue;
+    if (onValueChange) onValueChange(value);
+    return true;
+}
+
 void KnobNode::updateValueFromPosition(float x, float y) {
-    // Vertical drag to change value
-    float delta = (lastMouseY - y) * 0.005f;  // Sensitivity
+    bool shiftPressed = GetKeyState(VK_SHIFT) & 0x8000;
+    float sensitivity = shiftPressed ? 0.001f : 0.005f;
+    
+    float delta = (lastMouseY - y) * sensitivity;
     lastMouseY = y;
     
     float norm = getNormalizedValue() + delta;

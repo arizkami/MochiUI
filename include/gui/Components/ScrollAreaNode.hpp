@@ -25,14 +25,17 @@ public:
     // Scroll position
     float scrollX = 0.0f;
     float scrollY = 0.0f;
+    float targetScrollX = 0.0f;
+    float targetScrollY = 0.0f;
     
     void setContent(FlexNode::Ptr node);
-    void scrollTo(float x, float y);
-    void scrollBy(float dx, float dy);
+    void scrollTo(float x, float y, bool smooth = true);
+    void scrollBy(float dx, float dy, bool smooth = true);
     
     Size measure(Size available) override;
     void calculateLayout(SkRect availableSpace) override;
     void draw(SkCanvas* canvas) override;
+    bool needsRedraw() override;
     bool onMouseDown(float x, float y) override;
     bool onMouseMove(float x, float y) override;
     void onMouseUp(float x, float y) override;

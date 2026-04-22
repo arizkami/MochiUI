@@ -157,19 +157,29 @@ bool Win32Window::initD3D12() {
     fenceEvent = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 
     GrD3DBackendContext backendContext;
-    backendContext.fAdapter = gr_cp<IDXGIAdapter1>(hardwareAdapter.Get());
-    backendContext.fDevice = gr_cp<ID3D12Device>(d3dDevice.Get());
-    backendContext.fQueue = gr_cp<ID3D12CommandQueue>(commandQueue.Get());
+    backendContext.fAdapter.retain(hardwareAdapter.Get());
+    backendContext.fDevice.retain(d3dDevice.Get());
+    backendContext.fQueue.retain(commandQueue.Get());
     backendContext.fMemoryAllocator = sk_make_sp<SimpleD3DMemoryAllocator>(d3dDevice.Get());
 
     GrContextOptions options;
     grContext = GrDirectContexts::MakeD3D(backendContext, options);
+
+    if (!grContext) return false;
 
     resizeBuffers(width, height);
     return true;
 }
 
 void Win32Window::cleanupD3D12() {
+    if (grContext) {
+        grContext->flush();
+        grContext->submit(GrSyncCpu::kYes);
+    }
+
+    // Clear surfaces first before context dies
+    frames.clear();
+
     if (grContext) {
         grContext->releaseResourcesAndAbandonContext();
         grContext.reset();
@@ -186,22 +196,24 @@ void Win32Window::cleanupD3D12() {
         }
     }
     
-    frames.clear();
-    
     if (fenceEvent) {
         CloseHandle(fenceEvent);
         fenceEvent = nullptr;
     }
+    
+    fence.Reset();
+    swapChain.Reset();
+    commandQueue.Reset();
+    d3dDevice.Reset();
 }
 
 void Win32Window::resizeBuffers(int w, int h) {
-    if (!swapChain) return;
+    if (!swapChain || !grContext) return;
 
-    if (grContext) {
-        grContext->flush();
-        grContext->submit(GrSyncCpu::kYes);
-    }
+    grContext->flush();
+    grContext->submit(GrSyncCpu::kYes);
 
+    // Must release all surfaces before resizing the swapchain buffers
     frames.clear();
     frames.resize(bufferCount);
 
@@ -277,10 +289,16 @@ void Win32Window::onSize(int w, int h) {
 }
 
 void Win32Window::onPaint() {
-    if (!root || !grContext || frames.empty() || !frames[currentFrameIndex].surface) return;
-
+    if (!root || !grContext || frames.empty()) return;
+    
+    currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
+    if (currentFrameIndex >= frames.size()) return;
+    
     auto surface = frames[currentFrameIndex].surface;
+    if (!surface) return;
+
     SkCanvas* canvas = surface->getCanvas();
+    if (!canvas) return;
     
     canvas->clear(SK_ColorTRANSPARENT);
 
@@ -290,13 +308,14 @@ void Win32Window::onPaint() {
         root->draw(canvas);
     }
 
-    grContext->flush();
+    grContext->flush(surface.get());
     grContext->submit();
 
-    // Transition resource to present state is handled by DXGI, but we need to ensure Skia knows
-    GrBackendRenderTargets::SetD3DResourceState(
-        const_cast<GrBackendRenderTarget*>(&SkSurfaces::GetBackendRenderTarget(surface.get(), SkSurface::kFlushRead_BackendHandleAccess)),
-        D3D12_RESOURCE_STATE_PRESENT);
+    // Transition resource to present state
+    GrBackendRenderTarget backendRT = SkSurfaces::GetBackendRenderTarget(surface.get(), SkSurface::kFlushRead_BackendHandleAccess);
+    if (backendRT.isValid()) {
+        GrBackendRenderTargets::SetD3DResourceState(&backendRT, D3D12_RESOURCE_STATE_PRESENT);
+    }
 
     swapChain->Present(1, 0);
 
@@ -309,7 +328,6 @@ void Win32Window::onPaint() {
         WaitForSingleObject(fenceEvent, INFINITE);
     }
 
-    currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
     ValidateRect(hwnd, NULL);
 }
 

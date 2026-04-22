@@ -57,6 +57,7 @@ endif()
 include_directories(
     .
     include
+    External/skia
     External/skia/include
 )
 

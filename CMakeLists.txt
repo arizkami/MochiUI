@@ -116,7 +116,10 @@ target_link_libraries(MochiKit
 )
 
 # MochiExample executable
-add_executable(MochiExample WIN32 example/main.cpp)
+add_executable(MochiExample WIN32 
+    example/main.cpp
+    example/app.rc
+)
 
 # Link MochiExample with MochiKit
 target_link_libraries(MochiExample

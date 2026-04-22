@@ -61,14 +61,17 @@ private:
 Win32Window::Win32Window(const std::string& title, int width, int height) : width(width), height(height) {
     const char CLASS_NAME[] = "MochiUIWindow";
     
-    WNDCLASS wc = {};
+    WNDCLASSEX wc = {};
+    wc.cbSize = sizeof(WNDCLASSEX);
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
     wc.lpfnWndProc = Win32Window::WndProc;
     wc.hInstance = GetModuleHandle(NULL);
     wc.lpszClassName = CLASS_NAME;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(101));
+    wc.hIconSm = LoadIcon(wc.hInstance, MAKEINTRESOURCE(101));
     
-    RegisterClass(&wc);
+    RegisterClassEx(&wc);
 
     hwnd = CreateWindowEx(
         0, CLASS_NAME, title.c_str(),
@@ -79,6 +82,10 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
 
     if (hwnd) {
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
+        
+        // Ensure icon is set for the window and taskbar
+        SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)wc.hIcon);
+        SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)wc.hIconSm);
         
         auto& switcher = ThemeSwitcher::getInstance();
         bool isDark = (switcher.getCurrentTheme() == ThemeType::Auto) 

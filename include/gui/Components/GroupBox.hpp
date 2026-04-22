@@ -18,6 +18,7 @@ public:
     
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
+    void calculateLayout(SkRect availableSpace) override;
 };
 
 } // namespace MochiUI

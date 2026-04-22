@@ -27,14 +27,25 @@ public:
     Size measure(Size available) override;
     
     bool onMouseDown(float x, float y) override;
+    bool onMouseMove(float x, float y) override;
+    void onMouseUp(float x, float y) override;
     bool onChar(uint32_t charCode) override;
     bool onKeyDown(uint32_t key) override;
     bool needsRedraw() override;
 
 private:
     size_t cursorIndex = 0;
+    size_t selectionAnchor = std::string::npos;
+    bool isDragging = false;
     uint32_t lastBlinkTime = 0;
     bool showCursor = true;
+    uint16_t highSurrogate = 0;
+    
+    void deleteSelection();
+    bool hasSelection() const;
+    size_t getSelectionStart() const;
+    size_t getSelectionEnd() const;
+    size_t getCursorIndexFromPosition(float x);
 };
 
 } // namespace MochiUI

@@ -12,7 +12,7 @@ ComboBox::ComboBox() {
 }
 
 Size ComboBox::measure(Size available) {
-    float w = (style.widthMode == SizingMode::Fixed) ? style.width : available.width;
+    float w = (style.widthMode == SizingMode::Fixed) ? style.width : 120.0f;
     float h = (style.heightMode == SizingMode::Fixed) ? style.height : 36.0f;
     return { w, h };
 }
@@ -37,7 +37,6 @@ void ComboBox::draw(SkCanvas* canvas) {
     canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, borderPaint);
 
     // 2. Draw Current Selection
-    SkFont font = FontManager::getInstance().createFont(FontManager::DEFAULT_FONT, 14.0f);
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
     textPaint.setColor(selectedIndex >= 0 ? textColor : SkColorSetA(textColor, 120));
@@ -45,8 +44,9 @@ void ComboBox::draw(SkCanvas* canvas) {
     std::string currentText = (selectedIndex >= 0 && (size_t)selectedIndex < items.size()) 
                               ? items[selectedIndex] : placeholder;
     
-    canvas->drawSimpleText(currentText.c_str(), currentText.size(), SkTextEncoding::kUTF8, 
-                           frame.left() + style.padding, frame.centerY() + 5.0f, font, textPaint);
+    FontManager::getInstance().drawText(canvas, currentText, 
+                                        frame.left() + style.padding, frame.centerY() + 5.0f, 
+                                        14.0f, textPaint);
 
     // 3. Draw Arrow
     SkPaint arrowPaint;
@@ -98,8 +98,9 @@ void ComboBox::draw(SkCanvas* canvas) {
 
             // Item text
             textPaint.setColor(textColor);
-            canvas->drawSimpleText(items[i].c_str(), items[i].size(), SkTextEncoding::kUTF8, 
-                                   itemRect.left() + style.padding, itemRect.centerY() + 5.0f, font, textPaint);
+            FontManager::getInstance().drawText(canvas, items[i], 
+                                                itemRect.left() + style.padding, itemRect.centerY() + 5.0f, 
+                                                14.0f, textPaint);
         }
     }
 }

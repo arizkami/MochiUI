@@ -2,6 +2,8 @@
 #include <include/core/SkFontMgr.h>
 #include <include/core/SkTypeface.h>
 #include <include/core/SkFont.h>
+#include <include/core/SkCanvas.h>
+#include <include/core/SkPaint.h>
 #include <string>
 #include <memory>
 #include <map>
@@ -20,6 +22,10 @@ public:
     SkFont createFont(const std::string& familyName, 
                       float size, 
                       SkFontStyle style = SkFontStyle());
+                      
+    float drawText(SkCanvas* canvas, const std::string& text, float x, float y, float fontSize, const SkPaint& paint, const std::string& familyName = DEFAULT_FONT);
+    float measureText(const std::string& text, float fontSize, SkRect* outBounds = nullptr, const std::string& familyName = DEFAULT_FONT);
+    float measureText(const std::string& text, size_t byteLength, float fontSize, SkRect* outBounds = nullptr, const std::string& familyName = DEFAULT_FONT);
     
     sk_sp<SkFontMgr> getFontMgr() const { return fFontMgr; }
     

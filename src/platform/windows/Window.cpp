@@ -59,27 +59,34 @@ private:
 };
 
 Win32Window::Win32Window(const std::string& title, int width, int height) : width(width), height(height) {
-    const char CLASS_NAME[] = "MochiUIWindow";
-    
-    WNDCLASSEX wc = {};
-    wc.cbSize = sizeof(WNDCLASSEX);
+    const wchar_t CLASS_NAME[] = L"MochiUIWindow";
+
+    WNDCLASSEXW wc = {};
+    wc.cbSize = sizeof(WNDCLASSEXW);
     wc.style = CS_HREDRAW | CS_VREDRAW | CS_DBLCLKS;
     wc.lpfnWndProc = Win32Window::WndProc;
     wc.hInstance = GetModuleHandle(NULL);
     wc.lpszClassName = CLASS_NAME;
-    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
-    wc.hIcon = LoadIcon(wc.hInstance, MAKEINTRESOURCE(101));
-    wc.hIconSm = LoadIcon(wc.hInstance, MAKEINTRESOURCE(101));
-    
-    RegisterClassEx(&wc);
+    wc.hCursor = LoadCursorW(NULL, (LPCWSTR)IDC_ARROW);
+    wc.hIcon = LoadIconW(wc.hInstance, (LPCWSTR)MAKEINTRESOURCE(101));
+    wc.hIconSm = LoadIconW(wc.hInstance, (LPCWSTR)MAKEINTRESOURCE(101));
 
-    hwnd = CreateWindowEx(
-        0, CLASS_NAME, title.c_str(),
+    RegisterClassExW(&wc);
+
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, NULL, 0);
+    std::wstring wtitle(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, &wtitle[0], size_needed);
+    // Remove the extra null terminator added by wtitle resizing
+    if (!wtitle.empty() && wtitle.back() == L'\0') {
+        wtitle.pop_back();
+    }
+
+    hwnd = CreateWindowExW(
+        0, CLASS_NAME, wtitle.c_str(),
         WS_OVERLAPPEDWINDOW,
         CW_USEDEFAULT, CW_USEDEFAULT, width, height,
         NULL, NULL, wc.hInstance, this
     );
-
     if (hwnd) {
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
         
@@ -249,7 +256,10 @@ void Win32Window::resizeBuffers(int w, int h) {
 }
 
 void Win32Window::setTitle(const std::string& title) {
-    SetWindowTextA(hwnd, title.c_str());
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, NULL, 0);
+    std::wstring wtitle(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, title.c_str(), -1, &wtitle[0], size_needed);
+    SetWindowTextW(hwnd, wtitle.c_str());
 }
 
 void Win32Window::setDarkMode(bool enable) {
@@ -347,9 +357,9 @@ void Win32Window::onPaint() {
 void Win32Window::run() {
     ShowWindow(hwnd, SW_SHOW);
     MSG msg = {};
-    while (GetMessage(&msg, NULL, 0, 0)) {
+    while (GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
-        DispatchMessage(&msg);
+        DispatchMessageW(&msg);
     }
 }
 
@@ -416,7 +426,8 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             PostQuitMessage(0);
             return 0;
     }
-    return DefWindowProc(hwnd, msg, wp, lp);
+    return DefWindowProcW(hwnd, msg, wp, lp);
 }
 
 } // namespace MochiUI
+

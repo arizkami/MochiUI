@@ -12,13 +12,38 @@ Size GroupBox::measure(Size available) {
     Size size = FlexNode::measure(available);
     
     if (!title.empty()) {
-        SkFont font = FontManager::getInstance().createFont(FontManager::DEFAULT_FONT, fontSize);
         SkRect bounds;
-        font.measureText(title.c_str(), title.size(), SkTextEncoding::kUTF8, &bounds);
+        FontManager::getInstance().measureText(title, fontSize, &bounds);
         size.height += bounds.height() / 2.0f; // Add space for title overlapping the border
     }
     
     return size;
+}
+
+void GroupBox::calculateLayout(SkRect availableSpace) {
+    FlexNode::calculateLayout(availableSpace);
+    
+    if (!title.empty() && !children.empty()) {
+        SkRect bounds;
+        FontManager::getInstance().measureText(title, fontSize, &bounds);
+        float yOffset = bounds.height() / 2.0f;
+        
+        // Shift all children down by the title offset
+        for (auto& child : children) {
+            child->frame.offset(0, yOffset);
+            
+            // Recursively update layout for shifted children to ensure hit testing aligns
+            // Actually, offset is enough since size didn't change, but hitTest uses frame.
+            // Let's recursively offset their children too.
+            std::function<void(FlexNode::Ptr, float)> recursiveOffset = [&](FlexNode::Ptr node, float dy) {
+                for (auto& n : node->children) {
+                    n->frame.offset(0, dy);
+                    recursiveOffset(n, dy);
+                }
+            };
+            recursiveOffset(child, yOffset);
+        }
+    }
 }
 
 void GroupBox::draw(SkCanvas* canvas) {
@@ -34,9 +59,8 @@ void GroupBox::draw(SkCanvas* canvas) {
     float titleHeight = 0.0f;
     SkRect titleBounds;
 
-    SkFont font = FontManager::getInstance().createFont(FontManager::DEFAULT_FONT, fontSize);
     if (!title.empty()) {
-        font.measureText(title.c_str(), title.size(), SkTextEncoding::kUTF8, &titleBounds);
+        FontManager::getInstance().measureText(title, fontSize, &titleBounds);
         titleWidth = titleBounds.width();
         titleHeight = titleBounds.height();
     }
@@ -67,17 +91,15 @@ void GroupBox::draw(SkCanvas* canvas) {
         SkPaint textPaint;
         textPaint.setAntiAlias(true);
         textPaint.setColor(titleColor);
-        canvas->drawSimpleText(title.c_str(), title.size(), SkTextEncoding::kUTF8, 
-                               x1 + 5.0f, borderRect.top() - titleBounds.top() - titleHeight / 2.0f, 
-                               font, textPaint);
+        FontManager::getInstance().drawText(canvas, title, 
+                                            x1 + 5.0f, borderRect.top() - titleBounds.top() - titleHeight / 2.0f, 
+                                            fontSize, textPaint);
     }
 
     // 3. Draw Children
-    // Temporarily adjust frame so children draw inside the border
-    SkRect originalFrame = frame;
-    frame = borderRect;
-    FlexNode::draw(canvas);
-    frame = originalFrame;
+    for (auto& child : children) {
+        child->draw(canvas);
+    }
 }
 
 } // namespace MochiUI

@@ -55,11 +55,8 @@ public:
         float textWidth = 0;
         float textHeight = fontSize;
         
-        SkFont font = FontManager::getInstance().createFont(
-            FontManager::DEFAULT_FONT, (float)fontSize);
-        
         SkRect textBounds;
-        font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8, &textBounds);
+        FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
         textWidth = textBounds.width();
         textHeight = textBounds.height();
         
@@ -83,27 +80,19 @@ public:
         SkRRect rrect = SkRRect::MakeRectXY(frame, style.borderRadius, style.borderRadius);
         canvas->drawRRect(rrect, bgPaint);
         
-        SkFont font = FontManager::getInstance().createFont(
-            FontManager::DEFAULT_FONT, (float)fontSize);
-        
         SkPaint textPaint;
         textPaint.setColor(textColor);
         textPaint.setAntiAlias(true);
         
         SkRect textBounds;
-        font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8, &textBounds);
-        
-        SkFontMetrics metrics;
-        font.getMetrics(&metrics);
-        
+        FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
+
         float textX = frame.left() + (frame.width() - textBounds.width()) / 2;
-        float textY = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2;
-        
-        canvas->drawSimpleText(text.c_str(), text.size(), SkTextEncoding::kUTF8,
-                              textX, textY, font, textPaint);
-        
-        FlexNode::draw(canvas);
-    }
+        float textY = frame.centerY() - textBounds.centerY();
+
+        FontManager::getInstance().drawText(canvas, text, textX, textY, (float)fontSize, textPaint);
+
+        FlexNode::draw(canvas);    }
     
     bool onMouseMove(float x, float y) override {
         bool wasHovered = isHovered;

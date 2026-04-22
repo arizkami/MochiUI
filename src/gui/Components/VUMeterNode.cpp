@@ -118,27 +118,22 @@ void VUMeterNode::draw(SkCanvas* canvas) {
     
     // Draw numeric value
     if (showNumber) {
-        std::string valueText = formatValue(value);
-        
-        SkFont font = FontManager::getInstance().createFont(
-            FontManager::DEFAULT_FONT, 11.0f);
         SkPaint textPaint;
         textPaint.setAntiAlias(true);
-        textPaint.setColor(textColor);
-        
+        textPaint.setColor(Theme::TextPrimary);
+
+        std::string valueText = formatValue(value);
         SkRect bounds;
-        font.measureText(valueText.c_str(), valueText.size(), SkTextEncoding::kUTF8, &bounds);
-        
+        FontManager::getInstance().measureText(valueText, 12.0f, &bounds);
+
         if (vertical) {
             float textX = meterX + meterW + 5;
             float textY = frame.bottom() - 5;
-            canvas->drawSimpleText(valueText.c_str(), valueText.size(), 
-                                  SkTextEncoding::kUTF8, textX, textY, font, textPaint);
+            FontManager::getInstance().drawText(canvas, valueText, textX, textY, 12.0f, textPaint);
         } else {
             float textX = frame.right() - bounds.width() - 5;
             float textY = meterY + meterH + 15;
-            canvas->drawSimpleText(valueText.c_str(), valueText.size(), 
-                                  SkTextEncoding::kUTF8, textX, textY, font, textPaint);
+            FontManager::getInstance().drawText(canvas, valueText, textX, textY, 12.0f, textPaint);
         }
     }
     

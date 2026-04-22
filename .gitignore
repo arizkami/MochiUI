@@ -4,8 +4,8 @@ bin/
 obj/
 
 # Prebuilt binaries
-External/skia/
-External/_skia/
+External/prebuilt/skia/
+External/prebuilt/_skia/
 
 # Generated files
 src/gui/Theme.hpp

@@ -7,3 +7,7 @@
 #include <include/gui/Components/KnobNode.hpp>
 #include <include/gui/Components/VUMeterNode.hpp>
 #include <include/gui/Components/ScrollAreaNode.hpp>
+#include <include/gui/Components/GroupBox.hpp>
+#include <include/gui/Components/TextInput.hpp>
+#include <include/gui/Components/NumberInput.hpp>
+#include <include/gui/Components/ComboBox.hpp>

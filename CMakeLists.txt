@@ -74,6 +74,10 @@ set(MOCHIKIT_SOURCES
     src/gui/Components/KnobNode.cpp
     src/gui/Components/VUMeterNode.cpp
     src/gui/Components/ScrollAreaNode.cpp
+    src/gui/Components/GroupBox.cpp
+    src/gui/Components/TextInput.cpp
+    src/gui/Components/NumberInput.cpp
+    src/gui/Components/ComboBox.cpp
     src/platform/windows/Window.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp

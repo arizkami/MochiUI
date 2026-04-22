@@ -212,7 +212,15 @@ bool ScrollAreaNode::onMouseDown(float x, float y) {
 }
 
 bool ScrollAreaNode::onMouseMove(float x, float y) {
-    bool handled = FlexNode::onMouseMove(x, y);
+    bool handled = false;
+    bool currentlyInside = hitTest(x, y);
+    
+    if (isHovered != currentlyInside) {
+        isHovered = currentlyInside;
+        if (isHovered) onMouseEnter();
+        else onMouseLeave();
+        handled = true;
+    }
 
     bool wasHoveringVertical = isHoveringVertical;
     bool wasHoveringHorizontal = isHoveringHorizontal;

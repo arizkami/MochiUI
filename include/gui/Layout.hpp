@@ -48,6 +48,7 @@ public:
     // Interaction state
     bool isHovered = false;
     bool isPressed = false;
+    bool isFocused = false;
     std::function<void()> onClick;
 
     void addChild(Ptr child) {
@@ -68,7 +69,7 @@ public:
         return node;
     }
 
-    bool hitTest(float x, float y) {
+    virtual bool hitTest(float x, float y) {
         return frame.contains(x, y);
     }
 
@@ -199,8 +200,11 @@ public:
         bool handled = false;
         if (hitTest(x, y)) {
             isPressed = true;
+            isFocused = true;
             if (onClick) onClick();
             handled = true;
+        } else {
+            isFocused = false;
         }
 
         for (auto& child : children) {
@@ -221,6 +225,20 @@ public:
         return false;
     }
 
+    virtual bool onKeyDown(uint32_t key) {
+        for (auto& child : children) {
+            if (child->onKeyDown(key)) return true;
+        }
+        return false;
+    }
+
+    virtual bool onChar(uint32_t charCode) {
+        for (auto& child : children) {
+            if (child->onChar(charCode)) return true;
+        }
+        return false;
+    }
+
     virtual bool needsRedraw() {
         for (auto& child : children) {
             if (child->needsRedraw()) return true;
@@ -228,3 +246,4 @@ public:
         return false;
     }
 };
+

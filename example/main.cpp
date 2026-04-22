@@ -240,6 +240,39 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
 
     mainContent->addChild(vuSection);
 
+    // New Components Section
+    auto newComponentsSection = std::make_shared<GroupBox>();
+    newComponentsSection->title = "New Input Components";
+    newComponentsSection->style.widthMode = SizingMode::Flex;
+    newComponentsSection->style.heightMode = SizingMode::Hug;
+    newComponentsSection->style.padding = 20;
+    newComponentsSection->style.gap = 15;
+
+    auto inputRow = FlexNode::Row();
+    inputRow->style.widthMode = SizingMode::Flex;
+    inputRow->style.heightMode = SizingMode::Hug;
+    inputRow->style.gap = 20;
+
+    auto textInput = std::make_shared<TextInput>();
+    textInput->placeholder = "Enter your name...";
+    textInput->style.flex = 1.0f;
+    inputRow->addChild(textInput);
+
+    auto numInput = std::make_shared<NumberInput>();
+    numInput->value = 42.0;
+    numInput->style.width = 120;
+    numInput->style.widthMode = SizingMode::Fixed;
+    inputRow->addChild(numInput);
+
+    newComponentsSection->addChild(inputRow);
+
+    auto combo = std::make_shared<ComboBox>();
+    combo->items = { "Option 1: Skia", "Option 2: Direct3D 12", "Option 3: Win32 API", "Option 4: MochiUI" };
+    combo->placeholder = "Choose a technology...";
+    newComponentsSection->addChild(combo);
+
+    mainContent->addChild(newComponentsSection);
+
     // Wrap mainContent in a ScrollArea
     auto scrollArea = std::make_shared<ScrollAreaNode>();
     scrollArea->style.flex = 1.0f;

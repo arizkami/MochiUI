@@ -392,6 +392,20 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 }
             }
             return 0;
+        case WM_KEYDOWN:
+            if (win && effectiveRoot) {
+                if (effectiveRoot->onKeyDown((uint32_t)wp)) {
+                    InvalidateRect(hwnd, NULL, FALSE);
+                }
+            }
+            return 0;
+        case WM_CHAR:
+            if (win && effectiveRoot) {
+                if (effectiveRoot->onChar((uint32_t)wp)) {
+                    InvalidateRect(hwnd, NULL, FALSE);
+                }
+            }
+            return 0;
         case WM_SIZE:
             if (win) win->onSize(LOWORD(lp), HIWORD(lp));
             return 0;

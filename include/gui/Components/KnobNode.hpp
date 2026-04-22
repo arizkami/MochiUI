@@ -32,13 +32,16 @@ public:
 
     Size measure(Size available) override;
     void draw(SkCanvas* canvas) override;
+    bool hitTest(float x, float y) override;
     bool onMouseDown(float x, float y) override;
     bool onMouseMove(float x, float y) override;
     void onMouseUp(float x, float y) override;
+    bool onMouseWheel(float x, float y, float delta) override;
     bool onDoubleClick(float x, float y);
 
 private:
     void updateValueFromPosition(float x, float y);
+    void updateValueFromRotation(float x, float y);
     float getNormalizedValue() const;
     float getAngleForValue() const;
     bool isDragging = false;

@@ -28,6 +28,7 @@ public:
     bool onMouseDown(float x, float y) override;
     bool onMouseMove(float x, float y) override;
     void onMouseUp(float x, float y) override;
+    bool onMouseWheel(float x, float y, float delta) override;
 
 private:
     void updateValueFromPosition(float x, float y);

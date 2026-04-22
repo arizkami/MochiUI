@@ -1,5 +1,6 @@
 #include <include/gui/Components/SliderNode.hpp>
 #include <algorithm>
+#include <windows.h>
 
 namespace MochiUI {
 
@@ -114,6 +115,25 @@ bool SliderNode::onMouseMove(float x, float y) {
 void SliderNode::onMouseUp(float x, float y) {
     isDragging = false;
     FlexNode::onMouseUp(x, y);
+}
+
+bool SliderNode::onMouseWheel(float x, float y, float delta) {
+    if (hitTest(x, y)) {
+        bool shiftPressed = GetKeyState(VK_SHIFT) & 0x8000;
+        float sensitivity = shiftPressed ? 0.01f : 0.05f;
+        
+        float norm = getNormalizedValue();
+        norm += (delta > 0 ? sensitivity : -sensitivity);
+        norm = std::clamp(norm, 0.0f, 1.0f);
+        
+        value = minValue + norm * (maxValue - minValue);
+        
+        if (onValueChange) {
+            onValueChange(value);
+        }
+        return true;
+    }
+    return false;
 }
 
 void SliderNode::updateValueFromPosition(float x, float y) {

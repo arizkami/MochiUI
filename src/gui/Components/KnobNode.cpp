@@ -102,6 +102,15 @@ void KnobNode::draw(SkCanvas* canvas) {
     canvas->drawCircle(centerX - radius * 0.2f, centerY - radius * 0.2f, radius * 0.3f, capPaint);
 }
 
+bool KnobNode::hitTest(float x, float y) {
+    float dx = x - frame.centerX();
+    float dy = y - frame.centerY();
+    float radius = knobSize / 2.0f;
+    // Allow a slight margin for the outer arc track
+    float hitRadius = radius + 15.0f; 
+    return (dx * dx + dy * dy) <= (hitRadius * hitRadius);
+}
+
 bool KnobNode::onMouseDown(float x, float y) {
     if (hitTest(x, y)) {
         uint32_t currentTime = GetTickCount();
@@ -112,8 +121,19 @@ bool KnobNode::onMouseDown(float x, float y) {
         }
         lastClickTime = currentTime;
         
+        // Reset to default on Alt+Click
+        if (GetKeyState(VK_MENU) & 0x8000) {
+            value = defaultValue;
+            if (onValueChange) onValueChange(value);
+            return true;
+        }
+
         isDragging = true;
         lastMouseY = y;
+        
+        // Set value immediately on click (rotational)
+        updateValueFromRotation(x, y);
+        
         return true;
     }
     return false;
@@ -122,7 +142,7 @@ bool KnobNode::onMouseDown(float x, float y) {
 bool KnobNode::onMouseMove(float x, float y) {
     bool handled = FlexNode::onMouseMove(x, y); // For hover state
     if (isDragging) {
-        updateValueFromPosition(x, y);
+        updateValueFromRotation(x, y);
         return true;
     }
     return handled || isHovered; // Request redraw on hover
@@ -131,6 +151,25 @@ bool KnobNode::onMouseMove(float x, float y) {
 void KnobNode::onMouseUp(float x, float y) {
     isDragging = false;
     FlexNode::onMouseUp(x, y);
+}
+
+bool KnobNode::onMouseWheel(float x, float y, float delta) {
+    if (hitTest(x, y)) {
+        bool shiftPressed = GetKeyState(VK_SHIFT) & 0x8000;
+        float sensitivity = shiftPressed ? 0.01f : 0.05f;
+        
+        float norm = getNormalizedValue();
+        norm += (delta > 0 ? sensitivity : -sensitivity);
+        norm = std::clamp(norm, 0.0f, 1.0f);
+        
+        value = minValue + norm * (maxValue - minValue);
+        
+        if (onValueChange) {
+            onValueChange(value);
+        }
+        return true;
+    }
+    return false;
 }
 
 bool KnobNode::onDoubleClick(float x, float y) {
@@ -148,6 +187,38 @@ void KnobNode::updateValueFromPosition(float x, float y) {
     
     float norm = getNormalizedValue() + delta;
     norm = std::clamp(norm, 0.0f, 1.0f);
+    
+    value = minValue + norm * (maxValue - minValue);
+    
+    if (onValueChange) {
+        onValueChange(value);
+    }
+}
+
+void KnobNode::updateValueFromRotation(float x, float y) {
+    float dx = x - frame.centerX();
+    float dy = y - frame.centerY();
+    
+    // Avoid erratic behavior near center
+    if (std::abs(dx) < 2 && std::abs(dy) < 2) return;
+
+    float angle = std::atan2(dy, dx) * 180.0f / M_PI; // -180 to 180
+    
+    float normAngle = angle;
+    if (normAngle < 0) normAngle += 360.0f;
+    
+    // Shift so startAngle is 0
+    float relativeAngle = normAngle - startAngle;
+    if (relativeAngle < 0) relativeAngle += 360.0f;
+    
+    float norm = 0.0f;
+    if (relativeAngle <= sweepAngle) {
+        norm = relativeAngle / sweepAngle;
+    } else {
+        // In the gap, snap to nearest end
+        float gapCenter = sweepAngle + (360.0f - sweepAngle) / 2.0f;
+        norm = (relativeAngle > gapCenter) ? 0.0f : 1.0f;
+    }
     
     value = minValue + norm * (maxValue - minValue);
     

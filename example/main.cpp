@@ -2,7 +2,7 @@
 #include <include/gui/Layout.hpp>
 #include <include/gui/Components.hpp>
 #include <include/gui/Theme.hpp>
-#include <include/gui/TaskDialog.hpp>
+#include <include/gui/ConfirmationDialog.hpp>
 #include <include/utils/FontManager/FontMgr.hpp>
 #include <include/utils/Misc/ThemeSwitcher.hpp>
 
@@ -296,12 +296,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     auto menuBar = MochiUI::MenuBarFactory::Create(MochiUI::MenuBackend::Skia);
     menuBar->addMenu("File", {
         { "New", 101, []() {
-            ModernTaskDialog::showMessage(nullptr, L"MochiUI", L"New File", 
+            ConfirmationDialog::showMessage(nullptr, L"MochiUI", L"New File", 
                                    L"Create a new file in the application.", 
-                                   TaskDialogIcon::Information);
+                                   ConfirmationIcon::Information);
         } },
         { "Exit", 103, []() { 
-            if (ModernTaskDialog::confirm(nullptr, L"Exit Application", 
+            if (ConfirmationDialog::confirm(nullptr, L"Exit Application", 
                                    L"Are you sure you want to exit?",
                                    L"Any unsaved changes will be lost.")) {
                 PostQuitMessage(0);
@@ -310,44 +310,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     });
     menuBar->addMenu("Edit", {
         { "Undo", 201, []() {
-            ModernTaskDialog::showWarning(nullptr, L"Undo", L"Nothing to undo",
+            ConfirmationDialog::showWarning(nullptr, L"Undo", L"Nothing to undo",
                                    L"There are no actions to undo.");
         } }
     });
     menuBar->addMenu("View", {
         { "Theme", 301, [&window]() {
-            ModernTaskDialog dialog;
+            ConfirmationDialog dialog;
             dialog.setTitle(L"Theme Settings");
             dialog.setMainInstruction(L"Choose a theme");
-            dialog.setContent(L"Select your preferred color theme for the application.");
-            dialog.setMainIcon(TaskDialogIcon::Information);
-            dialog.addCustomButton(1, L"Dark Theme");
-            dialog.addCustomButton(2, L"Light Theme");
-            dialog.addCustomButton(3, L"Auto (System)");
+            dialog.setContent(L"Select your preferred color theme for the application.\n\n[Yes] Dark Theme\n[No] Light Theme\n[Cancel] Auto (System)");
+            dialog.setMainIcon(ConfirmationIcon::Information);
+            dialog.setCommonButtons(MB_YESNOCANCEL);
             
             auto& switcher = ThemeSwitcher::getInstance();
-            auto currentTheme = switcher.getCurrentTheme();
-            if (currentTheme == ThemeType::Dark) {
-                dialog.setDefaultButton(1);
-            } else if (currentTheme == ThemeType::Light) {
-                dialog.setDefaultButton(2);
-            } else {
-                dialog.setDefaultButton(3);
-            }
-            
-            dialog.setAllowDialogCancellation(true);
-            int result = static_cast<int>(dialog.show(nullptr));
+            ConfirmationResult result = dialog.show(nullptr);
             
             // Apply selected theme
-            if (result == 1) {
+            if (result == ConfirmationResult::Yes) {
                 switcher.setTheme(ThemeType::Dark);
                 window.setDarkMode(true);
                 InvalidateRect((HWND)window.getNativeHandle(), NULL, TRUE);
-            } else if (result == 2) {
+            } else if (result == ConfirmationResult::No) {
                 switcher.setTheme(ThemeType::Light);
                 window.setDarkMode(false);
                 InvalidateRect((HWND)window.getNativeHandle(), NULL, TRUE);
-            } else if (result == 3) {
+            } else if (result == ConfirmationResult::Cancel) {
                 switcher.setTheme(ThemeType::Auto);
                 window.setDarkMode(switcher.isWindowsInDarkMode());
                 InvalidateRect((HWND)window.getNativeHandle(), NULL, TRUE);
@@ -356,7 +344,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     });
     menuBar->addMenu("Help", {
         { "About", 401, []() {
-            ModernTaskDialog dialog;
+            ConfirmationDialog dialog;
             dialog.setTitle(L"About MochiUI");
             dialog.setMainInstruction(L"MochiUI Framework v1.0");
             dialog.setContent(L"A modern UI framework built with Skia and Win32.");
@@ -366,10 +354,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
                                   L"\u2022 Flexbox-based layout system\n"
                                   L"\u2022 CPU-based rendering with Skia\n"
                                   L"\u2022 Modern Windows 11 styling\n"
-                                  L"\u2022 Task Dialog integration");
+                                  L"\u2022 Confirmation Dialog integration");
             dialog.setFooter(L"Built with \u2764\uFE0F using Skia");
-            dialog.setMainIcon(TaskDialogIcon::Information);
-            dialog.setCommonButtons(TDCBF_OK_BUTTON);
+            dialog.setMainIcon(ConfirmationIcon::Information);
+            dialog.setCommonButtons(MB_OK);
             dialog.show(nullptr);
         } }
     });

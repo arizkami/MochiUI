@@ -9,7 +9,7 @@ namespace MochiUI {
 
 NumberInput::NumberInput() {
     syncTextFromValue();
-    style.padding = 10.0f;
+    style.padding = 4.0f;
 }
 
 void NumberInput::syncTextFromValue() {
@@ -28,7 +28,7 @@ void NumberInput::syncTextFromValue() {
 
 void NumberInput::syncValueFromText() {
     try {
-        if (text.empty() || text == "-" || text == ".") {
+        if (text.empty() || text == "-" || text == "." || text == "-." || text == "-0") {
             return;
         }
         double newVal = std::stod(text);
@@ -111,9 +111,14 @@ bool NumberInput::onKeyDown(uint32_t key) {
             syncTextFromValue();
             if (onValueChanged) onValueChanged(value);
             return true;
+        } else if (key == VK_RETURN) {
+            syncTextFromValue();
+            return true;
         }
     }
-    return TextInput::onKeyDown(key);
+    bool handled = TextInput::onKeyDown(key);
+    if (handled) syncValueFromText();
+    return handled;
 }
 
 bool NumberInput::onMouseDown(float x, float y) {

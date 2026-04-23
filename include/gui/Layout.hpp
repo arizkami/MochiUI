@@ -16,6 +16,12 @@ enum class SizingMode {
     Hug     // Shrink to fit children
 };
 
+enum class AlignItems {
+    FlexStart,
+    Center,
+    FlexEnd
+};
+
 struct LayoutStyle {
     float width = 0;
     float height = 0;
@@ -29,6 +35,7 @@ struct LayoutStyle {
     float borderRadius = 0;
     
     FlexDirection flexDirection = FlexDirection::Column;
+    AlignItems alignItems = AlignItems::FlexStart;
     float gap = 0;
 };
 
@@ -151,16 +158,32 @@ public:
                     childW = (child->style.flex / totalFlex) * remainingSpace;
                 }
                 if (child->style.heightMode == SizingMode::Flex) childH = myH - 2 * padding;
+
+                float childY = currentY;
+                if (style.alignItems == AlignItems::Center) {
+                    childY = currentY + (myH - 2 * padding - childH) / 2.0f;
+                } else if (style.alignItems == AlignItems::FlexEnd) {
+                    childY = currentY + (myH - 2 * padding - childH);
+                }
+
+                child->calculateLayout(SkRect::MakeXYWH(currentX, childY, childW, childH));
+                currentX += childW + gap;
             } else {
                 if (child->style.flex > 0 && child->style.heightMode == SizingMode::Flex) {
                     childH = (child->style.flex / totalFlex) * remainingSpace;
                 }
                 if (child->style.widthMode == SizingMode::Flex) childW = myW - 2 * padding;
-            }
 
-            child->calculateLayout(SkRect::MakeXYWH(currentX, currentY, childW, childH));
-            if (style.flexDirection == FlexDirection::Row) currentX += childW + gap;
-            else currentY += childH + gap;
+                float childX = currentX;
+                if (style.alignItems == AlignItems::Center) {
+                    childX = currentX + (myW - 2 * padding - childW) / 2.0f;
+                } else if (style.alignItems == AlignItems::FlexEnd) {
+                    childX = currentX + (myW - 2 * padding - childW);
+                }
+
+                child->calculateLayout(SkRect::MakeXYWH(childX, currentY, childW, childH));
+                currentY += childH + gap;
+            }
         }
     }
 

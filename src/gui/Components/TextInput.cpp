@@ -43,14 +43,14 @@ namespace {
 TextInput::TextInput() {
     style.widthMode = SizingMode::Flex;
     style.heightMode = SizingMode::Fixed;
-    style.height = 36.0f;
-    style.padding = 10.0f;
-    style.borderRadius = 6.0f;
+    style.height = 28.0f;
+    style.padding = 4.0f;
+    style.borderRadius = 0.0f;
 }
 
 Size TextInput::measure(Size available) {
     float w = (style.widthMode == SizingMode::Fixed) ? style.width : 100.0f;
-    float h = (style.heightMode == SizingMode::Fixed) ? style.height : 36.0f;
+    float h = (style.heightMode == SizingMode::Fixed) ? style.height : 28.0f;
     return { w, h };
 }
 

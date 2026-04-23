@@ -52,16 +52,11 @@ public:
     std::vector<MenuItem> menuItems;
     
     Size measure(Size available) override {
-        float textWidth = 0;
-        float textHeight = fontSize;
-        
         SkRect textBounds;
-        FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
-        textWidth = textBounds.width();
-        textHeight = textBounds.height();
+        float textWidth = FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
         
-        float totalWidth = textWidth + 2 * style.padding;
-        float totalHeight = textHeight + 2 * style.padding;
+        float totalWidth = textWidth + 12.0f; // horizontal padding
+        float totalHeight = (float)fontSize + 8.0f; // vertical padding
         
         return { totalWidth, totalHeight };
     }
@@ -85,9 +80,11 @@ public:
         textPaint.setAntiAlias(true);
         
         SkRect textBounds;
-        FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
+        float textWidth = FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
 
-        float textX = frame.left() + (frame.width() - textBounds.width()) / 2;
+        // Center horizontally and vertically within the node's frame
+        float textX = frame.left() + (frame.width() - textWidth) / 2.0f;
+        // Skia baseline is 0, so we subtract centerY of the bounds to center it vertically
         float textY = frame.centerY() - textBounds.centerY();
 
         FontManager::getInstance().drawText(canvas, text, textX, textY, (float)fontSize, textPaint);
@@ -142,12 +139,13 @@ class SkiaMenuBar : public IMenuBar {
 public:
     SkiaMenuBar() {
         rootNode = FlexNode::Row();
-        rootNode->style.height = 22;
+        rootNode->style.height = 24;
         rootNode->style.heightMode = SizingMode::Fixed;
         rootNode->style.widthMode = SizingMode::Flex;
         rootNode->style.backgroundColor = Theme::MenuBar;
-        rootNode->style.padding = 2;
-        rootNode->style.gap = 1;
+        rootNode->style.padding = 0;
+        rootNode->style.gap = 0;
+        rootNode->style.alignItems = AlignItems::Center;
     }
 
     void addMenu(const std::string& label, const std::vector<MenuItem>& items) override {
@@ -155,8 +153,8 @@ public:
         menuBtn->text = label;
         menuBtn->style.widthMode = SizingMode::Hug;
         menuBtn->style.heightMode = SizingMode::Flex;
-        menuBtn->style.padding = 6;
-        menuBtn->style.borderRadius = 3;
+        menuBtn->style.padding = 0; // MenuItemNode handles its own internal padding in measure/draw
+        menuBtn->style.borderRadius = 0;
         menuBtn->textColor = Theme::TextPrimary;
         menuBtn->hoverColor = Theme::Accent;
         menuBtn->fontSize = 12;

@@ -40,17 +40,10 @@ namespace {
     }
 }
 
-TextInput::TextInput() {
-    style.widthMode = SizingMode::Flex;
-    style.heightMode = SizingMode::Fixed;
-    style.height = 28.0f;
-    style.padding = 4.0f;
-    style.borderRadius = 0.0f;
-}
 
 Size TextInput::measure(Size available) {
-    float w = (style.widthMode == SizingMode::Fixed) ? style.width : 100.0f;
-    float h = (style.heightMode == SizingMode::Fixed) ? style.height : 28.0f;
+    float h = fontSize + style.padding * 2.0f + 10.0f;
+    float w = 150.0f; // Default width
     return { w, h };
 }
 
@@ -99,11 +92,7 @@ size_t TextInput::getCursorIndexFromPosition(float x) {
 }
 
 void TextInput::draw(SkCanvas* canvas) {
-    // 1. Draw Background
-    SkPaint bgPaint;
-    bgPaint.setAntiAlias(true);
-    bgPaint.setColor(backgroundColor);
-    canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, bgPaint);
+    drawSelf(canvas);
 
     // 2. Draw Border (Accent color if focused)
     SkPaint borderPaint;
@@ -120,7 +109,7 @@ void TextInput::draw(SkCanvas* canvas) {
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
     
-    float textX = frame.left() + style.padding;
+    float textX = frame.left() + style.padding + 4.0f;
     float textY = frame.centerY() + fontSize / 2.0f - 2.0f;
 
     if (text.empty() && !isFocused) {
@@ -161,6 +150,8 @@ void TextInput::draw(SkCanvas* canvas) {
             }
         }
     }
+
+    drawChildren(canvas);
 }
 
 bool TextInput::onMouseDown(float x, float y) {

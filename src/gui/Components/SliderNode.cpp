@@ -15,7 +15,7 @@ Size SliderNode::measure(Size available) {
 }
 
 void SliderNode::draw(SkCanvas* canvas) {
-    FlexNode::draw(canvas);
+    drawSelf(canvas);
     
     float norm = getNormalizedValue();
     
@@ -93,6 +93,8 @@ void SliderNode::draw(SkCanvas* canvas) {
         thumbPaint.setColor(SkColorSetARGB(40, 0, 0, 0));
         canvas->drawCircle(thumbX + 1, frame.centerY() + 1, thumbRadius, thumbPaint);
     }
+
+    drawChildren(canvas);
 }
 
 bool SliderNode::onMouseDown(float x, float y) {

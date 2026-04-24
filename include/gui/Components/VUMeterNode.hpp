@@ -13,6 +13,9 @@ namespace MochiUI {
 
 class VUMeterNode : public FlexNode {
 public:
+    VUMeterNode() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     float value = 0.0f;  // -60dB to 0dB (or 0.0 to 1.0 normalized)
     float peakValue = 0.0f;
     bool vertical = true;

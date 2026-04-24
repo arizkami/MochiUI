@@ -10,6 +10,9 @@ namespace MochiUI {
 
 class SliderNode : public FlexNode {
 public:
+    SliderNode() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     float value = 0.5f;  // 0.0 to 1.0
     float minValue = 0.0f;
     float maxValue = 1.0f;

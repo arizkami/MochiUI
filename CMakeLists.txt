@@ -6,7 +6,7 @@ set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
 
 project(MochiUI)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Match Skia's Official Build Runtime and Architecture
@@ -59,12 +59,37 @@ include_directories(
     include
     External/prebuilt/skia
     External/prebuilt/skia/include
+    External/yoga
 )
 
 set(SKIA_LIB_DIR ${SKIA_DIR}/lib)
 
+# Yoga Sources
+set(YOGA_SOURCES
+    External/yoga/yoga/YGConfig.cpp
+    External/yoga/yoga/YGEnums.cpp
+    External/yoga/yoga/YGNode.cpp
+    External/yoga/yoga/YGNodeLayout.cpp
+    External/yoga/yoga/YGNodeStyle.cpp
+    External/yoga/yoga/YGPixelGrid.cpp
+    External/yoga/yoga/YGValue.cpp
+    External/yoga/yoga/algorithm/AbsoluteLayout.cpp
+    External/yoga/yoga/algorithm/Baseline.cpp
+    External/yoga/yoga/algorithm/Cache.cpp
+    External/yoga/yoga/algorithm/CalculateLayout.cpp
+    External/yoga/yoga/algorithm/FlexLine.cpp
+    External/yoga/yoga/algorithm/PixelGrid.cpp
+    External/yoga/yoga/config/Config.cpp
+    External/yoga/yoga/debug/AssertFatal.cpp
+    External/yoga/yoga/debug/Log.cpp
+    External/yoga/yoga/event/event.cpp
+    External/yoga/yoga/node/LayoutResults.cpp
+    External/yoga/yoga/node/Node.cpp
+)
+
 # MochiKit Static Library Sources
 set(MOCHIKIT_SOURCES
+    ${YOGA_SOURCES}
     src/core/Application.cpp
     src/gui/MochiUI.cpp
     src/gui/MenuBar.cpp
@@ -78,6 +103,9 @@ set(MOCHIKIT_SOURCES
     src/gui/Components/TextInput.cpp
     src/gui/Components/NumberInput.cpp
     src/gui/Components/ComboBox.cpp
+    src/gui/Components/Table.cpp
+    src/gui/Components/ColorPicker.cpp
+    src/gui/Components/Calendar.cpp
     src/platform/windows/Window.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp
@@ -117,6 +145,8 @@ target_link_libraries(MochiKit
     Shlwapi.lib
     ComCtl32.lib
     Imm32.lib
+    Pdh.lib
+    Psapi.lib
 )
 
 # MochiExample executable
@@ -130,3 +160,5 @@ target_link_libraries(MochiExample
     PRIVATE
     MochiKit
 )
+
+add_subdirectory(example/ActivityMonitor)

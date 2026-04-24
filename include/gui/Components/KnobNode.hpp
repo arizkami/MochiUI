@@ -11,6 +11,9 @@ namespace MochiUI {
 
 class KnobNode : public FlexNode {
 public:
+    KnobNode() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     float value = 0.5f;  // 0.0 to 1.0
     float minValue = 0.0f;
     float maxValue = 1.0f;

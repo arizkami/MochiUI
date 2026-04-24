@@ -31,13 +31,7 @@ void VUMeterNode::update(float deltaTime) {
 }
 
 Size VUMeterNode::measure(Size available) {
-    float w = vertical ? (meterWidth + (showNumber ? 40.0f : 0.0f)) : meterHeight;
-    float h = vertical ? meterHeight : (meterWidth + (showNumber ? 25.0f : 0.0f));
-    
-    if (style.widthMode == SizingMode::Fixed) w = style.width;
-    if (style.heightMode == SizingMode::Fixed) h = style.height;
-    
-    return { w, h };
+    return { 0, 0 };
 }
 
 void VUMeterNode::draw(SkCanvas* canvas) {

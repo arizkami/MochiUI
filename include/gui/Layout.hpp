@@ -8,35 +8,98 @@
 #include <include/core/SkCanvas.h>
 #include <include/core/SkPaint.h>
 #include <include/core/SkColor.h>
+#include <External/yoga/yoga/Yoga.h>
+
+namespace MochiUI {
 
 enum class FlexDirection { Row, Column };
-enum class SizingMode { 
-    Fixed,  // Use explicit width/height
-    Flex,   // Fill remaining space
-    Hug     // Shrink to fit children
-};
+enum class SizingMode { Fixed, Flex, Hug };
+enum class AlignItems { FlexStart, Center, FlexEnd, Stretch };
 
-enum class AlignItems {
-    FlexStart,
-    Center,
-    FlexEnd
-};
+class FlexNode;
 
-struct LayoutStyle {
-    float width = 0;
-    float height = 0;
-    SizingMode widthMode = SizingMode::Flex;
-    SizingMode heightMode = SizingMode::Flex;
+class LayoutStyle {
+public:
+    FlexNode* owner = nullptr;
     
-    float flex = 0;
-    float padding = 0;
-    float margin = 0;
+    void setWidth(float w) { width = w; widthMode = SizingMode::Fixed; }
+    void setHeight(float h) { height = h; heightMode = SizingMode::Fixed; }
+    void setWidthFull() { widthMode = SizingMode::Flex; }
+    void setHeightFull() { heightMode = SizingMode::Flex; }
+    void setWidthAuto() { widthMode = SizingMode::Hug; }
+    void setHeightAuto() { heightMode = SizingMode::Hug; }
+    
+    void setFlex(float f) { flex = f; }
+    void setFlexGrow(float f) { flex = f; }
+    void setFlexShrink(float f) { flexShrink = f; }
+    void setFlexBasis(float f) { flexBasis = f; }
+
+    void setPadding(float p) { padding = p; }
+    void setMargin(float m) { margin = m; }
+    void setGap(float g) { gap = g; }
+    
+    void setFlexDirection(YGFlexDirection dir) { 
+        flexDirection = (dir == YGFlexDirectionRow) ? FlexDirection::Row : FlexDirection::Column;
+    }
+    void setAlignItems(YGAlign align) { alignItems = (AlignItems)align; }
+
     SkColor backgroundColor = SK_ColorTRANSPARENT;
     float borderRadius = 0;
-    
-    FlexDirection flexDirection = FlexDirection::Column;
-    AlignItems alignItems = AlignItems::FlexStart;
+    bool overflowHidden = false;
+
+    void syncLegacy() {
+        YGNodeRef node = getYGNode();
+        
+        if (widthMode == SizingMode::Fixed) {
+            YGNodeStyleSetWidth(node, width);
+        } else if (widthMode == SizingMode::Flex) {
+            YGNodeStyleSetWidthPercent(node, 100.0f);
+        } else {
+            YGNodeStyleSetWidthAuto(node);
+        }
+
+        if (heightMode == SizingMode::Fixed) {
+            YGNodeStyleSetHeight(node, height);
+        } else if (heightMode == SizingMode::Flex) {
+            YGNodeStyleSetHeightPercent(node, 100.0f);
+        } else {
+            YGNodeStyleSetHeightAuto(node);
+        }
+
+        YGNodeStyleSetFlexGrow(node, flex);
+        YGNodeStyleSetFlexShrink(node, flexShrink);
+        
+        if (flexBasis < 0) YGNodeStyleSetFlexBasisAuto(node);
+        else YGNodeStyleSetFlexBasis(node, flexBasis);
+        
+        YGNodeStyleSetPadding(node, YGEdgeAll, padding);
+        YGNodeStyleSetMargin(node, YGEdgeAll, margin);
+        YGNodeStyleSetGap(node, YGGutterAll, gap);
+
+        YGNodeStyleSetFlexDirection(node, flexDirection == FlexDirection::Row ? YGFlexDirectionRow : YGFlexDirectionColumn);
+
+        YGAlign align = YGAlignStretch;
+        if (alignItems == AlignItems::Center) align = YGAlignCenter;
+        else if (alignItems == AlignItems::FlexEnd) align = YGAlignFlexEnd;
+        else if (alignItems == AlignItems::FlexStart) align = YGAlignFlexStart;
+        YGNodeStyleSetAlignItems(node, align);
+    }
+
+    float width = 0;
+    float height = 0;
+    float flex = 0;
+    float flexShrink = 1.0f;
+    float flexBasis = -1.0f; // -1 for Auto
+    float padding = 0;
+    float margin = 0;
     float gap = 0;
+    SizingMode widthMode = SizingMode::Hug;
+    SizingMode heightMode = SizingMode::Hug;
+    FlexDirection flexDirection = FlexDirection::Column;
+    AlignItems alignItems = AlignItems::Stretch;
+
+private:
+    YGNodeRef getYGNode();
 };
 
 struct Size {
@@ -44,22 +107,50 @@ struct Size {
     float height;
 };
 
-class FlexNode {
+class FlexNode : public std::enable_shared_from_this<FlexNode> {
 public:
     using Ptr = std::shared_ptr<FlexNode>;
 
+    FlexNode() {
+        ygNode = YGNodeNew();
+        YGNodeSetContext(ygNode, this);
+        style.owner = this;
+    }
+
+    virtual ~FlexNode() {
+        if (ygNode) {
+            YGNodeFree(ygNode);
+        }
+    }
+
+    YGNodeRef getYGNode() const { return ygNode; }
     LayoutStyle style;
     SkRect frame = SkRect::MakeEmpty();
     std::vector<Ptr> children;
     
-    // Interaction state
     bool isHovered = false;
     bool isPressed = false;
     bool isFocused = false;
     std::function<void()> onClick;
 
-    void addChild(Ptr child) {
+    virtual void addChild(Ptr child) {
         children.push_back(child);
+        YGNodeInsertChild(ygNode, child->getYGNode(), (uint32_t)(children.size() - 1));
+    }
+
+    virtual void removeChild(Ptr child) {
+        auto it = std::find(children.begin(), children.end(), child);
+        if (it != children.end()) {
+            YGNodeRemoveChild(ygNode, child->getYGNode());
+            children.erase(it);
+        }
+    }
+
+    virtual void removeAllChildren() {
+        while (!children.empty()) {
+            YGNodeRemoveChild(ygNode, children.back()->getYGNode());
+            children.pop_back();
+        }
     }
 
     static Ptr Create() { return std::make_shared<FlexNode>(); }
@@ -67,12 +158,14 @@ public:
     static Ptr Row() {
         auto node = Create();
         node->style.flexDirection = FlexDirection::Row;
+        YGNodeStyleSetFlexDirection(node->ygNode, YGFlexDirectionRow);
         return node;
     }
 
     static Ptr Column() {
         auto node = Create();
         node->style.flexDirection = FlexDirection::Column;
+        YGNodeStyleSetFlexDirection(node->ygNode, YGFlexDirectionColumn);
         return node;
     }
 
@@ -80,114 +173,50 @@ public:
         return frame.contains(x, y);
     }
 
-    // Pass 1: Measure desired size
-    virtual Size measure(Size available) {
-        float contentW = 0;
-        float contentH = 0;
-
-        for (auto& child : children) {
-            Size childSize = child->measure(available);
-            if (style.flexDirection == FlexDirection::Row) {
-                contentW += childSize.width + (contentW > 0 ? style.gap : 0);
-                contentH = std::max(contentH, childSize.height);
-            } else {
-                contentH += childSize.height + (contentH > 0 ? style.gap : 0);
-                contentW = std::max(contentW, childSize.width);
-            }
-        }
-
-        contentW += 2 * style.padding;
-        contentH += 2 * style.padding;
-
-        float finalW = (style.widthMode == SizingMode::Fixed) ? style.width : contentW;
-        float finalH = (style.heightMode == SizingMode::Fixed) ? style.height : contentH;
-
-        return { finalW, finalH };
+    static YGSize MeasureCallback(YGNodeConstRef node, float width, YGMeasureMode widthMode, float height, YGMeasureMode heightMode) {
+        FlexNode* flexNode = (FlexNode*)YGNodeGetContext(node);
+        Size available = { width, height };
+        Size measured = flexNode->measure(available);
+        YGSize result;
+        result.width = measured.width;
+        result.height = measured.height;
+        return result;
     }
 
-    // Pass 2: Final Layout
+    virtual Size measure(Size available) {
+        return { 0, 0 };
+    }
+
     virtual void calculateLayout(SkRect availableSpace) {
-        float padding = style.padding;
-        float gap = style.gap;
+        syncSubtreeStyles();
+        YGNodeCalculateLayout(ygNode, availableSpace.width(), availableSpace.height(), YGDirectionLTR);
+        applyYogaLayout(availableSpace.left(), availableSpace.top());
+    }
 
-        float myW = availableSpace.width();
-        float myH = availableSpace.height();
-
-        if (style.widthMode == SizingMode::Fixed) myW = style.width;
-        else if (style.widthMode == SizingMode::Hug) {
-            myW = measure({availableSpace.width(), availableSpace.height()}).width;
-        }
-
-        if (style.heightMode == SizingMode::Fixed) myH = style.height;
-        else if (style.heightMode == SizingMode::Hug) {
-            myH = measure({availableSpace.width(), availableSpace.height()}).height;
-        }
-
-        frame = SkRect::MakeXYWH(availableSpace.left() + style.margin, 
-                                 availableSpace.top() + style.margin, 
-                                 myW, myH);
-
-        if (children.empty()) return;
-
-        float totalFixed = 0;
-        float totalFlex = 0;
+    void syncSubtreeStyles() {
+        style.syncLegacy();
         for (auto& child : children) {
-            if (child->style.flex > 0 && ((style.flexDirection == FlexDirection::Row && child->style.widthMode == SizingMode::Flex) || 
-                                          (style.flexDirection == FlexDirection::Column && child->style.heightMode == SizingMode::Flex))) {
-                totalFlex += child->style.flex;
-            } else {
-                Size childSize = child->measure({myW - 2 * padding, myH - 2 * padding});
-                totalFixed += (style.flexDirection == FlexDirection::Row) ? childSize.width : childSize.height;
-            }
+            child->syncSubtreeStyles();
         }
+    }
 
-        float totalGaps = gap * (children.size() - 1);
-        float remainingSpace = (style.flexDirection == FlexDirection::Row ? myW : myH) - 2 * padding - totalFixed - totalGaps;
-        if (remainingSpace < 0) remainingSpace = 0;
-
-        float currentX = frame.left() + padding;
-        float currentY = frame.top() + padding;
-
+    void applyYogaLayout(float offsetX, float offsetY) {
+        float left = YGNodeLayoutGetLeft(ygNode) + offsetX;
+        float top = YGNodeLayoutGetTop(getYGNode()) + offsetY;
+        float width = YGNodeLayoutGetWidth(getYGNode());
+        float height = YGNodeLayoutGetHeight(getYGNode());
+        frame = SkRect::MakeXYWH(left, top, width, height);
         for (auto& child : children) {
-            Size measured = child->measure({myW - 2 * padding, myH - 2 * padding});
-            float childW = measured.width;
-            float childH = measured.height;
-
-            if (style.flexDirection == FlexDirection::Row) {
-                if (child->style.flex > 0 && child->style.widthMode == SizingMode::Flex) {
-                    childW = (child->style.flex / totalFlex) * remainingSpace;
-                }
-                if (child->style.heightMode == SizingMode::Flex) childH = myH - 2 * padding;
-
-                float childY = currentY;
-                if (style.alignItems == AlignItems::Center) {
-                    childY = currentY + (myH - 2 * padding - childH) / 2.0f;
-                } else if (style.alignItems == AlignItems::FlexEnd) {
-                    childY = currentY + (myH - 2 * padding - childH);
-                }
-
-                child->calculateLayout(SkRect::MakeXYWH(currentX, childY, childW, childH));
-                currentX += childW + gap;
-            } else {
-                if (child->style.flex > 0 && child->style.heightMode == SizingMode::Flex) {
-                    childH = (child->style.flex / totalFlex) * remainingSpace;
-                }
-                if (child->style.widthMode == SizingMode::Flex) childW = myW - 2 * padding;
-
-                float childX = currentX;
-                if (style.alignItems == AlignItems::Center) {
-                    childX = currentX + (myW - 2 * padding - childW) / 2.0f;
-                } else if (style.alignItems == AlignItems::FlexEnd) {
-                    childX = currentX + (myW - 2 * padding - childW);
-                }
-
-                child->calculateLayout(SkRect::MakeXYWH(childX, currentY, childW, childH));
-                currentY += childH + gap;
-            }
+            child->applyYogaLayout(left, top);
         }
     }
 
     virtual void draw(SkCanvas* canvas) {
+        drawSelf(canvas);
+        drawChildren(canvas);
+    }
+
+    virtual void drawSelf(SkCanvas* canvas) {
         if (SkColorGetA(style.backgroundColor) > 0) {
             SkPaint paint;
             paint.setAntiAlias(true);
@@ -195,24 +224,32 @@ public:
             if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, paint);
             else canvas->drawRect(frame, paint);
         }
-        for (auto& child : children) child->draw(canvas);
     }
 
-    // Event handling
+    virtual void drawChildren(SkCanvas* canvas) {
+        bool needsClip = style.overflowHidden;
+        if (needsClip) {
+            canvas->save();
+            canvas->clipRect(frame);
+        }
+
+        for (auto& child : children) child->draw(canvas);
+
+        if (needsClip) {
+            canvas->restore();
+        }
+    }
+
     virtual bool onMouseMove(float x, float y) {
         bool handled = false;
         bool currentlyInside = hitTest(x, y);
-        
         if (isHovered != currentlyInside) {
             isHovered = currentlyInside;
             if (isHovered) onMouseEnter();
             else onMouseLeave();
             handled = true;
         }
-
-        for (auto& child : children) {
-            if (child->onMouseMove(x, y)) handled = true;
-        }
+        for (auto& child : children) if (child->onMouseMove(x, y)) handled = true;
         return handled;
     }
 
@@ -226,13 +263,8 @@ public:
             isFocused = true;
             if (onClick) onClick();
             handled = true;
-        } else {
-            isFocused = false;
-        }
-
-        for (auto& child : children) {
-            if (child->onMouseDown(x, y)) handled = true;
-        }
+        } else isFocused = false;
+        for (auto& child : children) if (child->onMouseDown(x, y)) handled = true;
         return handled;
     }
 
@@ -242,31 +274,29 @@ public:
     }
     
     virtual bool onMouseWheel(float x, float y, float delta) {
-        for (auto& child : children) {
-            if (child->onMouseWheel(x, y, delta)) return true;
-        }
+        for (auto& child : children) if (child->onMouseWheel(x, y, delta)) return true;
         return false;
     }
 
     virtual bool onKeyDown(uint32_t key) {
-        for (auto& child : children) {
-            if (child->onKeyDown(key)) return true;
-        }
+        for (auto& child : children) if (child->onKeyDown(key)) return true;
         return false;
     }
 
     virtual bool onChar(uint32_t charCode) {
-        for (auto& child : children) {
-            if (child->onChar(charCode)) return true;
-        }
+        for (auto& child : children) if (child->onChar(charCode)) return true;
         return false;
     }
 
     virtual bool needsRedraw() {
-        for (auto& child : children) {
-            if (child->needsRedraw()) return true;
-        }
+        for (auto& child : children) if (child->needsRedraw()) return true;
         return false;
     }
+
+private:
+    YGNodeRef ygNode;
 };
 
+inline YGNodeRef LayoutStyle::getYGNode() { return owner->getYGNode(); }
+
+} // namespace MochiUI

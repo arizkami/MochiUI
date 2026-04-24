@@ -13,6 +13,9 @@ namespace MochiUI {
 
 class CheckboxNode : public FlexNode {
 public:
+    CheckboxNode() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     std::string label;
     bool checked = false;
     SkColor checkboxColor = Theme::Accent;

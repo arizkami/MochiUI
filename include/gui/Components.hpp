@@ -11,3 +11,9 @@
 #include <include/gui/Components/TextInput.hpp>
 #include <include/gui/Components/NumberInput.hpp>
 #include <include/gui/Components/ComboBox.hpp>
+#include <include/gui/Components/ProgressBar.hpp>
+#include <include/gui/Components/GraphNode.hpp>
+#include <include/gui/Components/ButtonNode.hpp>
+#include <include/gui/Components/Table.hpp>
+#include <include/gui/Components/ColorPicker.hpp>
+#include <include/gui/Components/Calendar.hpp>

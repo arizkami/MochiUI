@@ -11,6 +11,9 @@ namespace MochiUI {
 
 class TextNode : public FlexNode {
 public:
+    TextNode() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     std::string text;
     SkColor color = SK_ColorBLACK;
     float fontSize = 16.0f;

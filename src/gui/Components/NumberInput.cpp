@@ -53,9 +53,9 @@ SkRect NumberInput::getDownButtonRect() const {
 }
 
 void NumberInput::draw(SkCanvas* canvas) {
-    TextInput::draw(canvas);
+    TextInput::draw(canvas); // TextInput now calls drawSelf and drawChildren
 
-    // Draw spin buttons
+    // Draw spin buttons on top
     SkRect upRect = getUpButtonRect();
     SkRect downRect = getDownButtonRect();
 

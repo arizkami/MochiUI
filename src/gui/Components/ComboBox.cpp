@@ -3,19 +3,11 @@
 
 namespace MochiUI {
 
-ComboBox::ComboBox() {
-    style.widthMode = SizingMode::Flex;
-    style.heightMode = SizingMode::Fixed;
-    style.height = 28.0f;
-    style.padding = 4.0f;
-    style.borderRadius = 0.0f;
-}
 
 Size ComboBox::measure(Size available) {
-    float w = (style.widthMode == SizingMode::Fixed) ? style.width : 120.0f;
-    float h = (style.heightMode == SizingMode::Fixed) ? style.height : 28.0f;
-    return { w, h };
+    return { 0, 0 };
 }
+
 
 SkRect ComboBox::getDropdownRect() const {
     float h = items.size() * itemHeight;

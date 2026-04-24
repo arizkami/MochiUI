@@ -9,6 +9,9 @@ namespace MochiUI {
 
 class TextInput : public FlexNode {
 public:
+    TextInput() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     std::string text;
     std::string placeholder;
     float fontSize = 14.0f;
@@ -21,8 +24,6 @@ public:
     SkColor textColor = Theme::TextPrimary;
     SkColor placeholderColor = SkColorSetA(Theme::TextSecondary, 120);
 
-    TextInput();
-    
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
     

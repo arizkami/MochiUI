@@ -48,32 +48,28 @@ public:
     SkColor textColor = Theme::TextPrimary;
     SkColor hoverColor = Theme::Accent;
     int fontSize = 11;
-    bool isHovered = false;
     std::vector<MenuItem> menuItems;
+
+    MenuItemNode() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     
     Size measure(Size available) override {
         SkRect textBounds;
         float textWidth = FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
-        
-        float totalWidth = textWidth + 12.0f; // horizontal padding
-        float totalHeight = (float)fontSize + 8.0f; // vertical padding
-        
-        return { totalWidth, totalHeight };
+        return { textWidth + 16.0f, 24.0f };
     }
     
     void draw(SkCanvas* canvas) override {
         if (!canvas) return;
         
-        SkPaint bgPaint;
         if (isHovered) {
+            SkPaint bgPaint;
+            bgPaint.setAntiAlias(true);
             bgPaint.setColor(hoverColor);
-            bgPaint.setAlphaf(0.15f);
-        } else {
-            bgPaint.setColor(SK_ColorTRANSPARENT);
+            bgPaint.setAlphaf(0.2f);
+            canvas->drawRect(frame, bgPaint);
         }
-        
-        SkRRect rrect = SkRRect::MakeRectXY(frame, style.borderRadius, style.borderRadius);
-        canvas->drawRRect(rrect, bgPaint);
         
         SkPaint textPaint;
         textPaint.setColor(textColor);
@@ -81,28 +77,18 @@ public:
         
         SkRect textBounds;
         float textWidth = FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
-
-        // Center horizontally and vertically within the node's frame
         float textX = frame.left() + (frame.width() - textWidth) / 2.0f;
-        // Skia baseline is 0, so we subtract centerY of the bounds to center it vertically
         float textY = frame.centerY() - textBounds.centerY();
 
         FontManager::getInstance().drawText(canvas, text, textX, textY, (float)fontSize, textPaint);
-
-        FlexNode::draw(canvas);    }
-    
-    bool onMouseMove(float x, float y) override {
-        bool wasHovered = isHovered;
-        isHovered = frame.contains(x, y);
-        return wasHovered != isHovered || FlexNode::onMouseMove(x, y);
     }
     
     bool onMouseDown(float x, float y) override {
-        if (frame.contains(x, y)) {
+        if (hitTest(x, y)) {
             showPopupMenu();
             return true;
         }
-        return FlexNode::onMouseDown(x, y);
+        return false;
     }
     
     void showPopupMenu() {
@@ -113,8 +99,8 @@ public:
             AppendMenuA(hMenu, MF_STRING, item.id, item.label.c_str());
         }
         
-        POINT pt;
-        GetCursorPos(&pt);
+        POINT pt = { (long)frame.left(), (long)frame.bottom() };
+        ClientToScreen((HWND)GetActiveWindow(), &pt);
         
         int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_NONOTIFY,
                                 pt.x, pt.y, 0, GetActiveWindow(), nullptr);
@@ -127,7 +113,6 @@ public:
                 }
             }
         }
-        
         DestroyMenu(hMenu);
     }
 };
@@ -139,27 +124,20 @@ class SkiaMenuBar : public IMenuBar {
 public:
     SkiaMenuBar() {
         rootNode = FlexNode::Row();
-        rootNode->style.height = 24;
-        rootNode->style.heightMode = SizingMode::Fixed;
-        rootNode->style.widthMode = SizingMode::Flex;
+        rootNode->style.setHeight(28);
         rootNode->style.backgroundColor = Theme::MenuBar;
-        rootNode->style.padding = 0;
-        rootNode->style.gap = 0;
-        rootNode->style.alignItems = AlignItems::Center;
+        rootNode->style.setAlignItems(YGAlignCenter);
+        rootNode->style.setPadding(2);
     }
 
     void addMenu(const std::string& label, const std::vector<MenuItem>& items) override {
         auto menuBtn = std::make_shared<MenuItemNode>();
         menuBtn->text = label;
-        menuBtn->style.widthMode = SizingMode::Hug;
-        menuBtn->style.heightMode = SizingMode::Flex;
-        menuBtn->style.padding = 0; // MenuItemNode handles its own internal padding in measure/draw
-        menuBtn->style.borderRadius = 0;
+        menuBtn->style.setHeight(24);
         menuBtn->textColor = Theme::TextPrimary;
         menuBtn->hoverColor = Theme::Accent;
         menuBtn->fontSize = 12;
         menuBtn->menuItems = items;
-
         rootNode->addChild(menuBtn);
     }
 

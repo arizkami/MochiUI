@@ -225,16 +225,27 @@ void Win32Window::cleanupD3D12() {
 void Win32Window::resizeBuffers(int w, int h) {
     if (!swapChain || !grContext) return;
 
+    // Flush and wait for GPU to finish all work before releasing back buffers
     grContext->flush();
     grContext->submit(GrSyncCpu::kYes);
 
-    // Must release all surfaces before resizing the swapchain buffers
+    if (commandQueue && fence && fenceEvent) {
+        const uint64_t fenceVal = fenceValue;
+        commandQueue->Signal(fence.Get(), fenceVal);
+        fenceValue++;
+        if (fence->GetCompletedValue() < fenceVal) {
+            fence->SetEventOnCompletion(fenceVal, fenceEvent);
+            WaitForSingleObject(fenceEvent, INFINITE);
+        }
+    }
+
+    // Must release all Skia surfaces and D3D12 back buffers before resizing
     frames.clear();
-    frames.resize(bufferCount);
 
     HRESULT hr = swapChain->ResizeBuffers(bufferCount, w, h, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
     if (FAILED(hr)) return;
 
+    frames.resize(bufferCount);
     currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
 
     for (int i = 0; i < bufferCount; ++i) {
@@ -288,22 +299,22 @@ void Win32Window::onSize(int w, int h) {
 
     if (root) {
         if (menuBar && menuBar->getLayoutNode()) {
-            masterRoot = FlexNode::Column();
-            masterRoot->style.widthMode = SizingMode::Flex;
-            masterRoot->style.heightMode = SizingMode::Flex;
-            
-            root->style.flex = 1.0f;
-            root->style.heightMode = SizingMode::Flex;
-            
-            masterRoot->addChild(menuBar->getLayoutNode());
-            masterRoot->addChild(root);
+            if (!masterRoot) {
+                masterRoot = FlexNode::Column();
+                masterRoot->style.setFlex(1.0f);
+                root->style.setFlex(1.0f);
+                masterRoot->addChild(menuBar->getLayoutNode());
+                masterRoot->addChild(root);
+            }
             masterRoot->calculateLayout(SkRect::MakeWH((float)w, (float)h));
         } else {
             masterRoot = nullptr;
             root->calculateLayout(SkRect::MakeWH((float)w, (float)h));
         }
     }
-    InvalidateRect(hwnd, NULL, FALSE);
+    
+    // Synchronous paint to reduce jitter during resize
+    onPaint();
 }
 
 void Win32Window::onPaint() {
@@ -335,6 +346,9 @@ void Win32Window::onPaint() {
         GrBackendRenderTargets::SetD3DResourceState(&backendRT, D3D12_RESOURCE_STATE_PRESENT);
     }
 
+    // Use Present(0, 0) during resize/live movement for better responsiveness, 
+    // but here we keep (1, 0) for general use. 
+    // Ideally we'd detect if we are in a resize loop.
     swapChain->Present(1, 0);
 
     FlexNode::Ptr effectiveRoot = masterRoot ? masterRoot : root;
@@ -356,6 +370,7 @@ void Win32Window::onPaint() {
 
 void Win32Window::run() {
     ShowWindow(hwnd, SW_SHOW);
+    UpdateWindow(hwnd);
     MSG msg = {};
     while (GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -372,6 +387,8 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     }
 
     switch (msg) {
+        case WM_ERASEBKGND:
+            return 1; // Prevent flicker
         case WM_MOUSEMOVE:
             if (win && effectiveRoot) {
                 if (effectiveRoot->onMouseMove((float)LOWORD(lp), (float)HIWORD(lp))) {

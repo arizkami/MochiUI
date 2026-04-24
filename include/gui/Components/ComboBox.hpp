@@ -10,6 +10,9 @@ namespace MochiUI {
 
 class ComboBox : public FlexNode {
 public:
+    ComboBox() {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     std::vector<std::string> items;
     int selectedIndex = -1;
     std::string placeholder = "Select item...";
@@ -20,8 +23,6 @@ public:
     SkColor textColor = Theme::TextPrimary;
     SkColor accentColor = Theme::Accent;
 
-    ComboBox();
-    
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
     

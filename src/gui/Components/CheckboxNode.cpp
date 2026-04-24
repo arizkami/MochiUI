@@ -13,16 +13,18 @@ Size CheckboxNode::measure(Size available) {
         labelHeight = bounds.height();
     }
 
-    float totalWidth = checkboxSize + spacing + labelWidth + 2 * style.padding;
-    float totalHeight = std::max(checkboxSize, labelHeight) + 2 * style.padding;
+    // Yoga adds padding automatically based on style, 
+    // so we should only return the intrinsic content size here.
+    float totalWidth = checkboxSize + (label.empty() ? 0 : (spacing + labelWidth));
+    float totalHeight = std::max(checkboxSize, labelHeight);
 
-    return { totalWidth, totalHeight };
+    return { std::ceil(totalWidth), std::ceil(totalHeight) };
 }
 
 void CheckboxNode::draw(SkCanvas* canvas) {
     if (!canvas) return;
 
-    FlexNode::draw(canvas);
+    drawSelf(canvas);
 
     float checkboxX = frame.left() + style.padding;
     float checkboxY = frame.centerY() - checkboxSize / 2;
@@ -70,9 +72,6 @@ void CheckboxNode::draw(SkCanvas* canvas) {
         textPaint.setAntiAlias(true);
         textPaint.setColor(labelColor);
 
-        // Simple vertical centering calculation instead of using font metrics
-        // Since FontManager::drawText expects the Y coordinate to be the baseline
-        // and we don't have direct access to metrics here easily.
         SkRect bounds;
         FontManager::getInstance().measureText(label, fontSize, &bounds);
 
@@ -81,6 +80,8 @@ void CheckboxNode::draw(SkCanvas* canvas) {
 
         FontManager::getInstance().drawText(canvas, label, textX, textY, fontSize, textPaint);
     }
+
+    drawChildren(canvas);
 }
 bool CheckboxNode::onMouseDown(float x, float y) {
     if (hitTest(x, y)) {

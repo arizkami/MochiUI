@@ -4,50 +4,33 @@
 namespace MochiUI {
 
 GroupBox::GroupBox() {
-    style.padding = 15;
-    style.gap = 10;
+    style.setPadding(15);
+    style.setGap(10);
 }
 
 Size GroupBox::measure(Size available) {
-    Size size = FlexNode::measure(available);
-    
-    if (!title.empty()) {
-        SkRect bounds;
-        FontManager::getInstance().measureText(title, fontSize, &bounds);
-        size.height += bounds.height() / 2.0f; // Add space for title overlapping the border
-    }
-    
-    return size;
+    return { 0, 0 }; // Yoga handles children, GroupBox title is handled by extra padding in calculateLayout
 }
 
 void GroupBox::calculateLayout(SkRect availableSpace) {
-    FlexNode::calculateLayout(availableSpace);
+    syncSubtreeStyles(); // Sync standard styles first
     
-    if (!title.empty() && !children.empty()) {
+    float titleHeight = 0.0f;
+    if (!title.empty()) {
         SkRect bounds;
         FontManager::getInstance().measureText(title, fontSize, &bounds);
-        float yOffset = bounds.height() / 2.0f;
-        
-        // Shift all children down by the title offset
-        for (auto& child : children) {
-            child->frame.offset(0, yOffset);
-            
-            // Recursively update layout for shifted children to ensure hit testing aligns
-            // Actually, offset is enough since size didn't change, but hitTest uses frame.
-            // Let's recursively offset their children too.
-            std::function<void(FlexNode::Ptr, float)> recursiveOffset = [&](FlexNode::Ptr node, float dy) {
-                for (auto& n : node->children) {
-                    n->frame.offset(0, dy);
-                    recursiveOffset(n, dy);
-                }
-            };
-            recursiveOffset(child, yOffset);
-        }
+        titleHeight = bounds.height();
+        // Add extra top padding to account for title, AFTER syncLegacy
+        YGNodeStyleSetPadding(getYGNode(), YGEdgeTop, style.padding + titleHeight / 2.0f);
     }
+    
+    YGNodeCalculateLayout(getYGNode(), availableSpace.width(), availableSpace.height(), YGDirectionLTR);
+    applyYogaLayout(availableSpace.left(), availableSpace.top());
 }
 
 void GroupBox::draw(SkCanvas* canvas) {
-    // 1. Draw Border
+    drawSelf(canvas);
+
     SkPaint borderPaint;
     borderPaint.setAntiAlias(true);
     borderPaint.setStyle(SkPaint::kStroke_Style);
@@ -70,7 +53,6 @@ void GroupBox::draw(SkCanvas* canvas) {
         borderRect.fTop += titleHeight / 2.0f;
     }
 
-    // Draw the border with a gap for the title
     if (title.empty()) {
         canvas->drawRect(borderRect, borderPaint);
     } else {
@@ -87,19 +69,15 @@ void GroupBox::draw(SkCanvas* canvas) {
         
         canvas->drawPath(path.detach(), borderPaint);
         
-        // 2. Draw Title
         SkPaint textPaint;
         textPaint.setAntiAlias(true);
         textPaint.setColor(titleColor);
         FontManager::getInstance().drawText(canvas, title, 
-                                            x1 + 5.0f, borderRect.top() - titleBounds.top() - titleHeight / 2.0f, 
+                                            x1 + 5.0f, borderRect.top() + titleHeight / 2.0f - 4.0f, 
                                             fontSize, textPaint);
     }
 
-    // 3. Draw Children
-    for (auto& child : children) {
-        child->draw(canvas);
-    }
+    drawChildren(canvas);
 }
 
 } // namespace MochiUI

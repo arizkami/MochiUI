@@ -179,10 +179,57 @@ bool TextInput::onMouseDown(float x, float y) {
     // Clear focus and selection if clicked outside
     isFocused = false;
     selectionAnchor = std::string::npos;
-    return false;
-}
+    return true;
+    }
 
-bool TextInput::onMouseMove(float x, float y) {
+    bool TextInput::onRightDown(float x, float y) {
+    if (!hitTest(x, y)) return false;
+
+    isFocused = true;
+
+    HMENU hMenu = CreatePopupMenu();
+    constexpr UINT_PTR IDM_CUT = 1001;
+    constexpr UINT_PTR IDM_COPY = 1002;
+    constexpr UINT_PTR IDM_PASTE = 1003;
+    constexpr UINT_PTR IDM_DELETE = 1004;
+
+    AppendMenuW(hMenu, hasSelection() ? MF_STRING : MF_GRAYED, IDM_CUT, L"Cut");
+    AppendMenuW(hMenu, hasSelection() ? MF_STRING : MF_GRAYED, IDM_COPY, L"Copy");
+    AppendMenuW(hMenu, MF_STRING, IDM_PASTE, L"Paste");
+    AppendMenuW(hMenu, hasSelection() ? MF_STRING : MF_GRAYED, IDM_DELETE, L"Delete");
+
+    POINT pt;
+    GetCursorPos(&pt);
+
+    HWND owner = GetActiveWindow();
+    int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_LEFTALIGN | TPM_RIGHTBUTTON, pt.x, pt.y, 0, owner, NULL);
+    DestroyMenu(hMenu);
+
+    if (cmd == IDM_COPY || cmd == IDM_CUT) {
+        if (hasSelection()) {
+            SetClipboardText(text.substr(getSelectionStart(), getSelectionEnd() - getSelectionStart()));
+        }
+    }
+
+    if (cmd == IDM_CUT || cmd == IDM_DELETE) {
+        if (hasSelection()) {
+            deleteSelection();
+            if (onChanged) onChanged(text);
+        }
+    } else if (cmd == IDM_PASTE) {
+        if (hasSelection()) deleteSelection();
+        std::string pasted = GetClipboardText();
+        if (!pasted.empty()) {
+            text.insert(cursorIndex, pasted);
+            cursorIndex += pasted.length();
+            if (onChanged) onChanged(text);
+        }
+    }
+
+    return true;
+    }
+
+    bool TextInput::onMouseMove(float x, float y) {
     bool handled = FlexNode::onMouseMove(x, y);
     if (isDragging && isFocused) {
         cursorIndex = getCursorIndexFromPosition(x);

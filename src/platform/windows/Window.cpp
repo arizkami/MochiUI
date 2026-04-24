@@ -409,6 +409,13 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 InvalidateRect(hwnd, NULL, FALSE);
             }
             return 0;
+        case WM_RBUTTONDOWN:
+            if (win && effectiveRoot) {
+                if (effectiveRoot->onRightDown((float)LOWORD(lp), (float)HIWORD(lp))) {
+                    InvalidateRect(hwnd, NULL, FALSE);
+                }
+            }
+            return 0;
         case WM_MOUSEWHEEL:
             if (win && effectiveRoot) {
                 POINT pt = { (short)LOWORD(lp), (short)HIWORD(lp) };

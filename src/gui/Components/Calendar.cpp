@@ -32,32 +32,73 @@ void Calendar::setDate(int year, int month, int day) {
     updateGrid();
 }
 
+void Calendar::nextMonth() {
+    selectedMonth++;
+    if (selectedMonth > 12) {
+        selectedMonth = 1;
+        selectedYear++;
+    }
+    updateGrid();
+}
+
+void Calendar::prevMonth() {
+    selectedMonth--;
+    if (selectedMonth < 1) {
+        selectedMonth = 12;
+        selectedYear--;
+    }
+    updateGrid();
+}
+
 void Calendar::updateGrid() {
     removeAllChildren();
     
-    // Header with Month Year
+    // Header with Month Year and Navigation
     auto header = FlexNode::Row();
     header->style.setHeight(40.0f);
     header->style.setAlignItems(YGAlignCenter);
+    header->style.backgroundColor = SkColorSetA(Theme::Accent, 40);
+    header->style.borderRadius = 6.0f;
+    header->style.setMargin(2.0f);
     
+    auto prevBtn = std::make_shared<TextNode>();
+    prevBtn->text = " < ";
+    prevBtn->fontSize = 18.0f;
+    prevBtn->fontFamily = fontFamily;
+    prevBtn->style.setPadding(5.0f);
+    prevBtn->enableHover = true;
+    prevBtn->onClick = [this]() { prevMonth(); };
+    header->addChild(prevBtn);
+
     auto monthText = std::make_shared<TextNode>();
     std::string months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
     monthText->text = months[selectedMonth-1] + " " + std::to_string(selectedYear);
     monthText->style.setFlex(1.0f);
-    monthText->fontSize = 16.0f;
-    monthText->style.setPadding(5.0f);
-    
+    monthText->fontSize = 15.0f;
+    monthText->fontFamily = fontFamily;
+    monthText->style.setAlignItems(YGAlignCenter);
     header->addChild(monthText);
+
+    auto nextBtn = std::make_shared<TextNode>();
+    nextBtn->text = " > ";
+    nextBtn->fontSize = 18.0f;
+    nextBtn->fontFamily = fontFamily;
+    nextBtn->style.setPadding(5.0f);
+    nextBtn->enableHover = true;
+    nextBtn->onClick = [this]() { nextMonth(); };
+    header->addChild(nextBtn);
+
     addChild(header);
 
     // Weekday headers
     auto weekHeader = FlexNode::Row();
     weekHeader->style.setHeight(30.0f);
     std::string days_of_week[] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
-    for (const auto& d : days_of_week) {
+    for (const auto& d_name : days_of_week) {
         auto t = std::make_shared<TextNode>();
-        t->text = d;
+        t->text = d_name;
         t->fontSize = 12.0f;
+        t->fontFamily = fontFamily;
         t->color = Theme::TextSecondary;
         t->style.setFlex(1.0f);
         weekHeader->addChild(t);
@@ -101,6 +142,7 @@ void Calendar::updateGrid() {
         auto dayNode = std::make_shared<TextNode>();
         dayNode->text = std::to_string(d);
         dayNode->fontSize = 13.0f;
+        dayNode->fontFamily = fontFamily;
         dayNode->style.setFlex(1.0f);
         dayNode->style.borderRadius = 17.0f;
         dayNode->enableHover = true;

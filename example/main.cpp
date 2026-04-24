@@ -177,6 +177,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     menuBar->addMenu("File", {
         { "Exit", 103, []() { PostQuitMessage(0); } }
     });
+    menuBar->addMenu("Help", {
+        { "Test Dialog", 201, []() { 
+            ConfirmationDialog::showWarning(GetActiveWindow(), L"Warning", L"This is a test warning.", L"Do you want to proceed?");
+        } },
+        { "About MochiUI", 202, []() {
+            ConfirmationDialog::showMessage(GetActiveWindow(), L"About", L"MochiUI Explorer v1.0", L"A high-performance UI framework powered by Skia and Yoga Layout.");
+        } }
+    });
     window.setMenuBar(std::move(menuBar));
 
     window.setRoot(CreateAppUI(1280, 800));

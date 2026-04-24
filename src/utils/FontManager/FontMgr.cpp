@@ -151,6 +151,7 @@ SkFont FontManager::createFont(const std::string& familyName,
     SkFont font(typeface, size);
     font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
     font.setSubpixel(true);
+    font.setHinting(SkFontHinting::kFull);
     return font;
 }
 
@@ -162,6 +163,7 @@ float FontManager::drawText(SkCanvas* canvas, const std::string& text, float x, 
         SkFont font(run.typeface, fontSize);
         font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
         font.setSubpixel(true);
+        font.setHinting(SkFontHinting::kFull);
         canvas->drawSimpleText(run.text.c_str(), run.text.size(), SkTextEncoding::kUTF8, currentX, y, font, paint);
         currentX += font.measureText(run.text.c_str(), run.text.size(), SkTextEncoding::kUTF8);
     }
@@ -178,6 +180,10 @@ float FontManager::measureText(const std::string& text, size_t byteLength, float
     
     for (const auto& run : runs) {
         SkFont font(run.typeface, fontSize);
+        font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
+        font.setSubpixel(true);
+        font.setHinting(SkFontHinting::kFull);
+        
         SkRect runBounds;
         float runWidth = font.measureText(run.text.c_str(), run.text.size(), SkTextEncoding::kUTF8, outBounds ? &runBounds : nullptr);
         
@@ -200,6 +206,13 @@ float FontManager::measureText(const std::string& text, size_t byteLength, float
 
 float FontManager::measureText(const std::string& text, float fontSize, SkRect* outBounds, const std::string& familyName) {
     return measureText(text, text.size(), fontSize, outBounds, familyName);
+}
+
+void FontManager::getFontMetrics(float fontSize, SkFontMetrics* metrics, const std::string& familyName) {
+    if (!fFontMgr) initialize();
+    sk_sp<SkTypeface> typeface = getTypeface(familyName);
+    SkFont font(typeface, fontSize);
+    font.getMetrics(metrics);
 }
 
 } // namespace MochiUI

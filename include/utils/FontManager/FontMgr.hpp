@@ -27,6 +27,8 @@ public:
     float measureText(const std::string& text, float fontSize, SkRect* outBounds = nullptr, const std::string& familyName = DEFAULT_FONT);
     float measureText(const std::string& text, size_t byteLength, float fontSize, SkRect* outBounds = nullptr, const std::string& familyName = DEFAULT_FONT);
     
+    void getFontMetrics(float fontSize, SkFontMetrics* metrics, const std::string& familyName = DEFAULT_FONT);
+    
     sk_sp<SkFontMgr> getFontMgr() const { return fFontMgr; }
     
     static constexpr const char* DEFAULT_FONT = "Segoe UI";

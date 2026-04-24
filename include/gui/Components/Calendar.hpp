@@ -1,6 +1,7 @@
 #pragma once
 #include <include/gui/Layout.hpp>
 #include <include/gui/Theme.hpp>
+#include <include/utils/FontManager/FontMgr.hpp>
 #include <functional>
 #include <ctime>
 
@@ -13,6 +14,7 @@ public:
     void setDate(int year, int month, int day);
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
+    std::string fontFamily = FontManager::DEFAULT_FONT;
     
     std::function<void(int, int, int)> onDateSelected;
 

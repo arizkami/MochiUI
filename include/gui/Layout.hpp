@@ -131,6 +131,7 @@ public:
     bool isHovered = false;
     bool isPressed = false;
     bool isFocused = false;
+    bool enableHover = false;
     std::function<void()> onClick;
 
     virtual void addChild(Ptr child) {
@@ -224,6 +225,14 @@ public:
             if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, paint);
             else canvas->drawRect(frame, paint);
         }
+
+        if (enableHover && isHovered) {
+            SkPaint hoverPaint;
+            hoverPaint.setAntiAlias(true);
+            hoverPaint.setColor(SkColorSetARGB(40, 255, 255, 255)); // Generic light overlay
+            if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, hoverPaint);
+            else canvas->drawRect(frame, hoverPaint);
+        }
     }
 
     virtual void drawChildren(SkCanvas* canvas) {
@@ -265,6 +274,12 @@ public:
             handled = true;
         } else isFocused = false;
         for (auto& child : children) if (child->onMouseDown(x, y)) handled = true;
+        return handled;
+    }
+
+    virtual bool onRightDown(float x, float y) {
+        bool handled = false;
+        for (auto& child : children) if (child->onRightDown(x, y)) handled = true;
         return handled;
     }
 

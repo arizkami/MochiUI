@@ -14,6 +14,7 @@ void TableHead::addColumn(const std::string& title, float width) {
     text->text = title;
     text->fontSize = 12.0f;
     text->color = Theme::TextSecondary;
+    text->fontFamily = fontFamily;
     text->style.setPadding(8.0f);
     if (width > 0) {
         text->style.setWidth(width);
@@ -50,13 +51,26 @@ void Table::addRow(const std::vector<std::string>& cells) {
     auto row = FlexNode::Row();
     row->style.setHeight(32.0f);
     row->style.setAlignItems(YGAlignCenter);
+    row->enableHover = true;
+
+    // Zebra striping
+    int rowCount = (int)children.size();
+    if (header) rowCount--; // Don't count header for parity
     
-    // Simple logic: match children of header
+    if (rowCount % 2 == 1) {
+        row->style.backgroundColor = SkColorSetA(Theme::TextSecondary, 15);
+    }
+    
+    // Add hover highlight to row
+    row->style.borderRadius = 4.0f;
+    row->enableHover = true;
     if (header) {
         for (size_t i = 0; i < cells.size() && i < header->children.size(); ++i) {
             auto cell = std::make_shared<TextNode>();
             cell->text = cells[i];
             cell->fontSize = 13.0f;
+            cell->color = Theme::TextPrimary;
+            cell->fontFamily = fontFamily;
             cell->style.setPadding(8.0f);
             
             // Match width/flex of header column
@@ -75,6 +89,11 @@ void Table::addRow(const std::vector<std::string>& cells) {
 
 void Table::draw(SkCanvas* canvas) {
     drawSelf(canvas);
+
+    // Draw children but with manual row hover highlight logic
+    // (Alternative: TextNode or FlexNode already handle hover if enabled)
+    // Here we ensure the row itself draws its hover background if we didn't use a child component
+    
     drawChildren(canvas);
     
     // Draw outer border

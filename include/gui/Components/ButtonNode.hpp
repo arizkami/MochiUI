@@ -2,6 +2,7 @@
 #include <include/gui/Layout.hpp>
 #include <include/gui/Theme.hpp>
 #include <include/utils/FontManager/FontMgr.hpp>
+#include <include/core/SkFontMetrics.h>
 #include <string>
 
 namespace MochiUI {
@@ -43,11 +44,12 @@ public:
         textPaint.setAntiAlias(true);
         textPaint.setColor(textColor);
         
-        SkRect bounds;
-        FontManager::getInstance().measureText(label, fontSize, &bounds);
-        
-        float tx = frame.left() + (frame.width() - bounds.width()) / 2.0f;
-        float ty = frame.top() + (frame.height() + bounds.height()) / 2.0f - 2.0f;
+        SkFontMetrics metrics;
+        FontManager::getInstance().getFontMetrics(fontSize, &metrics);
+
+        float textWidth = FontManager::getInstance().measureText(label, fontSize);
+        float tx = frame.left() + (frame.width() - textWidth) / 2.0f;
+        float ty = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f;
         
         FontManager::getInstance().drawText(canvas, label, tx, ty, fontSize, textPaint);
     }

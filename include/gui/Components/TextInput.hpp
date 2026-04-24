@@ -28,6 +28,7 @@ public:
     Size measure(Size available) override;
     
     bool onMouseDown(float x, float y) override;
+    bool onRightDown(float x, float y) override;
     bool onMouseMove(float x, float y) override;
     void onMouseUp(float x, float y) override;
     bool onChar(uint32_t charCode) override;

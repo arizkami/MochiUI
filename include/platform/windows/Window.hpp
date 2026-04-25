@@ -9,6 +9,8 @@
 
 class GrDirectContext;
 
+#include <include/gui/OverlayNode.hpp>
+
 namespace MochiUI {
 
 struct FrameContext {
@@ -26,10 +28,23 @@ public:
     void enableMica(bool enable) override;
     
     void setMenuBar(std::unique_ptr<IMenuBar> bar) override;
-    void setRoot(FlexNode::Ptr node) override { root = node; }
+    void setRoot(FlexNode::Ptr node) override { 
+        root = node;
+        if (!overlayRoot) overlayRoot = std::make_shared<OverlayNode>();
+        overlayRoot->setMainContent(node); 
+    }
     void run() override;
     
     void* getNativeHandle() const override { return (void*)hwnd; }
+    
+    void addOverlay(FlexNode::Ptr overlay) {
+        if (!overlayRoot) overlayRoot = std::make_shared<OverlayNode>();
+        overlayRoot->addOverlay(overlay);
+    }
+    
+    void removeOverlay(FlexNode::Ptr overlay) {
+        if (overlayRoot) overlayRoot->removeOverlay(overlay);
+    }
 
 private:
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
@@ -41,7 +56,8 @@ private:
     void resizeBuffers(int width, int height);
     
     HWND hwnd;
-    FlexNode::Ptr root;
+    OverlayNode::Ptr overlayRoot;
+    FlexNode::Ptr root; // Keep for compatibility if needed, but we use overlayRoot
     FlexNode::Ptr masterRoot;
     std::unique_ptr<IMenuBar> menuBar;
     int width, height;

@@ -1,5 +1,6 @@
 #include <include/gui/Components/Calendar.hpp>
 #include <include/gui/Components/TextNode.hpp>
+#include <include/gui/Components/IconNode.hpp>
 #include <iomanip>
 #include <sstream>
 
@@ -12,15 +13,19 @@ Calendar::Calendar() {
     currentMonth = now->tm_mon + 1;
     currentDay = now->tm_mday;
     
+    displayedYear = currentYear;
+    displayedMonth = currentMonth;
+    
     selectedYear = currentYear;
     selectedMonth = currentMonth;
     selectedDay = currentDay;
     
     style.setWidth(280.0f);
-    style.setHeight(300.0f);
+    style.setHeightAuto();
     style.backgroundColor = Theme::Card;
-    style.borderRadius = 8.0f;
-    style.setPadding(10.0f);
+    style.borderRadius = 12.0f;
+    style.setPadding(16.0f);
+    style.setGap(12.0f);
     
     updateGrid();
 }
@@ -29,23 +34,25 @@ void Calendar::setDate(int year, int month, int day) {
     selectedYear = year;
     selectedMonth = month;
     selectedDay = day;
+    displayedYear = year;
+    displayedMonth = month;
     updateGrid();
 }
 
 void Calendar::nextMonth() {
-    selectedMonth++;
-    if (selectedMonth > 12) {
-        selectedMonth = 1;
-        selectedYear++;
+    displayedMonth++;
+    if (displayedMonth > 12) {
+        displayedMonth = 1;
+        displayedYear++;
     }
     updateGrid();
 }
 
 void Calendar::prevMonth() {
-    selectedMonth--;
-    if (selectedMonth < 1) {
-        selectedMonth = 12;
-        selectedYear--;
+    displayedMonth--;
+    if (displayedMonth < 1) {
+        displayedMonth = 12;
+        displayedYear--;
     }
     updateGrid();
 }
@@ -53,79 +60,81 @@ void Calendar::prevMonth() {
 void Calendar::updateGrid() {
     removeAllChildren();
     
-    // Header with Month Year and Navigation
+    // Header
     auto header = FlexNode::Row();
-    header->style.setHeight(40.0f);
+    header->style.setHeight(32.0f);
     header->style.setAlignItems(YGAlignCenter);
-    header->style.backgroundColor = SkColorSetA(Theme::Accent, 40);
-    header->style.borderRadius = 6.0f;
-    header->style.setMargin(2.0f);
     
-    auto prevBtn = std::make_shared<TextNode>();
-    prevBtn->text = " < ";
-    prevBtn->fontSize = 18.0f;
-    prevBtn->fontFamily = fontFamily;
-    prevBtn->style.setPadding(5.0f);
+    auto monthYearText = std::make_shared<TextNode>();
+    static const std::string months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+    monthYearText->text = months[displayedMonth-1] + " " + std::to_string(displayedYear);
+    monthYearText->style.setFlex(1.0f);
+    monthYearText->fontSize = 16.0f;
+    monthYearText->color = Theme::TextPrimary;
+    header->addChild(monthYearText);
+
+    auto navGroup = FlexNode::Row();
+    navGroup->style.setGap(8.0f);
+
+    auto prevBtn = std::make_shared<IconNode>();
+    prevBtn->setIcon("res://chevron-left.svg");
+    prevBtn->style.setWidth(24.0f);
+    prevBtn->style.setHeight(24.0f);
+    prevBtn->color = Theme::TextSecondary;
     prevBtn->enableHover = true;
     prevBtn->onClick = [this]() { prevMonth(); };
-    header->addChild(prevBtn);
+    navGroup->addChild(prevBtn);
 
-    auto monthText = std::make_shared<TextNode>();
-    std::string months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
-    monthText->text = months[selectedMonth-1] + " " + std::to_string(selectedYear);
-    monthText->style.setFlex(1.0f);
-    monthText->fontSize = 15.0f;
-    monthText->fontFamily = fontFamily;
-    monthText->style.setAlignItems(YGAlignCenter);
-    header->addChild(monthText);
-
-    auto nextBtn = std::make_shared<TextNode>();
-    nextBtn->text = " > ";
-    nextBtn->fontSize = 18.0f;
-    nextBtn->fontFamily = fontFamily;
-    nextBtn->style.setPadding(5.0f);
+    auto nextBtn = std::make_shared<IconNode>();
+    nextBtn->setIcon("res://chevron-right.svg");
+    nextBtn->style.setWidth(24.0f);
+    nextBtn->style.setHeight(24.0f);
+    nextBtn->color = Theme::TextSecondary;
     nextBtn->enableHover = true;
     nextBtn->onClick = [this]() { nextMonth(); };
-    header->addChild(nextBtn);
+    navGroup->addChild(nextBtn);
 
+    header->addChild(navGroup);
     addChild(header);
 
-    // Weekday headers
+    // Weekdays
     auto weekHeader = FlexNode::Row();
-    weekHeader->style.setHeight(30.0f);
-    std::string days_of_week[] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
+    weekHeader->style.setHeight(24.0f);
+    static const std::string days_of_week[] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
     for (const auto& d_name : days_of_week) {
         auto t = std::make_shared<TextNode>();
         t->text = d_name;
         t->fontSize = 12.0f;
-        t->fontFamily = fontFamily;
         t->color = Theme::TextSecondary;
+        t->textAlign = TextAlign::Center;
         t->style.setFlex(1.0f);
         weekHeader->addChild(t);
     }
     addChild(weekHeader);
 
-    // Grid of days
+    // Days Grid
     struct tm firstDay = {0};
-    firstDay.tm_year = selectedYear - 1900;
-    firstDay.tm_mon = selectedMonth - 1;
+    firstDay.tm_year = displayedYear - 1900;
+    firstDay.tm_mon = displayedMonth - 1;
     firstDay.tm_mday = 1;
     mktime(&firstDay);
     
     int startDay = firstDay.tm_wday;
     int daysInMonth = 31;
-    if (selectedMonth == 4 || selectedMonth == 6 || selectedMonth == 9 || selectedMonth == 11) daysInMonth = 30;
-    else if (selectedMonth == 2) {
-        bool leap = (selectedYear % 4 == 0 && selectedYear % 100 != 0) || (selectedYear % 400 == 0);
+    if (displayedMonth == 4 || displayedMonth == 6 || displayedMonth == 9 || displayedMonth == 11) daysInMonth = 30;
+    else if (displayedMonth == 2) {
+        bool leap = (displayedYear % 4 == 0 && displayedYear % 100 != 0) || (displayedYear % 400 == 0);
         daysInMonth = leap ? 29 : 28;
     }
 
     auto grid = FlexNode::Column();
-    grid->style.setFlex(1.0f);
+    grid->style.setGap(4.0f);
     
     auto row = FlexNode::Row();
-    row->style.setHeight(35.0f);
+    row->style.setHeight(32.0f);
+    row->style.setGap(4.0f);
     
+    // Padding for start of month
     for (int i = 0; i < startDay; ++i) {
         auto empty = FlexNode::Create();
         empty->style.setFlex(1.0f);
@@ -136,26 +145,36 @@ void Calendar::updateGrid() {
         if (row->children.size() == 7) {
             grid->addChild(row);
             row = FlexNode::Row();
-            row->style.setHeight(35.0f);
+            row->style.setHeight(32.0f);
+            row->style.setGap(4.0f);
         }
         
         auto dayNode = std::make_shared<TextNode>();
         dayNode->text = std::to_string(d);
-        dayNode->fontSize = 13.0f;
-        dayNode->fontFamily = fontFamily;
+        dayNode->fontSize = 14.0f;
+        dayNode->textAlign = TextAlign::Center;
         dayNode->style.setFlex(1.0f);
-        dayNode->style.borderRadius = 17.0f;
+        dayNode->style.setHeight(32.0f);
+        dayNode->style.borderRadius = 16.0f;
         dayNode->enableHover = true;
         
-        if (d == selectedDay) {
+        bool isSelected = (d == selectedDay && displayedMonth == selectedMonth && displayedYear == selectedYear);
+        bool isToday = (d == currentDay && displayedMonth == currentMonth && displayedYear == currentYear);
+
+        if (isSelected) {
             dayNode->style.backgroundColor = Theme::Accent;
             dayNode->color = SK_ColorWHITE;
-        } else if (d == currentDay && selectedMonth == currentMonth && selectedYear == currentYear) {
+        } else if (isToday) {
             dayNode->color = Theme::Accent;
+            dayNode->style.backgroundColor = SkColorSetA(Theme::Accent, 40);
+        } else {
+            dayNode->color = Theme::TextPrimary;
         }
 
         dayNode->onClick = [this, d]() {
             selectedDay = d;
+            selectedMonth = displayedMonth;
+            selectedYear = displayedYear;
             updateGrid();
             if (onDateSelected) onDateSelected(selectedYear, selectedMonth, selectedDay);
         };
@@ -178,7 +197,7 @@ void Calendar::draw(SkCanvas* canvas) {
 }
 
 Size Calendar::measure(Size available) {
-    return { 280.0f, 300.0f };
+    return { 280.0f, 320.0f }; // Slightly taller for header/gap
 }
 
 } // namespace MochiUI

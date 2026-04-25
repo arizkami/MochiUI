@@ -24,8 +24,10 @@ public:
     
     void setWidth(float w) { width = w; widthMode = SizingMode::Fixed; }
     void setHeight(float h) { height = h; heightMode = SizingMode::Fixed; }
-    void setWidthFull() { widthMode = SizingMode::Flex; }
-    void setHeightFull() { heightMode = SizingMode::Flex; }
+    void setWidthFull() { widthMode = SizingMode::Flex; widthPercent = 100.0f; }
+    void setHeightFull() { heightMode = SizingMode::Flex; heightPercent = 100.0f; }
+    void setWidthPercent(float p) { widthMode = SizingMode::Flex; widthPercent = p; }
+    void setHeightPercent(float p) { heightMode = SizingMode::Flex; heightPercent = p; }
     void setWidthAuto() { widthMode = SizingMode::Hug; }
     void setHeightAuto() { heightMode = SizingMode::Hug; }
     
@@ -43,6 +45,13 @@ public:
     }
     void setAlignItems(YGAlign align) { alignItems = (AlignItems)align; }
     void setFlexWrap(YGWrap wrap) { flexWrap = wrap; }
+    void setPositionType(YGPositionType type) { positionType = type; }
+    void setPosition(YGEdge edge, float value) {
+        if (edge == YGEdgeLeft) left = value;
+        else if (edge == YGEdgeTop) top = value;
+        else if (edge == YGEdgeRight) right = value;
+        else if (edge == YGEdgeBottom) bottom = value;
+    }
 
     SkColor backgroundColor = SK_ColorTRANSPARENT;
     float borderRadius = 0;
@@ -54,7 +63,7 @@ public:
         if (widthMode == SizingMode::Fixed) {
             YGNodeStyleSetWidth(node, width);
         } else if (widthMode == SizingMode::Flex) {
-            YGNodeStyleSetWidthPercent(node, 100.0f);
+            YGNodeStyleSetWidthPercent(node, widthPercent);
         } else {
             YGNodeStyleSetWidthAuto(node);
         }
@@ -62,7 +71,7 @@ public:
         if (heightMode == SizingMode::Fixed) {
             YGNodeStyleSetHeight(node, height);
         } else if (heightMode == SizingMode::Flex) {
-            YGNodeStyleSetHeightPercent(node, 100.0f);
+            YGNodeStyleSetHeightPercent(node, heightPercent);
         } else {
             YGNodeStyleSetHeightAuto(node);
         }
@@ -86,16 +95,30 @@ public:
         YGNodeStyleSetAlignItems(node, align);
 
         YGNodeStyleSetFlexWrap(node, flexWrap);
+        YGNodeStyleSetPositionType(node, positionType);
+        if (positionType == YGPositionTypeAbsolute) {
+            if (left != -1e9f) YGNodeStyleSetPosition(node, YGEdgeLeft, left);
+            if (top != -1e9f) YGNodeStyleSetPosition(node, YGEdgeTop, top);
+            if (right != -1e9f) YGNodeStyleSetPosition(node, YGEdgeRight, right);
+            if (bottom != -1e9f) YGNodeStyleSetPosition(node, YGEdgeBottom, bottom);
+        }
     }
 
     float width = 0;
     float height = 0;
+    float widthPercent = 100.0f;
+    float heightPercent = 100.0f;
     float flex = 0;
     float flexShrink = 1.0f;
     float flexBasis = -1.0f; // -1 for Auto
     float padding = 0;
     float margin = 0;
     float gap = 0;
+    float left = -1e9f;
+    float top = -1e9f;
+    float right = -1e9f;
+    float bottom = -1e9f;
+    YGPositionType positionType = YGPositionTypeStatic;
     YGWrap flexWrap = YGWrapNoWrap;
     SizingMode widthMode = SizingMode::Hug;
     SizingMode heightMode = SizingMode::Hug;
@@ -131,6 +154,7 @@ public:
     LayoutStyle style;
     SkRect frame = SkRect::MakeEmpty();
     std::vector<Ptr> children;
+    FlexNode* parent = nullptr;
     
     bool isHovered = false;
     bool isPressed = false;
@@ -139,6 +163,11 @@ public:
     std::function<void()> onClick;
 
     virtual void addChild(Ptr child) {
+        if (!child) return;
+        if (child->parent) {
+            child->parent->removeChild(child);
+        }
+        child->parent = this;
         children.push_back(child);
         YGNodeInsertChild(ygNode, child->getYGNode(), (uint32_t)(children.size() - 1));
     }
@@ -146,6 +175,7 @@ public:
     virtual void removeChild(Ptr child) {
         auto it = std::find(children.begin(), children.end(), child);
         if (it != children.end()) {
+            child->parent = nullptr;
             YGNodeRemoveChild(ygNode, child->getYGNode());
             children.erase(it);
         }
@@ -153,6 +183,7 @@ public:
 
     virtual void removeAllChildren() {
         while (!children.empty()) {
+            children.back()->parent = nullptr;
             YGNodeRemoveChild(ygNode, children.back()->getYGNode());
             children.pop_back();
         }
@@ -255,6 +286,14 @@ public:
 
     virtual bool onMouseMove(float x, float y) {
         bool handled = false;
+        // Check children in reverse (top to bottom)
+        for (auto it = children.rbegin(); it != children.rend(); ++it) {
+            if ((*it)->onMouseMove(x, y)) {
+                handled = true;
+                break;
+            }
+        }
+
         bool currentlyInside = hitTest(x, y);
         if (isHovered != currentlyInside) {
             isHovered = currentlyInside;
@@ -262,7 +301,6 @@ public:
             else onMouseLeave();
             handled = true;
         }
-        for (auto& child : children) if (child->onMouseMove(x, y)) handled = true;
         return handled;
     }
 
@@ -270,21 +308,27 @@ public:
     virtual void onMouseLeave() {}
 
     virtual bool onMouseDown(float x, float y) {
-        bool handled = false;
+        // Check children in reverse (top to bottom)
+        for (auto it = children.rbegin(); it != children.rend(); ++it) {
+            if ((*it)->onMouseDown(x, y)) return true;
+        }
+
         if (hitTest(x, y)) {
             isPressed = true;
             isFocused = true;
             if (onClick) onClick();
-            handled = true;
-        } else isFocused = false;
-        for (auto& child : children) if (child->onMouseDown(x, y)) handled = true;
-        return handled;
+            return true;
+        } else {
+            isFocused = false;
+            return false;
+        }
     }
 
     virtual bool onRightDown(float x, float y) {
-        bool handled = false;
-        for (auto& child : children) if (child->onRightDown(x, y)) handled = true;
-        return handled;
+        for (auto it = children.rbegin(); it != children.rend(); ++it) {
+            if ((*it)->onRightDown(x, y)) return true;
+        }
+        return false;
     }
 
     virtual void onMouseUp(float x, float y) {
@@ -293,7 +337,9 @@ public:
     }
     
     virtual bool onMouseWheel(float x, float y, float delta) {
-        for (auto& child : children) if (child->onMouseWheel(x, y, delta)) return true;
+        for (auto it = children.rbegin(); it != children.rend(); ++it) {
+            if ((*it)->onMouseWheel(x, y, delta)) return true;
+        }
         return false;
     }
 

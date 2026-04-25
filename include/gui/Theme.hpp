@@ -13,6 +13,8 @@ static constexpr SkColor TextPrimary   = SkColorSetRGB(255, 255, 255);
 static constexpr SkColor TextSecondary = SkColorSetRGB(180, 180, 180);
 static constexpr SkColor HoverOverlay  = SkColorSetARGB(40, 255, 255, 255);
 static constexpr SkColor Card          = SkColorSetARGB(100, 80, 80, 80);
+static constexpr SkColor Border        = SkColorSetRGB(50, 50, 50);
+static constexpr SkColor Shadow        = SkColorSetARGB(0, 0, 0, 100);
 } // namespace DarkTheme
 
 // Light Theme Colors
@@ -25,6 +27,8 @@ static constexpr SkColor TextPrimary   = SkColorSetRGB(30, 30, 30);
 static constexpr SkColor TextSecondary = SkColorSetRGB(100, 100, 100);
 static constexpr SkColor HoverOverlay  = SkColorSetARGB(30, 0, 0, 0);
 static constexpr SkColor Card          = SkColorSetARGB(100, 255, 255, 255);
+static constexpr SkColor Border        = SkColorSetRGB(200, 200, 200);
+static constexpr SkColor Shadow        = SkColorSetARGB(0, 0, 0, 40);
 } // namespace LightTheme
 
 // Active Theme - defaults to Dark, can be switched at runtime
@@ -37,6 +41,8 @@ inline SkColor TextPrimary   = DarkTheme::TextPrimary;
 inline SkColor TextSecondary = DarkTheme::TextSecondary;
 inline SkColor HoverOverlay  = DarkTheme::HoverOverlay;
 inline SkColor Card          = DarkTheme::Card;
+inline SkColor Border        = DarkTheme::Border;
+inline SkColor Shadow        = DarkTheme::Shadow;
 } // namespace Theme
 
 } // namespace MochiUI

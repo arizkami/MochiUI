@@ -18,3 +18,5 @@
 #include <include/gui/Components/ColorPicker.hpp>
 #include <include/gui/Components/Calendar.hpp>
 #include <include/gui/Components/IconNode.hpp>
+#include <include/gui/Components/DatePicker.hpp>
+#include <include/gui/Components/Popover.hpp>

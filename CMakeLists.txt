@@ -108,6 +108,8 @@ set(MOCHIKIT_SOURCES
     src/gui/Components/ColorPicker.cpp
     src/gui/Components/Calendar.cpp
     src/gui/Components/IconNode.cpp
+    src/gui/Components/DatePicker.cpp
+    src/gui/Components/Popover.cpp
     src/platform/windows/Window.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp

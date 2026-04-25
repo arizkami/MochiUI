@@ -7,6 +7,7 @@
 #include <include/utils/Misc/ThemeSwitcher.hpp>
 #include <include/core/Application.hpp>
 #include <include/platform/windows/Window.hpp>
+#include <include/utils/Misc/FileDialog.hpp>
 
 #include <BinaryResources.hpp>
 
@@ -206,15 +207,59 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
     pickersRow->addChild(cpSection);
 
     auto calSection = std::make_shared<GroupBox>();
-    calSection->title = "Calendar";
+    calSection->title = "Date Picker";
     calSection->style.setPadding(20);
     calSection->style.backgroundColor = Theme::Card;
     calSection->style.borderRadius = 8;
-    calSection->addChild(std::make_shared<Calendar>());
+    calSection->addChild(std::make_shared<DatePicker>());
     calSection->style.setFlex(1.0f);
     pickersRow->addChild(calSection);
 
     mainContent->addChild(pickersRow);
+
+    // 4. Dialogs Section
+    auto dialogSection = std::make_shared<GroupBox>();
+    dialogSection->title = "System Dialogs";
+    dialogSection->style.setPadding(20);
+    dialogSection->style.setGap(15);
+    dialogSection->style.backgroundColor = Theme::Card;
+    dialogSection->style.borderRadius = 8;
+
+    auto dialogButtons = FlexNode::Row();
+    dialogButtons->style.setGap(10);
+
+    auto btnOpen = std::make_shared<ButtonNode>();
+    btnOpen->label = "Open File";
+    btnOpen->onClick = []() {
+        auto path = FileDialog::OpenFile(GetActiveWindow(), L"Select a file", {{L"Text Files", L"*.txt"}, {L"All Files", L"*.*"}});
+        if (!path.empty()) {
+            ConfirmationDialog::showMessage(GetActiveWindow(), L"File Selected", path);
+        }
+    };
+    dialogButtons->addChild(btnOpen);
+
+    auto btnSave = std::make_shared<ButtonNode>();
+    btnSave->label = "Save File";
+    btnSave->onClick = []() {
+        auto path = FileDialog::SaveFile(GetActiveWindow(), L"Save as...", {{L"JSON Files", L"*.json"}}, L"json");
+        if (!path.empty()) {
+            ConfirmationDialog::showMessage(GetActiveWindow(), L"File Saved", path);
+        }
+    };
+    dialogButtons->addChild(btnSave);
+
+    auto btnFolder = std::make_shared<ButtonNode>();
+    btnFolder->label = "Select Folder";
+    btnFolder->onClick = []() {
+        auto path = FileDialog::SelectFolder(GetActiveWindow(), L"Choose a directory");
+        if (!path.empty()) {
+            ConfirmationDialog::showMessage(GetActiveWindow(), L"Folder Selected", path);
+        }
+    };
+    dialogButtons->addChild(btnFolder);
+
+    dialogSection->addChild(dialogButtons);
+    mainContent->addChild(dialogSection);
 
     auto scrollArea = std::make_shared<ScrollAreaNode>();
     scrollArea->style.setFlex(1.0f);

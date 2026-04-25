@@ -297,20 +297,24 @@ void Win32Window::onSize(int w, int h) {
 
     resizeBuffers(w, h);
 
-    if (root) {
+    if (overlayRoot) {
         if (menuBar && menuBar->getLayoutNode()) {
             if (!masterRoot) {
                 masterRoot = FlexNode::Column();
-                masterRoot->style.setFlex(1.0f);
-                root->style.setFlex(1.0f);
-                masterRoot->addChild(menuBar->getLayoutNode());
-                masterRoot->addChild(root);
+                masterRoot->style.setWidthPercent(100.0f);
+                masterRoot->style.setHeightPercent(100.0f);
+                
+                auto contentWrapper = FlexNode::Column();
+                contentWrapper->style.setFlex(1.0f);
+                contentWrapper->addChild(menuBar->getLayoutNode());
+                if (root) contentWrapper->addChild(root);
+                
+                overlayRoot->setMainContent(contentWrapper);
             }
-            masterRoot->calculateLayout(SkRect::MakeWH((float)w, (float)h));
         } else {
-            masterRoot = nullptr;
-            root->calculateLayout(SkRect::MakeWH((float)w, (float)h));
+            if (root) overlayRoot->setMainContent(root);
         }
+        overlayRoot->calculateLayout(SkRect::MakeWH((float)w, (float)h));
     }
     
     // Synchronous paint to reduce jitter during resize
@@ -318,7 +322,7 @@ void Win32Window::onSize(int w, int h) {
 }
 
 void Win32Window::onPaint() {
-    if (!root || !grContext || frames.empty()) return;
+    if (!overlayRoot || !grContext || frames.empty()) return;
     
     currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
     if (currentFrameIndex >= frames.size()) return;
@@ -331,11 +335,7 @@ void Win32Window::onPaint() {
     
     canvas->clear(SK_ColorTRANSPARENT);
 
-    if (masterRoot) {
-        masterRoot->draw(canvas);
-    } else {
-        root->draw(canvas);
-    }
+    overlayRoot->draw(canvas);
 
     grContext->flush(surface.get());
     grContext->submit();
@@ -351,8 +351,7 @@ void Win32Window::onPaint() {
     // Ideally we'd detect if we are in a resize loop.
     swapChain->Present(1, 0);
 
-    FlexNode::Ptr effectiveRoot = masterRoot ? masterRoot : root;
-    if (effectiveRoot && effectiveRoot->needsRedraw()) {
+    if (overlayRoot->needsRedraw()) {
         InvalidateRect(hwnd, NULL, FALSE);
     }
 
@@ -371,6 +370,12 @@ void Win32Window::onPaint() {
 void Win32Window::run() {
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
+    
+    // Initial layout
+    RECT rect;
+    GetClientRect(hwnd, &rect);
+    onSize(rect.right - rect.left, rect.bottom - rect.top);
+
     MSG msg = {};
     while (GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -381,10 +386,7 @@ void Win32Window::run() {
 LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     Win32Window* win = (Win32Window*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     
-    FlexNode::Ptr effectiveRoot = nullptr;
-    if (win) {
-        effectiveRoot = win->masterRoot ? win->masterRoot : win->root;
-    }
+    FlexNode::Ptr effectiveRoot = win ? win->overlayRoot : nullptr;
 
     switch (msg) {
         case WM_ERASEBKGND:

@@ -93,6 +93,8 @@ static constexpr SkColor TextPrimary   = {get_sk_color(dark_data['text_primary']
 static constexpr SkColor TextSecondary = {get_sk_color(dark_data['text_secondary'])};
 static constexpr SkColor HoverOverlay  = {get_sk_color(dark_data['hover_overlay'])};
 static constexpr SkColor Card          = {get_sk_color(dark_data['card'])};
+static constexpr SkColor Border        = {get_sk_color(dark_data.get('border', [50, 50, 50]))};
+static constexpr SkColor Shadow        = {get_sk_color(dark_data.get('shadow', [0, 0, 0, 100]))};
 }} // namespace DarkTheme
 
 // Light Theme Colors
@@ -105,6 +107,8 @@ static constexpr SkColor TextPrimary   = {get_sk_color(light_data['text_primary'
 static constexpr SkColor TextSecondary = {get_sk_color(light_data['text_secondary'])};
 static constexpr SkColor HoverOverlay  = {get_sk_color(light_data['hover_overlay'])};
 static constexpr SkColor Card          = {get_sk_color(light_data['card'])};
+static constexpr SkColor Border        = {get_sk_color(light_data.get('border', [200, 200, 200]))};
+static constexpr SkColor Shadow        = {get_sk_color(light_data.get('shadow', [0, 0, 0, 40]))};
 }} // namespace LightTheme
 
 // Active Theme - defaults to Dark, can be switched at runtime
@@ -117,6 +121,8 @@ inline SkColor TextPrimary   = DarkTheme::TextPrimary;
 inline SkColor TextSecondary = DarkTheme::TextSecondary;
 inline SkColor HoverOverlay  = DarkTheme::HoverOverlay;
 inline SkColor Card          = DarkTheme::Card;
+inline SkColor Border        = DarkTheme::Border;
+inline SkColor Shadow        = DarkTheme::Shadow;
 }} // namespace Theme
 
 }} // namespace MochiUI

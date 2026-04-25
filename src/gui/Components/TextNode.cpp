@@ -5,10 +5,14 @@ namespace MochiUI {
 
 Size TextNode::measure(Size available) {
     if (text.empty()) return { 0, 0 };
-    SkRect bounds;
-    FontManager::getInstance().measureText(text, fontSize, &bounds, fontFamily);
-    // Use ceil to avoid sub-pixel cropping
-    return { std::ceil(bounds.width()), std::ceil(bounds.height()) };
+    
+    float width = FontManager::getInstance().measureText(text, fontSize, nullptr, fontFamily);
+    
+    SkFontMetrics metrics;
+    FontManager::getInstance().getFontMetrics(fontSize, &metrics, fontFamily);
+    float height = std::abs(metrics.fAscent) + std::abs(metrics.fDescent);
+    
+    return { std::ceil(width), std::ceil(height) };
 }
 
 void TextNode::draw(SkCanvas* canvas) {
@@ -22,16 +26,21 @@ void TextNode::draw(SkCanvas* canvas) {
         SkFontMetrics metrics;
         FontManager::getInstance().getFontMetrics(fontSize, &metrics, fontFamily);
         
+        float textWidth = FontManager::getInstance().measureText(text, fontSize, nullptr, fontFamily);
         float x = frame.left() + style.padding;
         
-        // Center based on full font bounds (ascent + descent) for better balance
+        if (textAlign == TextAlign::Center) {
+            x = frame.left() + (frame.width() - textWidth) / 2.0f;
+        } else if (textAlign == TextAlign::Right) {
+            x = frame.right() - style.padding - textWidth;
+        }
+        
+        // Center based on font metrics for consistent baseline across different characters
         float y = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f;
         
-        // If we have fixed size or flex, we center horizontally. If it's hug, padding handles it.
-        if (style.widthMode != SizingMode::Hug) {
-            float textWidth = FontManager::getInstance().measureText(text, fontSize, nullptr, fontFamily);
-            x = frame.left() + (frame.width() - textWidth) / 2.0f;
-        }
+        // Round to nearest pixel to avoid sub-pixel blurring
+        x = std::round(x);
+        y = std::round(y);
         
         FontManager::getInstance().drawText(canvas, text, x, y, fontSize, paint, fontFamily);
     }

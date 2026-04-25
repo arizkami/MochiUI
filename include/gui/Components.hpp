@@ -17,3 +17,4 @@
 #include <include/gui/Components/Table.hpp>
 #include <include/gui/Components/ColorPicker.hpp>
 #include <include/gui/Components/Calendar.hpp>
+#include <include/gui/Components/IconNode.hpp>

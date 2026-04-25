@@ -8,6 +8,8 @@
 #include <include/core/Application.hpp>
 #include <include/platform/windows/Window.hpp>
 
+#include <BinaryResources.hpp>
+
 using namespace MochiUI;
 
 FlexNode::Ptr CreateAppUI(int width, int height) {
@@ -24,14 +26,30 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
     sidebar->style.setGap(5);
 
     for(int i=1; i<=8; ++i) {
-        auto item = std::make_shared<TextNode>();
-        item->text = "Mochi Item " + std::to_string(i);
+        auto item = FlexNode::Row();
         item->style.setHeight(35);
         item->style.setWidthFull();
+        item->style.setPadding(8);
+        item->style.setGap(12);
+        item->style.setAlignItems(YGAlignCenter);
         item->style.backgroundColor = Theme::Card;
         item->style.borderRadius = 6;
-        item->color = Theme::TextPrimary;
-        item->fontSize = 14;
+        item->enableHover = true;
+
+        auto icon = std::make_shared<IconNode>();
+        static const std::string icons[] = {"activity", "airplay", "alarm-clock", "apple", "archive", "award", "bell", "bookmark"};
+        icon->setIcon("res://" + icons[(i-1) % 8] + ".svg");
+        icon->color = Theme::Accent;
+        icon->style.setWidth(18);
+        icon->style.setHeight(18);
+        item->addChild(icon);
+
+        auto text = std::make_shared<TextNode>();
+        text->text = "Mochi Item " + std::to_string(i);
+        text->color = Theme::TextPrimary;
+        text->fontSize = 14;
+        item->addChild(text);
+
         sidebar->addChild(item);
     }
 
@@ -52,12 +70,52 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
     hugContainer->style.setPadding(10);
     hugContainer->style.borderRadius = 10;
     hugContainer->style.setGap(10);
+    hugContainer->style.setAlignItems(YGAlignCenter);
+
+    auto starIcon = std::make_shared<IconNode>();
+    starIcon->setIcon("res://sparkles.svg");
+    starIcon->color = SK_ColorWHITE;
+    starIcon->style.setWidth(20);
+    starIcon->style.setHeight(20);
+    hugContainer->addChild(starIcon);
 
     auto hugText = std::make_shared<TextNode>();
     hugText->text = "Yoga Layout v3.2 Engine";
-    hugText->color = Theme::TextPrimary;
+    hugText->color = SK_ColorWHITE;
     hugContainer->addChild(hugText);
     mainContent->addChild(hugContainer);
+
+    // Lucide Icons Preview
+    auto iconSection = std::make_shared<GroupBox>();
+    iconSection->title = "Lucide Icons Preview";
+    iconSection->style.setPadding(20);
+    iconSection->style.backgroundColor = Theme::Card;
+    iconSection->style.borderRadius = 8;
+
+    auto iconGrid = FlexNode::Row();
+    iconGrid->style.setGap(15);
+    iconGrid->style.setWidthFull();
+    iconGrid->style.flexWrap = YGWrapWrap;
+
+    static const std::vector<std::string> previewIcons = {
+        "camera", "cloud", "cpu", "database", "fingerprint-pattern", "flask-conical", "gift", 
+        "heart", "image", "key", "lamp", "languages", "map", "music", "palette", "phone",
+        "rocket", "scissors", "settings", "shopping-cart", "smartphone", "star", "sun", "trash-2",
+        "umbrella", "user", "video", "wifi", "zap"
+    };
+
+    for (const auto& iconName : previewIcons) {
+        auto icon = std::make_shared<IconNode>();
+        icon->setIcon("res://" + iconName + ".svg");
+        icon->color = Theme::TextSecondary;
+        icon->style.setWidth(24);
+        icon->style.setHeight(24);
+        icon->enableHover = true;
+        icon->onClick = [icon]() { icon->color = Theme::Accent; };
+        iconGrid->addChild(icon);
+    }
+    iconSection->addChild(iconGrid);
+    mainContent->addChild(iconSection);
 
     auto checkboxSection = std::make_shared<GroupBox>();
     checkboxSection->title = "Checkbox Components";
@@ -170,6 +228,7 @@ FlexNode::Ptr CreateAppUI(int width, int height) {
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     Application::getInstance().init();
+    InitBinaryResources();
     Win32Window window("MochiUI Explorer", 1280, 800);
     window.enableMica(true);
 

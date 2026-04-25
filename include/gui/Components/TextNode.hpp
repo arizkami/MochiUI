@@ -9,6 +9,8 @@
 
 namespace MochiUI {
 
+enum class TextAlign { Left, Center, Right };
+
 class TextNode : public FlexNode {
 public:
     TextNode() {
@@ -18,6 +20,7 @@ public:
     std::string fontFamily = FontManager::DEFAULT_FONT;
     SkColor color = Theme::TextPrimary;
     float fontSize = 16.0f;
+    TextAlign textAlign = TextAlign::Left;
 
     Size measure(Size available) override;
     void draw(SkCanvas* canvas) override;

@@ -42,6 +42,7 @@ public:
         flexDirection = (dir == YGFlexDirectionRow) ? FlexDirection::Row : FlexDirection::Column;
     }
     void setAlignItems(YGAlign align) { alignItems = (AlignItems)align; }
+    void setFlexWrap(YGWrap wrap) { flexWrap = wrap; }
 
     SkColor backgroundColor = SK_ColorTRANSPARENT;
     float borderRadius = 0;
@@ -83,6 +84,8 @@ public:
         else if (alignItems == AlignItems::FlexEnd) align = YGAlignFlexEnd;
         else if (alignItems == AlignItems::FlexStart) align = YGAlignFlexStart;
         YGNodeStyleSetAlignItems(node, align);
+
+        YGNodeStyleSetFlexWrap(node, flexWrap);
     }
 
     float width = 0;
@@ -93,6 +96,7 @@ public:
     float padding = 0;
     float margin = 0;
     float gap = 0;
+    YGWrap flexWrap = YGWrapNoWrap;
     SizingMode widthMode = SizingMode::Hug;
     SizingMode heightMode = SizingMode::Hug;
     FlexDirection flexDirection = FlexDirection::Column;

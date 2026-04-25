@@ -91,6 +91,7 @@ set(YOGA_SOURCES
 set(MOCHIKIT_SOURCES
     ${YOGA_SOURCES}
     src/core/Application.cpp
+    src/core/ResourceManager.cpp
     src/gui/MochiUI.cpp
     src/gui/MenuBar.cpp
     src/gui/Components/TextNode.cpp
@@ -106,16 +107,39 @@ set(MOCHIKIT_SOURCES
     src/gui/Components/Table.cpp
     src/gui/Components/ColorPicker.cpp
     src/gui/Components/Calendar.cpp
+    src/gui/Components/IconNode.cpp
     src/platform/windows/Window.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp
 )
 
-# Create MochiKit static library
-add_library(MochiKit STATIC ${MOCHIKIT_SOURCES})
+# Resource Generation
+find_package(Python3 REQUIRED)
+set(RESOURCES_XML ${CMAKE_CURRENT_SOURCE_DIR}/example/shared/resources/resrouces.xml)
+set(GENERATED_RESOURCES_H ${CMAKE_CURRENT_BINARY_DIR}/generated/BinaryResources.hpp)
+set(GENERATED_RESOURCES_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/BinaryResources.cpp)
 
-# MochiKit compile definitions
-target_compile_definitions(MochiKit PUBLIC
+add_custom_command(
+    OUTPUT ${GENERATED_RESOURCES_H} ${GENERATED_RESOURCES_CPP}
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_resources.py ${RESOURCES_XML} ${GENERATED_RESOURCES_H} ${GENERATED_RESOURCES_CPP}
+    DEPENDS ${RESOURCES_XML} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_resources.py
+    COMMENT "Generating binary resources from ${RESOURCES_XML}"
+)
+
+# Add generated directory to includes
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/generated)
+
+# Create MochiKit shared library
+add_library(MochiKit SHARED ${MOCHIKIT_SOURCES} ${GENERATED_RESOURCES_H} ${GENERATED_RESOURCES_CPP})
+set_target_properties(MochiKit PROPERTIES 
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
+
+# Create MochiKit static library
+add_library(MochiKitStatic STATIC ${MOCHIKIT_SOURCES})
+
+# Common compile definitions
+set(MOCHIKIT_DEFINITIONS
     SKIA_STATIC
     SK_RELEASE
     SK_D3D
@@ -125,9 +149,11 @@ target_compile_definitions(MochiKit PUBLIC
     WIN32_LEAN_AND_MEAN
 )
 
-# MochiKit link libraries
-target_link_libraries(MochiKit
-    PUBLIC
+target_compile_definitions(MochiKit PUBLIC ${MOCHIKIT_DEFINITIONS})
+target_compile_definitions(MochiKitStatic PUBLIC ${MOCHIKIT_DEFINITIONS})
+
+# Common link libraries
+set(MOCHIKIT_LIBS
     ${SKIA_LIB_DIR}/skia.lib
     ${SKIA_LIB_DIR}/libpng.lib
     ${SKIA_LIB_DIR}/zlib.lib
@@ -149,13 +175,16 @@ target_link_libraries(MochiKit
     Psapi.lib
 )
 
+target_link_libraries(MochiKit PUBLIC ${MOCHIKIT_LIBS})
+target_link_libraries(MochiKitStatic PUBLIC ${MOCHIKIT_LIBS})
+
 # MochiExample executable
 add_executable(MochiExample WIN32 
     example/main.cpp
     example/app.rc
 )
 
-# Link MochiExample with MochiKit
+# Link MochiExample with MochiKit (Dynamic)
 target_link_libraries(MochiExample
     PRIVATE
     MochiKit

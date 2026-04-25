@@ -6,6 +6,7 @@ namespace MochiUI {
 TableHead::TableHead() {
     style.setFlexDirection(YGFlexDirectionRow);
     style.setHeight(32.0f);
+    style.setAlignItems(YGAlignCenter);
     style.backgroundColor = SkColorSetA(Theme::TextSecondary, 30);
 }
 

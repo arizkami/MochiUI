@@ -8,7 +8,9 @@ namespace MochiUI {
 enum class ThemeType {
     Auto,   // Automatically detect from Windows
     Dark,
-    Light
+    Light,
+    System,
+    Minimal
 };
 
 class ThemeSwitcher {

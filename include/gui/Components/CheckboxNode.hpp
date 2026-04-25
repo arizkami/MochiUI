@@ -15,6 +15,7 @@ class CheckboxNode : public FlexNode {
 public:
     CheckboxNode() {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+        enableHover = true;
     }
     std::string label;
     bool checked = false;

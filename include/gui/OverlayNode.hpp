@@ -9,7 +9,16 @@ public:
     OverlayNode() {
         style.setWidthPercent(100.0f);
         style.setHeightPercent(100.0f);
-        style.setPositionType(YGPositionTypeStatic);
+        
+        toastLayer = FlexNode::Create();
+        toastLayer->style.setWidthPercent(100.0f);
+        toastLayer->style.setHeightPercent(100.0f);
+        toastLayer->style.setPositionType(YGPositionTypeAbsolute);
+        toastLayer->style.setPadding(20);
+        toastLayer->style.setAlignItems(YGAlignFlexEnd); // Toast to the right/bottom
+        
+        // Children will be added to specific layers
+        addChild(toastLayer);
     }
 
     void setMainContent(FlexNode::Ptr content) {
@@ -18,7 +27,10 @@ public:
         if (mainContent) {
             mainContent->style.setWidthPercent(100.0f);
             mainContent->style.setHeightPercent(100.0f);
-            addChild(mainContent);
+            // Insert at index 0 to be behind everything
+            children.insert(children.begin(), mainContent);
+            YGNodeInsertChild(getYGNode(), mainContent->getYGNode(), 0);
+            mainContent->parent = this;
         }
     }
 
@@ -30,18 +42,17 @@ public:
         removeChild(overlay);
     }
 
-    // Capture all clicks that don't hit an overlay to close them?
+    void addToast(FlexNode::Ptr toast) {
+        toastLayer->addChild(toast);
+    }
+
     bool onMouseDown(float x, float y) override {
-        bool handled = FlexNode::onMouseDown(x, y);
-        // If not handled by any child (overlay), we might want to close overlays
-        if (!handled) {
-            // Close logic could go here
-        }
-        return handled;
+        return FlexNode::onMouseDown(x, y);
     }
 
 private:
     FlexNode::Ptr mainContent;
+    FlexNode::Ptr toastLayer;
 };
 
 } // namespace MochiUI

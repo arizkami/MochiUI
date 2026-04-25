@@ -26,7 +26,7 @@ void CheckboxNode::draw(SkCanvas* canvas) {
 
     drawSelf(canvas);
 
-    float checkboxX = frame.left() + style.padding;
+    float checkboxX = frame.left() + getLayoutPadding(YGEdgeLeft);
     float checkboxY = frame.centerY() - checkboxSize / 2;
 
     SkRect checkboxRect = SkRect::MakeXYWH(checkboxX, checkboxY, checkboxSize, checkboxSize);
@@ -34,10 +34,10 @@ void CheckboxNode::draw(SkCanvas* canvas) {
     SkPaint boxPaint;
     boxPaint.setAntiAlias(true);
     boxPaint.setStyle(SkPaint::kStroke_Style);
-    boxPaint.setStrokeWidth(2.0f);
-    boxPaint.setColor(isHovered ? checkboxColor : SkColorSetA(checkboxColor, 180));
+    boxPaint.setStrokeWidth(Theme::BorderWidth);
+    boxPaint.setColor(checked ? checkboxColor : (isHovered ? checkboxColor : Theme::Border));
 
-    float radius = 4.0f;
+    float radius = std::min(4.0f, Theme::BorderRadius);
     canvas->drawRoundRect(checkboxRect, radius, radius, boxPaint);
 
     if (checked) {

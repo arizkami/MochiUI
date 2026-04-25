@@ -5,7 +5,7 @@ namespace MochiUI {
 
 
 Size ComboBox::measure(Size available) {
-    return { 0, 0 };
+    return { 150.0f, Theme::ControlHeight };
 }
 
 
@@ -37,8 +37,8 @@ void ComboBox::draw(SkCanvas* canvas) {
                               ? items[selectedIndex] : placeholder;
     
     FontManager::getInstance().drawText(canvas, currentText, 
-                                        frame.left() + style.padding, frame.centerY() + 5.0f, 
-                                        14.0f, textPaint);
+                                        frame.left() + getLayoutPadding(YGEdgeLeft), frame.centerY() + 5.0f, 
+                                        fontSize, textPaint);
 
     // 3. Draw Arrow
     SkPaint arrowPaint;
@@ -91,8 +91,8 @@ void ComboBox::draw(SkCanvas* canvas) {
             // Item text
             textPaint.setColor(textColor);
             FontManager::getInstance().drawText(canvas, items[i], 
-                                                itemRect.left() + style.padding, itemRect.centerY() + 5.0f, 
-                                                14.0f, textPaint);
+                                                itemRect.left() + getLayoutPadding(YGEdgeLeft), itemRect.centerY() + 5.0f, 
+                                                fontSize, textPaint);
         }
     }
 }

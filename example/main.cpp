@@ -1,297 +1,121 @@
-#include <include/gui/MochiUI.h>
-#include <include/gui/Layout.hpp>
-#include <include/gui/Components.hpp>
-#include <include/gui/Theme.hpp>
-#include <include/gui/ConfirmationDialog.hpp>
-#include <include/utils/FontManager/FontMgr.hpp>
-#include <include/utils/Misc/ThemeSwitcher.hpp>
 #include <include/core/Application.hpp>
+#include <include/gui/Components.hpp>
+#include <include/gui/Layout.hpp>
+#include <include/gui/MochiUI.h>
+#include <include/gui/Theme.hpp>
 #include <include/platform/windows/Window.hpp>
-#include <include/utils/Misc/FileDialog.hpp>
-
-#include <BinaryResources.hpp>
+#include <include/utils/Misc/ThemeSwitcher.hpp>
 
 using namespace MochiUI;
 
-FlexNode::Ptr CreateAppUI(int width, int height) {
-    auto root = FlexNode::Row();
-    root->style.backgroundColor = Theme::Background;
-    root->style.setWidthFull();
-    root->style.setHeightFull();
+FlexNode::Ptr CreateHelloWorldUI() {
+  auto root = FlexNode::Column();
+  root->style.backgroundColor = Theme::Background;
+  root->style.setWidthFull();
+  root->style.setHeightFull();
+  root->style.setPadding(20);
+  root->style.setGap(20);
 
-    auto sidebar = FlexNode::Column();
-    sidebar->style.setWidth(250);
-    sidebar->style.setHeightFull();
-    sidebar->style.backgroundColor = Theme::Sidebar;
-    sidebar->style.setPadding(10);
-    sidebar->style.setGap(5);
+  // 1. Header
+  auto header = std::make_shared<TextNode>("MochiUI Typography Test");
+  header->fontSize = Theme::FontHeader;
+  header->color = Theme::Accent;
+  header->textAlign = TextAlign::Left;
+  header->style.setPadding(10, 5);
+  root->addChild(header);
 
-    for(int i=1; i<=8; ++i) {
-        auto item = FlexNode::Row();
-        item->style.setHeight(35);
-        item->style.setWidthFull();
-        item->style.setPadding(8);
-        item->style.setGap(12);
-        item->style.setAlignItems(YGAlignCenter);
-        item->style.backgroundColor = Theme::Card;
-        item->style.borderRadius = 6;
-        item->enableHover = true;
+  // 2. Multi-language Section
+  auto typoSection = std::make_shared<GroupBox>();
+  typoSection->title = "Multi-Language Support (Left Aligned with Padding)";
+  typoSection->style.setPadding(20);
+  typoSection->style.setGap(10);
+  typoSection->style.backgroundColor = Theme::Card;
+  typoSection->style.setWidthFull();
 
-        auto icon = std::make_shared<IconNode>();
-        static const std::string icons[] = {"activity", "airplay", "alarm-clock", "apple", "archive", "award", "bell", "bookmark"};
-        icon->setIcon("res://" + icons[(i-1) % 8] + ".svg");
-        icon->color = Theme::Accent;
-        icon->style.setWidth(18);
-        icon->style.setHeight(18);
-        item->addChild(icon);
+  auto addTypoSample = [&](std::string lang, std::string text, float size = Theme::FontNormal) {
+    auto row = FlexNode::Row();
+    row->style.setWidthFull();
+    row->style.setHeight(Theme::ControlHeight + 10); // Fixed row height for better centering
+    row->style.setGap(15);
+    row->style.setAlignItems(YGAlignCenter); // Vertical center items in row
 
-        auto text = std::make_shared<TextNode>();
-        text->text = "Mochi Item " + std::to_string(i);
-        text->color = Theme::TextPrimary;
-        text->fontSize = 14;
-        item->addChild(text);
+    auto label = std::make_shared<TextNode>(lang + ":");
+    label->style.setWidth(100);
+    label->color = Theme::TextSecondary;
+    label->fontSize = Theme::FontSmall;
+    label->textAlign = TextAlign::Left; // Revert to Left
+    row->addChild(label);
 
-        sidebar->addChild(item);
-    }
+    auto sample = std::make_shared<TextNode>(text);
+    sample->fontSize = size;
+    sample->color = Theme::TextPrimary;
+    sample->textAlign = TextAlign::Left;
+    // Test padding within the TextNode itself
+    sample->style.setPadding(15, 5); 
+    sample->style.backgroundColor = SkColorSetA(Theme::Accent, 20); // Show padding area
+    sample->style.setFlex(1.0f); // Make the box flexible
+    row->addChild(sample);
 
-    auto mainContent = FlexNode::Column();
-    mainContent->style.setFlex(1.0f);
-    mainContent->style.setPadding(40);
-    mainContent->style.setGap(20);
+    typoSection->addChild(row);
+  };
 
-    auto header = std::make_shared<TextNode>();
-    header->text = "MochiUI Framework";
-    header->style.setPadding(5);
-    header->color = Theme::TextPrimary;
-    header->fontSize = 42;
-    mainContent->addChild(header);
+  addTypoSample("English", "The quick brown fox jumps over the lazy dog.");
+  addTypoSample("Thai", "สวัสดีชาวโลก! นี่คือการทดสอบภาษาไทยใน MochiUI", Theme::FontMedium);
+  addTypoSample("Japanese", "こんにちは世界！これは日本語のテストです。", Theme::FontMedium);
+  addTypoSample("Arabic", "مرحبا بالعالم! هذا اختبار للغة العربية", Theme::FontMedium);
+  addTypoSample("Emoji", "🚀 🦀 🦄 🌈 🍕 🍦 🎸 ⚡️", Theme::FontLarge);
 
-    auto hugContainer = FlexNode::Row();
-    hugContainer->style.backgroundColor = Theme::Accent;
-    hugContainer->style.setPadding(10);
-    hugContainer->style.borderRadius = 10;
-    hugContainer->style.setGap(10);
-    hugContainer->style.setAlignItems(YGAlignCenter);
+  root->addChild(typoSection);
 
-    auto starIcon = std::make_shared<IconNode>();
-    starIcon->setIcon("res://sparkles.svg");
-    starIcon->color = SK_ColorWHITE;
-    starIcon->style.setWidth(20);
-    starIcon->style.setHeight(20);
-    hugContainer->addChild(starIcon);
+  // 3. Alignment Test
+  auto alignSection = std::make_shared<GroupBox>();
+  alignSection->title = "Alignment Tests";
+  alignSection->style.setPadding(20);
+  alignSection->style.setGap(10);
+  alignSection->style.backgroundColor = Theme::Card;
 
-    auto hugText = std::make_shared<TextNode>();
-    hugText->text = "Yoga Layout v3.2 Engine";
-    hugText->color = SK_ColorWHITE;
-    hugContainer->addChild(hugText);
-    mainContent->addChild(hugContainer);
+  auto leftText = std::make_shared<TextNode>("Left Aligned Text");
+  leftText->textAlign = TextAlign::Left;
+  leftText->style.setWidthFull();
+  leftText->style.backgroundColor = SkColorSetA(SK_ColorBLACK, 30);
+  alignSection->addChild(leftText);
 
-    // Lucide Icons Preview
-    auto iconSection = std::make_shared<GroupBox>();
-    iconSection->title = "Lucide Icons Preview";
-    iconSection->style.setPadding(20);
-    iconSection->style.backgroundColor = Theme::Card;
-    iconSection->style.borderRadius = 8;
+  auto centerText = std::make_shared<TextNode>("Center Aligned Text");
+  centerText->textAlign = TextAlign::Center;
+  centerText->style.setWidthFull();
+  centerText->style.backgroundColor = SkColorSetA(SK_ColorBLACK, 30);
+  alignSection->addChild(centerText);
 
-    auto iconGrid = FlexNode::Row();
-    iconGrid->style.setGap(15);
-    iconGrid->style.setWidthFull();
-    iconGrid->style.flexWrap = YGWrapWrap;
+  auto rightText = std::make_shared<TextNode>("Right Aligned Text");
+  rightText->textAlign = TextAlign::Right;
+  rightText->style.setWidthFull();
+  rightText->style.backgroundColor = SkColorSetA(SK_ColorBLACK, 30);
+  alignSection->addChild(rightText);
 
-    static const std::vector<std::string> previewIcons = {
-        "camera", "cloud", "cpu", "database", "fingerprint-pattern", "flask-conical", "gift", 
-        "heart", "image", "key", "lamp", "languages", "map", "music", "palette", "phone",
-        "rocket", "scissors", "settings", "shopping-cart", "smartphone", "star", "sun", "trash-2",
-        "umbrella", "user", "video", "wifi", "zap"
-    };
+  root->addChild(alignSection);
 
-    for (const auto& iconName : previewIcons) {
-        auto icon = std::make_shared<IconNode>();
-        icon->setIcon("res://" + iconName + ".svg");
-        icon->color = Theme::TextSecondary;
-        icon->style.setWidth(24);
-        icon->style.setHeight(24);
-        icon->enableHover = true;
-        icon->onClick = [icon]() { icon->color = Theme::Accent; };
-        iconGrid->addChild(icon);
-    }
-    iconSection->addChild(iconGrid);
-    mainContent->addChild(iconSection);
-
-    auto checkboxSection = std::make_shared<GroupBox>();
-    checkboxSection->title = "Checkbox Components";
-    checkboxSection->style.setPadding(20);
-    checkboxSection->style.setGap(12);
-    checkboxSection->style.backgroundColor = Theme::Card;
-    checkboxSection->style.borderRadius = 8;
-
-    auto createCB = [](std::string label, bool checked) {
-        auto cb = std::make_shared<CheckboxNode>();
-        cb->label = label;
-        cb->checked = checked;
-        cb->style.setPadding(4);
-        return cb;
-    };
-    checkboxSection->addChild(createCB("Enable dark mode", true));
-    checkboxSection->addChild(createCB("Show notifications", false));
-    checkboxSection->addChild(createCB("Auto-save changes", true));
-    mainContent->addChild(checkboxSection);
-
-    auto sliderSection = FlexNode::Column();
-    sliderSection->style.setPadding(20);
-    sliderSection->style.setGap(12);
-    
-    auto slider1 = std::make_shared<SliderNode>();
-    slider1->style.setWidth(400);
-    slider1->style.setHeight(30);
-    sliderSection->addChild(slider1);
-    mainContent->addChild(sliderSection);
-
-    // --- New Components Section ---
-
-    // 1. Inputs Section
-    auto inputSection = std::make_shared<GroupBox>();
-    inputSection->title = "Input Fields";
-    inputSection->style.setPadding(20);
-    inputSection->style.setGap(15);
-    inputSection->style.backgroundColor = Theme::Card;
-    inputSection->style.borderRadius = 8;
-
-    auto textInput = std::make_shared<TextInput>();
-    textInput->placeholder = "Enter your name...";
-    textInput->style.setWidth(300);
-    inputSection->addChild(textInput);
-
-    auto numInput = std::make_shared<NumberInput>();
-    numInput->value = 42.0;
-    numInput->style.setWidth(150);
-    inputSection->addChild(numInput);
-
-    mainContent->addChild(inputSection);
-
-    // 2. Table Section
-    auto tableSection = std::make_shared<GroupBox>();
-    tableSection->title = "Data Table";
-    tableSection->style.setPadding(20);
-    tableSection->style.backgroundColor = Theme::Card;
-    tableSection->style.borderRadius = 8;
-
-    auto table = std::make_shared<Table>();
-    auto head = std::make_shared<TableHead>();
-    head->addColumn("ID", 50);
-    head->addColumn("Product", 200);
-    head->addColumn("Price", 100);
-    head->addColumn("Status", -1); // flex
-    table->setHeader(head);
-
-    table->addRow({"001", "Mochi Pro Laptop", "$1,299", "In Stock"});
-    table->addRow({"002", "Yoga Wireless Mouse", "$45", "Low Stock"});
-    table->addRow({"003", "Skia Graphics Tablet", "$299", "Out of Stock"});
-    
-    table->style.setWidthFull();
-    tableSection->addChild(table);
-    mainContent->addChild(tableSection);
-
-    // 3. Pickers Section (Side by side)
-    auto pickersRow = FlexNode::Row();
-    pickersRow->style.setGap(20);
-    pickersRow->style.setWidthFull();
-
-    auto cpSection = std::make_shared<GroupBox>();
-    cpSection->title = "Color Picker";
-    cpSection->style.setPadding(20);
-    cpSection->style.backgroundColor = Theme::Card;
-    cpSection->style.borderRadius = 8;
-    cpSection->addChild(std::make_shared<ColorPicker>());
-    cpSection->style.setFlex(1.0f);
-    pickersRow->addChild(cpSection);
-
-    auto calSection = std::make_shared<GroupBox>();
-    calSection->title = "Date Picker";
-    calSection->style.setPadding(20);
-    calSection->style.backgroundColor = Theme::Card;
-    calSection->style.borderRadius = 8;
-    calSection->addChild(std::make_shared<DatePicker>());
-    calSection->style.setFlex(1.0f);
-    pickersRow->addChild(calSection);
-
-    mainContent->addChild(pickersRow);
-
-    // 4. Dialogs Section
-    auto dialogSection = std::make_shared<GroupBox>();
-    dialogSection->title = "System Dialogs";
-    dialogSection->style.setPadding(20);
-    dialogSection->style.setGap(15);
-    dialogSection->style.backgroundColor = Theme::Card;
-    dialogSection->style.borderRadius = 8;
-
-    auto dialogButtons = FlexNode::Row();
-    dialogButtons->style.setGap(10);
-
-    auto btnOpen = std::make_shared<ButtonNode>();
-    btnOpen->label = "Open File";
-    btnOpen->onClick = []() {
-        auto path = FileDialog::OpenFile(GetActiveWindow(), L"Select a file", {{L"Text Files", L"*.txt"}, {L"All Files", L"*.*"}});
-        if (!path.empty()) {
-            ConfirmationDialog::showMessage(GetActiveWindow(), L"File Selected", path);
-        }
-    };
-    dialogButtons->addChild(btnOpen);
-
-    auto btnSave = std::make_shared<ButtonNode>();
-    btnSave->label = "Save File";
-    btnSave->onClick = []() {
-        auto path = FileDialog::SaveFile(GetActiveWindow(), L"Save as...", {{L"JSON Files", L"*.json"}}, L"json");
-        if (!path.empty()) {
-            ConfirmationDialog::showMessage(GetActiveWindow(), L"File Saved", path);
-        }
-    };
-    dialogButtons->addChild(btnSave);
-
-    auto btnFolder = std::make_shared<ButtonNode>();
-    btnFolder->label = "Select Folder";
-    btnFolder->onClick = []() {
-        auto path = FileDialog::SelectFolder(GetActiveWindow(), L"Choose a directory");
-        if (!path.empty()) {
-            ConfirmationDialog::showMessage(GetActiveWindow(), L"Folder Selected", path);
-        }
-    };
-    dialogButtons->addChild(btnFolder);
-
-    dialogSection->addChild(dialogButtons);
-    mainContent->addChild(dialogSection);
-
-    auto scrollArea = std::make_shared<ScrollAreaNode>();
-    scrollArea->style.setFlex(1.0f);
-    scrollArea->style.backgroundColor = Theme::Background;
-    scrollArea->setContent(mainContent);
-
-    root->addChild(sidebar);
-    root->addChild(scrollArea);
-    return root;
+  return root;
 }
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    Application::getInstance().init();
-    InitBinaryResources();
-    Win32Window window("MochiUI Explorer", 1280, 800);
-    window.enableMica(true);
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
+                   int nCmdShow) {
+  Application::getInstance().init();
 
-    auto menuBar = MenuBarFactory::Create(MenuBackend::Skia);
-    menuBar->addMenu("File", {
-        { "Exit", 103, []() { PostQuitMessage(0); } }
-    });
-    menuBar->addMenu("Help", {
-        { "Test Dialog", 201, []() { 
-            ConfirmationDialog::showWarning(GetActiveWindow(), L"Warning", L"This is a test warning.", L"Do you want to proceed?");
-        } },
-        { "About MochiUI", 202, []() {
-            ConfirmationDialog::showMessage(GetActiveWindow(), L"About", L"MochiUI Explorer v1.0", L"A high-performance UI framework powered by Skia and Yoga Layout.");
-        } }
-    });
-    window.setMenuBar(std::move(menuBar));
+  Win32Window window("MochiUI Typography Test", 1024, 768);
+  window.enableMica(true);
 
-    window.setRoot(CreateAppUI(1280, 800));
-    window.run();
-    return 0;
+  auto menuBar = MenuBarFactory::Create(MenuBackend::Skia);
+  menuBar->addMenu("File", {{"Exit", 103, []() { PostQuitMessage(0); }}});
+
+  menuBar->addMenu("View", {{"Light Theme", 201, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Light); }},
+                            {"Dark Theme", 202, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Dark); }},
+                            {"System Theme", 203, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::System); }},
+                            {"Minimal Theme", 204, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Minimal); }}});
+
+  window.setMenuBar(std::move(menuBar));
+
+  window.setRoot(CreateHelloWorldUI());
+  window.run();
+
+  return 0;
 }

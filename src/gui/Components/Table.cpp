@@ -63,10 +63,13 @@ void Table::addRow(const std::vector<std::string>& cells) {
     }
     
     // Add hover highlight to row
-    row->style.borderRadius = 4.0f;
+    row->style.borderRadius = 0.0f;
     row->enableHover = true;
     if (header) {
         for (size_t i = 0; i < cells.size() && i < header->children.size(); ++i) {
+            auto headCol = header->children[i];
+            if (!headCol) continue;
+
             auto cell = std::make_shared<TextNode>();
             cell->text = cells[i];
             cell->fontSize = 13.0f;
@@ -75,7 +78,6 @@ void Table::addRow(const std::vector<std::string>& cells) {
             cell->style.setPadding(8.0f);
             
             // Match width/flex of header column
-            auto headCol = header->children[i];
             if (headCol->style.widthMode == SizingMode::Fixed) {
                 cell->style.setWidth(headCol->style.width);
             } else {

@@ -42,8 +42,8 @@ namespace {
 
 
 Size TextInput::measure(Size available) {
-    float h = fontSize + style.padding * 2.0f + 10.0f;
-    float w = 150.0f; // Default width
+    float h = Theme::ControlHeight;
+    float w = (style.widthMode == SizingMode::Fixed) ? style.width : 150.0f;
     return { w, h };
 }
 
@@ -70,7 +70,7 @@ void TextInput::deleteSelection() {
 }
 
 size_t TextInput::getCursorIndexFromPosition(float x) {
-    float relX = x - (frame.left() + style.padding);
+    float relX = x - (frame.left() + getLayoutPadding(YGEdgeLeft));
     size_t bestIndex = 0;
     float lastWidth = 0.0f;
     for (size_t i = 0; i <= text.size(); ++i) {
@@ -98,18 +98,19 @@ void TextInput::draw(SkCanvas* canvas) {
     SkPaint borderPaint;
     borderPaint.setAntiAlias(true);
     borderPaint.setStyle(SkPaint::kStroke_Style);
-    borderPaint.setStrokeWidth(isFocused ? 2.0f : 1.0f);
+    borderPaint.setStrokeWidth(isFocused ? Theme::BorderWidth + 1.0f : Theme::BorderWidth);
     borderPaint.setColor(isFocused ? focusColor : borderColor);
     
     SkRect borderRect = frame;
     if (isFocused) borderRect.inset(0.5f, 0.5f);
-    canvas->drawRoundRect(borderRect, style.borderRadius, style.borderRadius, borderPaint);
+    float r = (style.borderRadius > 0) ? style.borderRadius : Theme::BorderRadius;
+    canvas->drawRoundRect(borderRect, r, r, borderPaint);
 
     // 3. Draw Text or Placeholder
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
     
-    float textX = frame.left() + style.padding + 4.0f;
+    float textX = frame.left() + getLayoutPadding(YGEdgeLeft) + 4.0f;
     float textY = frame.centerY() + fontSize / 2.0f - 2.0f;
 
     if (text.empty() && !isFocused) {
@@ -176,11 +177,8 @@ bool TextInput::onMouseDown(float x, float y) {
         return true;
     }
     
-    // Clear focus and selection if clicked outside
-    isFocused = false;
-    selectionAnchor = std::string::npos;
-    return true;
-    }
+    return FlexNode::onMouseDown(x, y);
+}
 
     bool TextInput::onRightDown(float x, float y) {
     if (!hitTest(x, y)) return false;

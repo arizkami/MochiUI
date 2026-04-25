@@ -346,16 +346,15 @@ void Win32Window::onPaint() {
         GrBackendRenderTargets::SetD3DResourceState(&backendRT, D3D12_RESOURCE_STATE_PRESENT);
     }
 
-    // Use Present(0, 0) during resize/live movement for better responsiveness, 
-    // but here we keep (1, 0) for general use. 
-    // Ideally we'd detect if we are in a resize loop.
+    bool needsMoreRedraw = overlayRoot->needsRedraw();
+    
+    // Use VSync (1, 0) for normal use, (0, 0) for high refresh if needed
+    // But (1, 0) is usually safer for UI.
     swapChain->Present(1, 0);
 
-    if (overlayRoot->needsRedraw()) {
-        InvalidateRect(hwnd, NULL, FALSE);
-    }
-
-    // Wait for the frame to finish
+    // Wait for the frame to finish to avoid piling up frames, 
+    // but only if we are not trying to push maximum framerate.
+    // For UI, waiting is usually okay to prevent 100% CPU/GPU usage.
     const uint64_t fenceVal = fenceValue;
     commandQueue->Signal(fence.Get(), fenceVal);
     fenceValue++;
@@ -377,9 +376,20 @@ void Win32Window::run() {
     onSize(rect.right - rect.left, rect.bottom - rect.top);
 
     MSG msg = {};
-    while (GetMessageW(&msg, NULL, 0, 0)) {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
+    while (msg.message != WM_QUIT) {
+        if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
+        } else {
+            // Idle time - check if we need to redraw for animations
+            if (overlayRoot && overlayRoot->needsRedraw()) {
+                InvalidateRect(hwnd, NULL, FALSE);
+                // Allow a small sleep to not max out a single core if just animating
+                // MsgWaitForMultipleObjects could be used for better power efficiency.
+            } else {
+                WaitMessage(); // Wait for next message if no animation
+            }
+        }
     }
 }
 
@@ -442,9 +452,35 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 }
             }
             return 0;
+
+        case WM_SETCURSOR:
+            if (win && LOWORD(lp) == HTCLIENT) {
+                POINT pt;
+                GetCursorPos(&pt);
+                ScreenToClient(hwnd, &pt);
+
+                if (win->overlayRoot) {
+                    auto node = win->overlayRoot->findNodeAt((float)pt.x, (float)pt.y);
+                    if (node) {
+                        LPCWSTR cursorId = (LPCWSTR)IDC_ARROW;
+                        switch (node->style.cursorType) {
+                            case Cursor::Hand:   cursorId = (LPCWSTR)IDC_HAND; break;
+                            case Cursor::IBeam:  cursorId = (LPCWSTR)IDC_IBEAM; break;
+                            case Cursor::SizeNS: cursorId = (LPCWSTR)IDC_SIZENS; break;
+                            case Cursor::SizeWE: cursorId = (LPCWSTR)IDC_SIZEWE; break;
+                            default:             cursorId = (LPCWSTR)IDC_ARROW; break;
+                        }
+                        SetCursor(LoadCursorW(NULL, cursorId));
+                        return TRUE;
+                    }
+                }
+            }
+            break;
+
         case WM_SIZE:
             if (win) win->onSize(LOWORD(lp), HIWORD(lp));
             return 0;
+
         case WM_PAINT:
             if (win) win->onPaint();
             return 0;

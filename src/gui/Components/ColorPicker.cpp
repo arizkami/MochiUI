@@ -7,6 +7,7 @@
 namespace MochiUI {
 
 ColorPicker::ColorPicker() {
+    YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     style.setWidth(220.0f);
     style.setHeight(200.0f);
     style.setPadding(10.0f);

@@ -16,7 +16,8 @@ public:
     bool showPercentage = false;
 
     Size measure(Size available) override {
-        float w = (style.widthMode == SizingMode::Fixed) ? style.width : available.width;
+        float w = (style.widthMode == SizingMode::Fixed) ? style.width : 
+                  (IsUndefined(available.width) ? 200.0f : available.width);
         float h = (style.heightMode == SizingMode::Fixed) ? style.height : 20.0f;
         return { w, h };
     }

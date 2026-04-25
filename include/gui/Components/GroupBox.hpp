@@ -17,8 +17,8 @@ public:
     GroupBox();
     
     void draw(SkCanvas* canvas) override;
-    Size measure(Size available) override;
-    void calculateLayout(SkRect availableSpace) override;
+    void drawSelf(SkCanvas* canvas) override;
+    void syncSubtreeStyles() override;
 };
 
 } // namespace MochiUI

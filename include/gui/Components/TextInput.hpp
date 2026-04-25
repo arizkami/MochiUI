@@ -11,10 +11,12 @@ class TextInput : public FlexNode {
 public:
     TextInput() {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+        enableHover = true;
+        style.cursorType = Cursor::IBeam;
     }
     std::string text;
     std::string placeholder;
-    float fontSize = 14.0f;
+    float fontSize = Theme::FontNormal;
     std::function<void(const std::string&)> onChanged;
     std::function<void()> onEnter;
 

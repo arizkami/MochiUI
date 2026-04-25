@@ -110,6 +110,8 @@ set(MOCHIKIT_SOURCES
     src/gui/Components/IconNode.cpp
     src/gui/Components/DatePicker.cpp
     src/gui/Components/Popover.cpp
+    src/gui/Components/SwitchNode.cpp
+    src/gui/Components/RadioButtonNode.cpp
     src/platform/windows/Window.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp

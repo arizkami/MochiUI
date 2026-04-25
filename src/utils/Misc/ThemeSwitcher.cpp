@@ -62,6 +62,39 @@ void ThemeSwitcher::applyTheme() {
         Theme::TextSecondary = LightTheme::TextSecondary;
         Theme::HoverOverlay  = LightTheme::HoverOverlay;
         Theme::Card          = LightTheme::Card;
+        Theme::Border        = LightTheme::Border;
+        Theme::Shadow        = LightTheme::Shadow;
+        
+        Theme::BorderRadius = 0.0f;
+        Theme::BorderWidth = 1.0f;
+    } else if (effectiveTheme == ThemeType::System) {
+        Theme::Background    = SystemTheme::Background;
+        Theme::Sidebar       = SystemTheme::Sidebar;
+        Theme::MenuBar       = SystemTheme::MenuBar;
+        Theme::Accent        = SystemTheme::Accent;
+        Theme::TextPrimary   = SystemTheme::TextPrimary;
+        Theme::TextSecondary = SystemTheme::TextSecondary;
+        Theme::HoverOverlay  = SystemTheme::HoverOverlay;
+        Theme::Card          = SystemTheme::Card;
+        Theme::Border        = SystemTheme::Border;
+        Theme::Shadow        = SystemTheme::Shadow;
+        
+        Theme::BorderRadius = 0.0f; // Sharp
+        Theme::BorderWidth = 1.0f;
+    } else if (effectiveTheme == ThemeType::Minimal) {
+        Theme::Background    = MinimalTheme::Background;
+        Theme::Sidebar       = MinimalTheme::Sidebar;
+        Theme::MenuBar       = MinimalTheme::MenuBar;
+        Theme::Accent        = MinimalTheme::Accent;
+        Theme::TextPrimary   = MinimalTheme::TextPrimary;
+        Theme::TextSecondary = MinimalTheme::TextSecondary;
+        Theme::HoverOverlay  = MinimalTheme::HoverOverlay;
+        Theme::Card          = MinimalTheme::Card;
+        Theme::Border        = MinimalTheme::Border;
+        Theme::Shadow        = MinimalTheme::Shadow;
+        
+        Theme::BorderRadius = 0.0f; // Flat for minimal look
+        Theme::BorderWidth = 1.0f;
     } else {
         Theme::Background    = DarkTheme::Background;
         Theme::Sidebar       = DarkTheme::Sidebar;
@@ -71,6 +104,11 @@ void ThemeSwitcher::applyTheme() {
         Theme::TextSecondary = DarkTheme::TextSecondary;
         Theme::HoverOverlay  = DarkTheme::HoverOverlay;
         Theme::Card          = DarkTheme::Card;
+        Theme::Border        = DarkTheme::Border;
+        Theme::Shadow        = DarkTheme::Shadow;
+        
+        Theme::BorderRadius = 0.0f;
+        Theme::BorderWidth = 1.0f;
     }
 }
 
@@ -89,6 +127,10 @@ void ThemeSwitcher::setTheme(const std::string& themeName) {
         newTheme = ThemeType::Light;
     } else if (themeName == "dark") {
         newTheme = ThemeType::Dark;
+    } else if (themeName == "system") {
+        newTheme = ThemeType::System;
+    } else if (themeName == "minimal") {
+        newTheme = ThemeType::Minimal;
     } else if (themeName == "auto") {
         newTheme = ThemeType::Auto;
     }
@@ -104,6 +146,10 @@ std::string ThemeSwitcher::getCurrentThemeName() const {
             return "dark";
         case ThemeType::Light:
             return "light";
+        case ThemeType::System:
+            return "system";
+        case ThemeType::Minimal:
+            return "minimal";
         default:
             return "auto";
     }

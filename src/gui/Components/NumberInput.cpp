@@ -9,7 +9,7 @@ namespace MochiUI {
 
 NumberInput::NumberInput() {
     syncTextFromValue();
-    style.padding = 4.0f;
+    style.setPadding(4.0f);
 }
 
 void NumberInput::syncTextFromValue() {

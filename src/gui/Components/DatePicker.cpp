@@ -11,6 +11,7 @@
 namespace MochiUI {
 
 DatePicker::DatePicker() {
+    YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     time_t t = time(nullptr);
     struct tm* now = localtime(&t);
     selectedYear = now->tm_year + 1900;

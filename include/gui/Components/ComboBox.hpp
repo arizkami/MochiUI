@@ -22,6 +22,7 @@ public:
     SkColor borderColor = SkColorSetA(Theme::TextSecondary, 50);
     SkColor textColor = Theme::TextPrimary;
     SkColor accentColor = Theme::Accent;
+    float fontSize = Theme::FontNormal;
 
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
@@ -32,7 +33,7 @@ public:
 private:
     bool isOpen = false;
     int hoveredItemIndex = -1;
-    float itemHeight = 32.0f;
+    float itemHeight = Theme::ControlHeight;
     
     SkRect getDropdownRect() const;
 };

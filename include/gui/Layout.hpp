@@ -15,12 +15,14 @@ namespace MochiUI {
 enum class FlexDirection { Row, Column };
 enum class SizingMode { Fixed, Flex, Hug };
 enum class AlignItems { FlexStart, Center, FlexEnd, Stretch };
+enum class Cursor { Arrow, IBeam, Hand, SizeNS, SizeWE };
 
 class FlexNode;
 
 class LayoutStyle {
 public:
     FlexNode* owner = nullptr;
+    Cursor cursorType = Cursor::Arrow;
     
     void setWidth(float w) { width = w; widthMode = SizingMode::Fixed; }
     void setHeight(float h) { height = h; heightMode = SizingMode::Fixed; }
@@ -31,13 +33,23 @@ public:
     void setWidthAuto() { widthMode = SizingMode::Hug; }
     void setHeightAuto() { heightMode = SizingMode::Hug; }
     
+    void setMinWidth(float w) { minWidth = w; }
+    void setMinHeight(float h) { minHeight = h; }
+    void setMinWidthPercent(float p) { minWidth = -1e9f; minWidthPercent = p; }
+    void setMinHeightPercent(float p) { minHeight = -1e9f; minHeightPercent = p; }
+    
     void setFlex(float f) { flex = f; }
     void setFlexGrow(float f) { flex = f; }
     void setFlexShrink(float f) { flexShrink = f; }
     void setFlexBasis(float f) { flexBasis = f; }
 
-    void setPadding(float p) { padding = p; }
-    void setMargin(float m) { margin = m; }
+    void setPadding(float p) { paddingLeft = paddingTop = paddingRight = paddingBottom = p; }
+    void setPadding(float h, float v) { paddingLeft = paddingRight = h; paddingTop = paddingBottom = v; }
+    void setPadding(float l, float t, float r, float b) { paddingLeft = l; paddingTop = t; paddingRight = r; paddingBottom = b; }
+    
+    void setMargin(float m) { marginLeft = marginTop = marginRight = marginBottom = m; }
+    void setMargin(float h, float v) { marginLeft = marginRight = h; marginTop = marginBottom = v; }
+    
     void setGap(float g) { gap = g; }
     
     void setFlexDirection(YGFlexDirection dir) { 
@@ -82,8 +94,16 @@ public:
         if (flexBasis < 0) YGNodeStyleSetFlexBasisAuto(node);
         else YGNodeStyleSetFlexBasis(node, flexBasis);
         
-        YGNodeStyleSetPadding(node, YGEdgeAll, padding);
-        YGNodeStyleSetMargin(node, YGEdgeAll, margin);
+        YGNodeStyleSetPadding(node, YGEdgeLeft, paddingLeft != 0 ? paddingLeft : padding);
+        YGNodeStyleSetPadding(node, YGEdgeTop, paddingTop != 0 ? paddingTop : padding);
+        YGNodeStyleSetPadding(node, YGEdgeRight, paddingRight != 0 ? paddingRight : padding);
+        YGNodeStyleSetPadding(node, YGEdgeBottom, paddingBottom != 0 ? paddingBottom : padding);
+        
+        YGNodeStyleSetMargin(node, YGEdgeLeft, marginLeft != 0 ? marginLeft : margin);
+        YGNodeStyleSetMargin(node, YGEdgeTop, marginTop != 0 ? marginTop : margin);
+        YGNodeStyleSetMargin(node, YGEdgeRight, marginRight != 0 ? marginRight : margin);
+        YGNodeStyleSetMargin(node, YGEdgeBottom, marginBottom != 0 ? marginBottom : margin);
+
         YGNodeStyleSetGap(node, YGGutterAll, gap);
 
         YGNodeStyleSetFlexDirection(node, flexDirection == FlexDirection::Row ? YGFlexDirectionRow : YGFlexDirectionColumn);
@@ -102,18 +122,42 @@ public:
             if (right != -1e9f) YGNodeStyleSetPosition(node, YGEdgeRight, right);
             if (bottom != -1e9f) YGNodeStyleSetPosition(node, YGEdgeBottom, bottom);
         }
+
+        if (minWidth != -1e9f) YGNodeStyleSetMinWidth(node, minWidth);
+        else if (minWidthPercent != 0) YGNodeStyleSetMinWidthPercent(node, minWidthPercent);
+        
+        if (minHeight != -1e9f) YGNodeStyleSetMinHeight(node, minHeight);
+        else if (minHeightPercent != 0) YGNodeStyleSetMinHeightPercent(node, minHeightPercent);
     }
 
     float width = 0;
     float height = 0;
     float widthPercent = 100.0f;
     float heightPercent = 100.0f;
+
+    float minWidth = -1e9f;
+    float minHeight = -1e9f;
+    float minWidthPercent = 0;
+    float minHeightPercent = 0;
+
     float flex = 0;
     float flexShrink = 1.0f;
     float flexBasis = -1.0f; // -1 for Auto
+    
     float padding = 0;
     float margin = 0;
     float gap = 0;
+    
+    float paddingLeft = 0;
+    float paddingTop = 0;
+    float paddingRight = 0;
+    float paddingBottom = 0;
+    
+    float marginLeft = 0;
+    float marginTop = 0;
+    float marginRight = 0;
+    float marginBottom = 0;
+
     float left = -1e9f;
     float top = -1e9f;
     float right = -1e9f;
@@ -133,6 +177,10 @@ struct Size {
     float width;
     float height;
 };
+
+inline bool IsUndefined(float value) {
+    return YGFloatIsUndefined(value);
+}
 
 class FlexNode : public std::enable_shared_from_this<FlexNode> {
 public:
@@ -161,6 +209,9 @@ public:
     bool isFocused = false;
     bool enableHover = false;
     std::function<void()> onClick;
+
+    float getLayoutPadding(YGEdge edge) const { return YGNodeLayoutGetPadding(ygNode, edge); }
+    float getLayoutMargin(YGEdge edge) const { return YGNodeLayoutGetMargin(ygNode, edge); }
 
     virtual void addChild(Ptr child) {
         if (!child) return;
@@ -209,9 +260,30 @@ public:
         return frame.contains(x, y);
     }
 
+    virtual Ptr findNodeAt(float x, float y) {
+        // Search children in reverse (top to bottom)
+        for (auto it = children.rbegin(); it != children.rend(); ++it) {
+            auto found = (*it)->findNodeAt(x, y);
+            if (found) return found;
+        }
+
+        if (hitTest(x, y)) {
+            try {
+                return shared_from_this();
+            } catch (const std::bad_weak_ptr&) {
+                return nullptr;
+            }
+        }
+        return nullptr;
+    }
+
     static YGSize MeasureCallback(YGNodeConstRef node, float width, YGMeasureMode widthMode, float height, YGMeasureMode heightMode) {
         FlexNode* flexNode = (FlexNode*)YGNodeGetContext(node);
         Size available = { width, height };
+        
+        // Convert Yoga Undefined to something easier to handle if needed
+        // But passing it as is (NAN) is also okay if measure handles it.
+        
         Size measured = flexNode->measure(available);
         YGSize result;
         result.width = measured.width;
@@ -229,7 +301,7 @@ public:
         applyYogaLayout(availableSpace.left(), availableSpace.top());
     }
 
-    void syncSubtreeStyles() {
+    virtual void syncSubtreeStyles() {
         style.syncLegacy();
         for (auto& child : children) {
             child->syncSubtreeStyles();
@@ -308,9 +380,19 @@ public:
     virtual void onMouseLeave() {}
 
     virtual bool onMouseDown(float x, float y) {
+        bool handled = false;
         // Check children in reverse (top to bottom)
         for (auto it = children.rbegin(); it != children.rend(); ++it) {
-            if ((*it)->onMouseDown(x, y)) return true;
+            if ((*it)->onMouseDown(x, y)) {
+                handled = true;
+                break;
+            }
+        }
+
+        if (handled) {
+            isFocused = false; // Someone else (a child) took focus
+            isPressed = false;
+            return true;
         }
 
         if (hitTest(x, y)) {
@@ -320,6 +402,7 @@ public:
             return true;
         } else {
             isFocused = false;
+            isPressed = false;
             return false;
         }
     }

@@ -32,6 +32,10 @@ void ScrollAreaNode::draw(SkCanvas* canvas) {
     
     if (!content) return;
 
+    // Ensure layout is up to date for the scroll content
+    content->syncSubtreeStyles();
+    YGNodeCalculateLayout(content->getYGNode(), frame.width(), YGUndefined, YGDirectionLTR);
+
     canvas->save();
     canvas->clipRect(frame);
     

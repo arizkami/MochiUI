@@ -7,6 +7,7 @@
 namespace MochiUI {
 
 Calendar::Calendar() {
+    YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     time_t t = time(nullptr);
     struct tm* now = localtime(&t);
     currentYear = now->tm_year + 1900;

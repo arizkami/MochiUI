@@ -16,6 +16,9 @@ public:
     TextNode() {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     }
+    TextNode(std::string text) : text(text) {
+        YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+    }
     std::string text;
     std::string fontFamily = FontManager::DEFAULT_FONT;
     SkColor color = Theme::TextPrimary;

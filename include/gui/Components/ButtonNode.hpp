@@ -11,13 +11,18 @@ class ButtonNode : public FlexNode {
 public:
     ButtonNode() {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
+        enableHover = true;
     }
     std::string label = "Button";
     SkColor textColor = Theme::TextPrimary;
     SkColor normalColor = Theme::Card;
+    
+    // If true, will use Theme::* colors dynamically in draw()
+    bool useThemeColors = true;
+    
     SkColor hoverColor = SkColorSetRGB(60, 60, 60);
     SkColor pressedColor = SkColorSetRGB(40, 40, 40);
-    float borderRadius = 6.0f;
+    float borderRadius = -1.0f; // -1 to use Theme::BorderRadius
     float fontSize = 14.0f;
 
     Size measure(Size available) override {
@@ -33,16 +38,30 @@ public:
     }
 
     void draw(SkCanvas* canvas) override {
-        SkColor bg = isPressed ? pressedColor : (isHovered ? hoverColor : normalColor);
+        SkColor bg = normalColor;
+        SkColor textCol = textColor;
+        
+        if (useThemeColors) {
+            bg = Theme::Card;
+            textCol = Theme::TextPrimary;
+        }
+
+        if (isPressed) {
+            bg = useThemeColors ? SkColorSetA(Theme::Accent, 180) : pressedColor;
+        } else if (isHovered) {
+            bg = useThemeColors ? SkColorSetA(Theme::Accent, 100) : hoverColor;
+        }
+        
+        float r = (borderRadius < 0) ? Theme::BorderRadius : borderRadius;
         
         SkPaint bgPaint;
         bgPaint.setAntiAlias(true);
         bgPaint.setColor(bg);
-        canvas->drawRoundRect(frame, borderRadius, borderRadius, bgPaint);
+        canvas->drawRoundRect(frame, r, r, bgPaint);
 
         SkPaint textPaint;
         textPaint.setAntiAlias(true);
-        textPaint.setColor(textColor);
+        textPaint.setColor(textCol);
         
         SkFontMetrics metrics;
         FontManager::getInstance().getFontMetrics(fontSize, &metrics);

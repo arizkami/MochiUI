@@ -22,22 +22,6 @@ def get_available_themes():
             themes.append(file[:-5])  # Remove .json extension
     return themes
 
-def load_theme_config():
-    """Load theme configuration from theme_config.json"""
-    config_path = "theme_config.json"
-    default_theme = "dark"
-    
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, "r") as f:
-                config = json.load(f)
-                return config.get("theme", default_theme)
-        except Exception as e:
-            print(f"Warning: Failed to read theme config: {e}")
-            return default_theme
-    
-    return default_theme
-
 def load_theme_data(theme_name):
     """Load theme data from JSON file"""
     theme_file = os.path.join("themes", f"{theme_name}.json")
@@ -65,68 +49,90 @@ def load_theme_data(theme_name):
         return None
 
 def generate_theme():
-    """Generate Theme.hpp with both light and dark themes"""
-    print("Generating dual-theme header (light + dark)...")
+    """Generate Theme.hpp with all available themes"""
+    themes = get_available_themes()
+    print(f"Generating theme header for: {', '.join(themes)}")
     
-    # Load both themes
-    dark_data = load_theme_data("dark")
-    light_data = load_theme_data("light")
-    
-    if not dark_data or not light_data:
-        print("Error: Could not load required themes (dark.json and light.json)")
+    theme_data_map = {}
+    for theme in themes:
+        data = load_theme_data(theme)
+        if data:
+            theme_data_map[theme] = data
+
+    if not theme_data_map:
+        print("Error: No valid themes found in themes/ directory")
         return False
     
+    # Ensure dark and light are present as defaults if not found
+    if 'dark' not in theme_data_map:
+        print("Warning: 'dark' theme not found, using first available theme as default dark")
+        theme_data_map['dark'] = list(theme_data_map.values())[0]
+    if 'light' not in theme_data_map:
+        print("Warning: 'light' theme not found, using 'dark' as default light")
+        theme_data_map['light'] = theme_data_map['dark']
+
     try:
-        # Generate theme header content with both themes
-        theme_content = f"""#pragma once
-#include <include/core/SkColor.h>
+        header_lines = [
+            "#pragma once",
+            "#include <include/core/SkColor.h>",
+            "",
+            "namespace MochiUI {",
+            ""
+        ]
 
-namespace MochiUI {{
+        # Generate namespaces for each theme
+        for theme, data in theme_data_map.items():
+            # Use specific casing for known themes to match ThemeSwitcher.cpp
+            if theme == 'system':
+                namespace_name = "SystemTheme"
+            elif theme == 'minimal':
+                namespace_name = "MinimalTheme"
+            else:
+                namespace_name = theme.capitalize() + "Theme"
 
-// Dark Theme Colors
-namespace DarkTheme {{
-static constexpr SkColor Background    = {get_sk_color(dark_data['background'])};
-static constexpr SkColor Sidebar       = {get_sk_color(dark_data['sidebar'])};
-static constexpr SkColor MenuBar       = {get_sk_color(dark_data['menubar'])};
-static constexpr SkColor Accent        = {get_sk_color(dark_data['accent'])};
-static constexpr SkColor TextPrimary   = {get_sk_color(dark_data['text_primary'])};
-static constexpr SkColor TextSecondary = {get_sk_color(dark_data['text_secondary'])};
-static constexpr SkColor HoverOverlay  = {get_sk_color(dark_data['hover_overlay'])};
-static constexpr SkColor Card          = {get_sk_color(dark_data['card'])};
-static constexpr SkColor Border        = {get_sk_color(dark_data.get('border', [50, 50, 50]))};
-static constexpr SkColor Shadow        = {get_sk_color(dark_data.get('shadow', [0, 0, 0, 100]))};
-}} // namespace DarkTheme
+            header_lines.append(f"// {theme.capitalize()} Theme")
+            header_lines.append(f"namespace {namespace_name} {{")
+            header_lines.append(f"static constexpr SkColor Background    = {get_sk_color(data['background'])};")
+            header_lines.append(f"static constexpr SkColor Sidebar       = {get_sk_color(data['sidebar'])};")
+            header_lines.append(f"static constexpr SkColor MenuBar       = {get_sk_color(data['menubar'])};")
+            header_lines.append(f"static constexpr SkColor Accent        = {get_sk_color(data['accent'])};")
+            header_lines.append(f"static constexpr SkColor TextPrimary   = {get_sk_color(data['text_primary'])};")
+            header_lines.append(f"static constexpr SkColor TextSecondary = {get_sk_color(data['text_secondary'])};")
+            header_lines.append(f"static constexpr SkColor HoverOverlay  = {get_sk_color(data['hover_overlay'])};")
+            header_lines.append(f"static constexpr SkColor Card          = {get_sk_color(data['card'])};")
+            header_lines.append(f"static constexpr SkColor Border        = {get_sk_color(data.get('border', [50, 50, 50]))};")
+            header_lines.append(f"static constexpr SkColor Shadow        = {get_sk_color(data.get('shadow', [0, 0, 0, 100]))};")
+            header_lines.append(f"}} // namespace {namespace_name}")
+            header_lines.append("")
 
-// Light Theme Colors
-namespace LightTheme {{
-static constexpr SkColor Background    = {get_sk_color(light_data['background'])};
-static constexpr SkColor Sidebar       = {get_sk_color(light_data['sidebar'])};
-static constexpr SkColor MenuBar       = {get_sk_color(light_data['menubar'])};
-static constexpr SkColor Accent        = {get_sk_color(light_data['accent'])};
-static constexpr SkColor TextPrimary   = {get_sk_color(light_data['text_primary'])};
-static constexpr SkColor TextSecondary = {get_sk_color(light_data['text_secondary'])};
-static constexpr SkColor HoverOverlay  = {get_sk_color(light_data['hover_overlay'])};
-static constexpr SkColor Card          = {get_sk_color(light_data['card'])};
-static constexpr SkColor Border        = {get_sk_color(light_data.get('border', [200, 200, 200]))};
-static constexpr SkColor Shadow        = {get_sk_color(light_data.get('shadow', [0, 0, 0, 40]))};
-}} // namespace LightTheme
+        # Active Theme - defaults to Dark, can be switched at runtime
+        header_lines.append("// Active Theme - defaults to Dark, can be switched at runtime")
+        header_lines.append("namespace Theme {")
+        header_lines.append("inline SkColor Background    = DarkTheme::Background;")
+        header_lines.append("inline SkColor Sidebar       = DarkTheme::Sidebar;")
+        header_lines.append("inline SkColor MenuBar       = DarkTheme::MenuBar;")
+        header_lines.append("inline SkColor Accent        = DarkTheme::Accent;")
+        header_lines.append("inline SkColor TextPrimary   = DarkTheme::TextPrimary;")
+        header_lines.append("inline SkColor TextSecondary = DarkTheme::TextSecondary;")
+        header_lines.append("inline SkColor HoverOverlay  = DarkTheme::HoverOverlay;")
+        header_lines.append("inline SkColor Card          = DarkTheme::Card;")
+        header_lines.append("inline SkColor Border        = DarkTheme::Border;")
+        header_lines.append("inline SkColor Shadow        = DarkTheme::Shadow;")
+        header_lines.append("")
+        header_lines.append("// Non-color theme properties")
+        header_lines.append("inline float BorderWidth     = 1.0f;")
+        header_lines.append("inline float BorderRadius    = 4.0f;")
+        header_lines.append("inline float ControlHeight   = 32.0f;")
+        header_lines.append("inline float FontSmall       = 12.0f;")
+        header_lines.append("inline float FontNormal      = 14.0f;")
+        header_lines.append("inline float FontMedium      = 16.0f;")
+        header_lines.append("inline float FontLarge       = 18.0f;")
+        header_lines.append("inline float FontHeader      = 24.0f;")
+        header_lines.append("} // namespace Theme")
+        header_lines.append("")
+        header_lines.append("} // namespace MochiUI")
 
-// Active Theme - defaults to Dark, can be switched at runtime
-namespace Theme {{
-inline SkColor Background    = DarkTheme::Background;
-inline SkColor Sidebar       = DarkTheme::Sidebar;
-inline SkColor MenuBar       = DarkTheme::MenuBar;
-inline SkColor Accent        = DarkTheme::Accent;
-inline SkColor TextPrimary   = DarkTheme::TextPrimary;
-inline SkColor TextSecondary = DarkTheme::TextSecondary;
-inline SkColor HoverOverlay  = DarkTheme::HoverOverlay;
-inline SkColor Card          = DarkTheme::Card;
-inline SkColor Border        = DarkTheme::Border;
-inline SkColor Shadow        = DarkTheme::Shadow;
-}} // namespace Theme
-
-}} // namespace MochiUI
-"""
+        theme_content = "\n".join(header_lines)
         
         # Write to include directory
         output_path = os.path.join("include", "gui", "Theme.hpp")
@@ -135,7 +141,7 @@ inline SkColor Shadow        = DarkTheme::Shadow;
         with open(output_path, "w") as f:
             f.write(theme_content)
         
-        print(f"Dual-theme header generated successfully at {output_path}")
+        print(f"Theme header generated successfully at {output_path}")
         
         # Also write to old location for backward compatibility
         old_output_path = os.path.join("src", "gui", "Theme.hpp")
@@ -152,12 +158,7 @@ inline SkColor Shadow        = DarkTheme::Shadow;
 
 def main():
     """Main entry point"""
-    # List available themes
-    available_themes = get_available_themes()
-    if available_themes:
-        print(f"Available themes: {', '.join(available_themes)}")
-    
-    # Generate dual-theme header
+    # Generate theme header
     success = generate_theme()
     
     if not success:

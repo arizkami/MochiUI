@@ -8,113 +8,164 @@
 
 using namespace MochiUI;
 
-FlexNode::Ptr CreateHelloWorldUI() {
-  auto root = FlexNode::Column();
-  root->style.backgroundColor = Theme::Background;
-  root->style.setWidthFull();
-  root->style.setHeightFull();
-  root->style.setPadding(20);
-  root->style.setGap(20);
+FlexNode::Ptr CreateInteractiveTab() {
+    auto content = FlexNode::Column();
+    content->style.setPadding(20);
+    content->style.setGap(20);
 
-  // 1. Header
-  auto header = std::make_shared<TextNode>("MochiUI Typography Test");
-  header->fontSize = Theme::FontHeader;
-  header->color = Theme::Accent;
-  header->textAlign = TextAlign::Left;
-  header->style.setPadding(10, 5);
-  root->addChild(header);
+    auto btnGroup = std::make_shared<GroupBox>();
+    btnGroup->title = "Buttons";
+    btnGroup->style.setPadding(15);
+    btnGroup->style.setGap(10);
+    btnGroup->style.flexDirection = FlexDirection::Row;
+    
+    auto btn1 = std::make_shared<ButtonNode>();
+    btn1->label = "Default";
+    btnGroup->addChild(btn1);
 
-  // 2. Multi-language Section
-  auto typoSection = std::make_shared<GroupBox>();
-  typoSection->title = "Multi-Language Support (Left Aligned with Padding)";
-  typoSection->style.setPadding(20);
-  typoSection->style.setGap(10);
-  typoSection->style.backgroundColor = Theme::Card;
-  typoSection->style.setWidthFull();
+    auto btn2 = std::make_shared<ButtonNode>();
+    btn2->label = "Ghost";
+    btn2->useThemeColors = false;
+    btn2->normalColor = SK_ColorTRANSPARENT;
+    btn2->textColor = Theme::Accent;
+    btnGroup->addChild(btn2);
+    
+    content->addChild(btnGroup);
 
-  auto addTypoSample = [&](std::string lang, std::string text, float size = Theme::FontNormal) {
-    auto row = FlexNode::Row();
-    row->style.setWidthFull();
-    row->style.setHeight(Theme::ControlHeight + 10); // Fixed row height for better centering
-    row->style.setGap(15);
-    row->style.setAlignItems(YGAlignCenter); // Vertical center items in row
+    auto toggleGroup = std::make_shared<GroupBox>();
+    toggleGroup->title = "Toggles";
+    toggleGroup->style.setPadding(15);
+    toggleGroup->style.setGap(20);
+    toggleGroup->style.flexDirection = FlexDirection::Row;
 
-    auto label = std::make_shared<TextNode>(lang + ":");
-    label->style.setWidth(100);
-    label->color = Theme::TextSecondary;
-    label->fontSize = Theme::FontSmall;
-    label->textAlign = TextAlign::Left; // Revert to Left
-    row->addChild(label);
+    auto cb = std::make_shared<CheckboxNode>();
+    cb->label = "Checkbox";
+    toggleGroup->addChild(cb);
 
-    auto sample = std::make_shared<TextNode>(text);
-    sample->fontSize = size;
-    sample->color = Theme::TextPrimary;
-    sample->textAlign = TextAlign::Left;
-    // Test padding within the TextNode itself
-    sample->style.setPadding(15, 5); 
-    sample->style.backgroundColor = SkColorSetA(Theme::Accent, 20); // Show padding area
-    sample->style.setFlex(1.0f); // Make the box flexible
-    row->addChild(sample);
+    auto sw = std::make_shared<SwitchNode>();
+    sw->label = "Switch";
+    toggleGroup->addChild(sw);
 
-    typoSection->addChild(row);
-  };
+    content->addChild(toggleGroup);
 
-  addTypoSample("English", "The quick brown fox jumps over the lazy dog.");
-  addTypoSample("Thai", "สวัสดีชาวโลก! นี่คือการทดสอบภาษาไทยใน MochiUI", Theme::FontMedium);
-  addTypoSample("Japanese", "こんにちは世界！これは日本語のテストです。", Theme::FontMedium);
-  addTypoSample("Arabic", "مرحبا بالعالم! هذا اختبار للغة العربية", Theme::FontMedium);
-  addTypoSample("Emoji", "🚀 🦀 🦄 🌈 🍕 🍦 🎸 ⚡️", Theme::FontLarge);
+    return content;
+}
 
-  root->addChild(typoSection);
+FlexNode::Ptr CreateFormsTab() {
+    auto content = FlexNode::Column();
+    content->style.setPadding(20);
+    content->style.setGap(20);
 
-  // 3. Alignment Test
-  auto alignSection = std::make_shared<GroupBox>();
-  alignSection->title = "Alignment Tests";
-  alignSection->style.setPadding(20);
-  alignSection->style.setGap(10);
-  alignSection->style.backgroundColor = Theme::Card;
+    auto inputs = std::make_shared<GroupBox>();
+    inputs->title = "Text Inputs";
+    inputs->style.setPadding(15);
+    inputs->style.setGap(15);
 
-  auto leftText = std::make_shared<TextNode>("Left Aligned Text");
-  leftText->textAlign = TextAlign::Left;
-  leftText->style.setWidthFull();
-  leftText->style.backgroundColor = SkColorSetA(SK_ColorBLACK, 30);
-  alignSection->addChild(leftText);
+    auto text = std::make_shared<TextInput>();
+    text->placeholder = "Text input...";
+    inputs->addChild(text);
 
-  auto centerText = std::make_shared<TextNode>("Center Aligned Text");
-  centerText->textAlign = TextAlign::Center;
-  centerText->style.setWidthFull();
-  centerText->style.backgroundColor = SkColorSetA(SK_ColorBLACK, 30);
-  alignSection->addChild(centerText);
+    auto num = std::make_shared<NumberInput>();
+    num->value = 42;
+    num->style.setWidth(120);
+    inputs->addChild(num);
 
-  auto rightText = std::make_shared<TextNode>("Right Aligned Text");
-  rightText->textAlign = TextAlign::Right;
-  rightText->style.setWidthFull();
-  rightText->style.backgroundColor = SkColorSetA(SK_ColorBLACK, 30);
-  alignSection->addChild(rightText);
+    content->addChild(inputs);
 
-  root->addChild(alignSection);
+    auto select = std::make_shared<GroupBox>();
+    select->title = "Selection";
+    select->style.setPadding(15);
+    
+    auto combo = std::make_shared<ComboBox>();
+    combo->items = {"Option A", "Option B", "Option C"};
+    combo->selectedIndex = 0;
+    select->addChild(combo);
 
-  return root;
+    content->addChild(select);
+
+    return content;
+}
+
+FlexNode::Ptr CreateFeedbackTab() {
+    auto content = FlexNode::Column();
+    content->style.setPadding(20);
+    content->style.setGap(20);
+
+    auto prog = std::make_shared<ProgressBar>();
+    prog->value = 0.3f;
+    content->addChild(prog);
+
+    auto slider = std::make_shared<SliderNode>();
+    slider->value = 0.3f;
+    slider->onValueChange = [prog](float v) { prog->value = v; };
+    content->addChild(slider);
+
+    auto accordion = std::make_shared<AccordionNode>();
+    accordion->addItem("Section 1", std::make_shared<TextNode>("Content for section 1..."));
+    accordion->addItem("Section 2", std::make_shared<TextNode>("Content for section 2..."));
+    content->addChild(accordion);
+
+    return content;
+}
+
+FlexNode::Ptr CreateDataTab() {
+    auto content = FlexNode::Column();
+    content->style.setPadding(20);
+    content->style.setGap(20);
+
+    auto table = std::make_shared<Table>();
+    auto head = std::make_shared<TableHead>();
+    head->addColumn("ID", 50);
+    head->addColumn("Name", 150);
+    head->addColumn("Value", -1); // Flex
+    table->setHeader(head);
+    table->addRow({"1", "Alpha", "100"});
+    table->addRow({"2", "Beta", "200"});
+    table->addRow({"3", "Gamma", "300"});
+    content->addChild(table);
+
+    auto cal = std::make_shared<Calendar>();
+    content->addChild(cal);
+
+    return content;
+}
+
+FlexNode::Ptr CreateUIGallery() {
+    auto root = FlexNode::Column();
+    root->style.backgroundColor = Theme::Background;
+    root->style.setWidthFull();
+    root->style.setHeightFull();
+
+    auto tabs = std::make_shared<TabsNode>();
+    tabs->style.setFlex(1.0f);
+    
+    tabs->addTab("Interactive", CreateInteractiveTab());
+    tabs->addTab("Forms", CreateFormsTab());
+    tabs->addTab("Feedback", CreateFeedbackTab());
+    tabs->addTab("Data", CreateDataTab());
+
+    root->addChild(tabs);
+    return root;
 }
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine,
                    int nCmdShow) {
   Application::getInstance().init();
 
-  Win32Window window("MochiUI Typography Test", 1024, 768);
+  Win32Window window("MochiUI Gallery", 1024, 768);
   window.enableMica(true);
 
   auto menuBar = MenuBarFactory::Create(MenuBackend::Skia);
   menuBar->addMenu("File", {{"Exit", 103, []() { PostQuitMessage(0); }}});
-
-  menuBar->addMenu("View", {{"Light Theme", 201, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Light); }},
-                            {"Dark Theme", 202, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Dark); }},
-                            {"System Theme", 203, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::System); }},
-                            {"Minimal Theme", 204, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Minimal); }}});
-
+  menuBar->addMenu("Theme", {
+      {"Light", 201, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Light); }},
+      {"Dark", 202, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Dark); }},
+      {"System", 203, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::System); }},
+      {"Minimal", 204, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Minimal); }}
+  });
   window.setMenuBar(std::move(menuBar));
 
-  window.setRoot(CreateHelloWorldUI());
+  window.setRoot(CreateUIGallery());
   window.run();
 
   return 0;

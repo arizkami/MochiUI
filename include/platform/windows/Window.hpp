@@ -18,7 +18,7 @@ struct FrameContext {
     sk_sp<SkSurface> surface;
 };
 
-class Win32Window : public IWindow {
+class Win32Window : public IWindow, public IWindowHost {
 public:
     Win32Window(const std::string& title, int width, int height);
     ~Win32Window();
@@ -28,14 +28,14 @@ public:
     void enableMica(bool enable) override;
     
     void setMenuBar(std::unique_ptr<IMenuBar> bar) override;
-    void setRoot(FlexNode::Ptr node) override { 
-        root = node;
-        if (!overlayRoot) overlayRoot = std::make_shared<OverlayNode>();
-        overlayRoot->setMainContent(node); 
-    }
+    void setRoot(FlexNode::Ptr node) override;
     void run() override;
     
     void* getNativeHandle() const override { return (void*)hwnd; }
+    
+    void requestRedraw() override {
+        InvalidateRect(hwnd, NULL, FALSE);
+    }
     
     void addOverlay(FlexNode::Ptr overlay) {
         if (!overlayRoot) overlayRoot = std::make_shared<OverlayNode>();

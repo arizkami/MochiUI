@@ -7,7 +7,6 @@
 namespace MochiUI {
 
 Calendar::Calendar() {
-    YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     time_t t = time(nullptr);
     struct tm* now = localtime(&t);
     currentYear = now->tm_year + 1900;
@@ -27,8 +26,6 @@ Calendar::Calendar() {
     style.borderRadius = 12.0f;
     style.setPadding(16.0f);
     style.setGap(12.0f);
-    
-    updateGrid();
 }
 
 void Calendar::setDate(int year, int month, int day) {
@@ -37,7 +34,8 @@ void Calendar::setDate(int year, int month, int day) {
     selectedDay = day;
     displayedYear = year;
     displayedMonth = month;
-    updateGrid();
+    needsUpdate = true;
+    markDirty();
 }
 
 void Calendar::nextMonth() {
@@ -46,7 +44,8 @@ void Calendar::nextMonth() {
         displayedMonth = 1;
         displayedYear++;
     }
-    updateGrid();
+    needsUpdate = true;
+    markDirty();
 }
 
 void Calendar::prevMonth() {
@@ -55,10 +54,19 @@ void Calendar::prevMonth() {
         displayedMonth = 12;
         displayedYear--;
     }
-    updateGrid();
+    needsUpdate = true;
+    markDirty();
+}
+
+void Calendar::syncSubtreeStyles() {
+    if (needsUpdate) {
+        updateGrid();
+    }
+    FlexNode::syncSubtreeStyles();
 }
 
 void Calendar::updateGrid() {
+    needsUpdate = false;
     removeAllChildren();
     
     // Header
@@ -195,10 +203,6 @@ void Calendar::updateGrid() {
 void Calendar::draw(SkCanvas* canvas) {
     drawSelf(canvas);
     drawChildren(canvas);
-}
-
-Size Calendar::measure(Size available) {
-    return { 280.0f, 320.0f }; // Slightly taller for header/gap
 }
 
 } // namespace MochiUI

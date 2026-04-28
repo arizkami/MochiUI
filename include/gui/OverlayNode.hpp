@@ -3,6 +3,17 @@
 
 namespace MochiUI {
 
+// Full-window layer for toasts: must not steal hits when empty or over transparent area.
+class ToastLayerNode : public FlexNode {
+public:
+    bool hitTest(float x, float y) override {
+        for (const auto& child : children) {
+            if (child->hitTest(x, y)) return true;
+        }
+        return false;
+    }
+};
+
 class OverlayNode : public FlexNode {
 public:
     using Ptr = std::shared_ptr<OverlayNode>;
@@ -10,7 +21,7 @@ public:
         style.setWidthPercent(100.0f);
         style.setHeightPercent(100.0f);
         
-        toastLayer = FlexNode::Create();
+        toastLayer = std::make_shared<ToastLayerNode>();
         toastLayer->style.setWidthPercent(100.0f);
         toastLayer->style.setHeightPercent(100.0f);
         toastLayer->style.setPositionType(YGPositionTypeAbsolute);
@@ -31,6 +42,7 @@ public:
             children.insert(children.begin(), mainContent);
             YGNodeInsertChild(getYGNode(), mainContent->getYGNode(), 0);
             mainContent->parent = this;
+            mainContent->setWindowHost(windowHost);
         }
     }
 

@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <memory>
+#include <include/core/IWindowHost.hpp>
 #include <include/gui/Layout.hpp>
 #include <include/gui/MenuBar.hpp>
 

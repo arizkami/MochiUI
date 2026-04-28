@@ -37,6 +37,7 @@ void Popover::calculateLayout(SkRect availableSpace) {
     for (auto& child : children) {
         child->applyYogaLayout(left, top);
     }
+    clearLayoutDirtyRecursive();
 }
 
 void Popover::draw(SkCanvas* canvas) {

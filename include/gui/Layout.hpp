@@ -9,6 +9,7 @@
 #include <include/core/SkPaint.h>
 #include <include/core/SkColor.h>
 #include <External/yoga/yoga/Yoga.h>
+#include <include/core/IWindowHost.hpp>
 
 namespace MochiUI {
 
@@ -56,6 +57,7 @@ public:
         flexDirection = (dir == YGFlexDirectionRow) ? FlexDirection::Row : FlexDirection::Column;
     }
     void setAlignItems(YGAlign align) { alignItems = (AlignItems)align; }
+    void setJustifyContent(YGJustify justify) { justifyContent = justify; }
     void setFlexWrap(YGWrap wrap) { flexWrap = wrap; }
     void setPositionType(YGPositionType type) { positionType = type; }
     void setPosition(YGEdge edge, float value) {
@@ -107,6 +109,7 @@ public:
         YGNodeStyleSetGap(node, YGGutterAll, gap);
 
         YGNodeStyleSetFlexDirection(node, flexDirection == FlexDirection::Row ? YGFlexDirectionRow : YGFlexDirectionColumn);
+        YGNodeStyleSetJustifyContent(node, justifyContent);
 
         YGAlign align = YGAlignStretch;
         if (alignItems == AlignItems::Center) align = YGAlignCenter;
@@ -164,6 +167,7 @@ public:
     float bottom = -1e9f;
     YGPositionType positionType = YGPositionTypeStatic;
     YGWrap flexWrap = YGWrapNoWrap;
+    YGJustify justifyContent = YGJustifyFlexStart;
     SizingMode widthMode = SizingMode::Hug;
     SizingMode heightMode = SizingMode::Hug;
     FlexDirection flexDirection = FlexDirection::Column;
@@ -204,6 +208,23 @@ public:
     std::vector<Ptr> children;
     FlexNode* parent = nullptr;
     
+    bool dirtyLayout = true;
+    void markDirty() {
+        dirtyLayout = true;
+        if (parent) parent->markDirty();
+        requestRedraw();
+    }
+    
+    IWindowHost* windowHost = nullptr;
+    virtual void setWindowHost(IWindowHost* host) {
+        windowHost = host;
+        for (auto& child : children) child->setWindowHost(host);
+    }
+
+    virtual void requestRedraw() {
+        if (windowHost) windowHost->requestRedraw();
+    }
+    
     bool isHovered = false;
     bool isPressed = false;
     bool isFocused = false;
@@ -219,8 +240,10 @@ public:
             child->parent->removeChild(child);
         }
         child->parent = this;
+        child->setWindowHost(windowHost);
         children.push_back(child);
         YGNodeInsertChild(ygNode, child->getYGNode(), (uint32_t)(children.size() - 1));
+        markDirty();
     }
 
     virtual void removeChild(Ptr child) {
@@ -229,15 +252,18 @@ public:
             child->parent = nullptr;
             YGNodeRemoveChild(ygNode, child->getYGNode());
             children.erase(it);
+            markDirty();
         }
     }
 
     virtual void removeAllChildren() {
+        if (children.empty()) return;
         while (!children.empty()) {
             children.back()->parent = nullptr;
             YGNodeRemoveChild(ygNode, children.back()->getYGNode());
             children.pop_back();
         }
+        markDirty();
     }
 
     static Ptr Create() { return std::make_shared<FlexNode>(); }
@@ -299,6 +325,14 @@ public:
         syncSubtreeStyles();
         YGNodeCalculateLayout(ygNode, availableSpace.width(), availableSpace.height(), YGDirectionLTR);
         applyYogaLayout(availableSpace.left(), availableSpace.top());
+        clearLayoutDirtyRecursive();
+    }
+
+    void clearLayoutDirtyRecursive() {
+        dirtyLayout = false;
+        for (auto& child : children) {
+            child->clearLayoutDirtyRecursive();
+        }
     }
 
     virtual void syncSubtreeStyles() {

@@ -13,7 +13,7 @@ public:
     
     void setDate(int year, int month, int day);
     void draw(SkCanvas* canvas) override;
-    Size measure(Size available) override;
+    void syncSubtreeStyles() override;
     
     std::function<void(int, int, int)> onDateSelected;
 
@@ -25,6 +25,8 @@ private:
     void updateGrid();
     void nextMonth();
     void prevMonth();
+    
+    bool needsUpdate = true;
     
     void onMouseEnter() override { isHovered = true; }
     void onMouseLeave() override { isHovered = false; }

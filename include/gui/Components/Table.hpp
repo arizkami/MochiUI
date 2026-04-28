@@ -27,6 +27,8 @@ public:
     Table();
     void setHeader(std::shared_ptr<TableHead> head);
     void addRow(const std::vector<std::string>& cells);
+    void removeRow(size_t index);
+    void clearRows();
     void draw(SkCanvas* canvas) override;
     std::string fontFamily = FontManager::DEFAULT_FONT;
 

@@ -290,6 +290,15 @@ void Win32Window::setMenuBar(std::unique_ptr<IMenuBar> bar) {
     }
 }
 
+void Win32Window::setRoot(FlexNode::Ptr node) {
+    root = node;
+    if (!overlayRoot) {
+        overlayRoot = std::make_shared<OverlayNode>();
+        overlayRoot->setWindowHost(this);
+    }
+    overlayRoot->setMainContent(node);
+}
+
 void Win32Window::onSize(int w, int h) {
     if (w == 0 || h == 0) return;
     width = w;
@@ -301,6 +310,7 @@ void Win32Window::onSize(int w, int h) {
         if (menuBar && menuBar->getLayoutNode()) {
             if (!masterRoot) {
                 masterRoot = FlexNode::Column();
+                masterRoot->setWindowHost(this);
                 masterRoot->style.setWidthPercent(100.0f);
                 masterRoot->style.setHeightPercent(100.0f);
                 
@@ -332,6 +342,10 @@ void Win32Window::onPaint() {
 
     SkCanvas* canvas = surface->getCanvas();
     if (!canvas) return;
+
+    if (overlayRoot->dirtyLayout) {
+        overlayRoot->calculateLayout(SkRect::MakeWH((float)width, (float)height));
+    }
     
     canvas->clear(SK_ColorTRANSPARENT);
 

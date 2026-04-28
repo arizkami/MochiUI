@@ -18,6 +18,10 @@ public:
     std::string placeholder = "Select item...";
     std::function<void(int)> onSelectionChanged;
 
+    void addItem(const std::string& item) {
+        items.push_back(item);
+    }
+
     SkColor backgroundColor = Theme::Card;
     SkColor borderColor = SkColorSetA(Theme::TextSecondary, 50);
     SkColor textColor = Theme::TextPrimary;

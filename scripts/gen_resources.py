@@ -38,10 +38,20 @@ def generate_resources(xml_path, header_path, source_path):
             resources.append((rel_path, var_name, len(content)))
 
         f.write('\nvoid InitBinaryResources() {\n')
+        f.write('    static bool initialized = false;\n')
+        f.write('    if (initialized) return;\n')
+        f.write('    initialized = true;\n\n')
         f.write('    auto& rm = ResourceManager::getInstance();\n')
         for rel_path, var_name, size in resources:
             f.write(f'    rm.registerResource("res://{rel_path}", {var_name}, {size});\n')
         f.write('}\n\n')
+        
+        # Add auto-initialization helper
+        f.write('struct BinaryResourceInitializer {\n')
+        f.write('    BinaryResourceInitializer() { InitBinaryResources(); }\n')
+        f.write('};\n\n')
+        f.write('static BinaryResourceInitializer g_binaryResourceInitializer;\n\n')
+        
         f.write('} // namespace MochiUI\n')
 
 if __name__ == "__main__":

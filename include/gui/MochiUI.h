@@ -6,6 +6,8 @@
 #include <include/platform/windows/Window.hpp>
 #endif
 
+#include <BinaryResources.hpp>
+
 namespace MochiUI {
 
 using App = Application;

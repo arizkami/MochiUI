@@ -24,7 +24,11 @@ void ScrollAreaNode::setContent(FlexNode::Ptr node) {
 }
 
 Size ScrollAreaNode::measure(Size available) {
-    return { 100, 100 };
+    // Fill parent flex box when Yoga passes definite constraints (fixes vertical resize
+    // where a constant {100,100} left the viewport stuck at 100px tall).
+    float w = IsUndefined(available.width) ? 100.0f : std::max(0.0f, available.width);
+    float h = IsUndefined(available.height) ? 100.0f : std::max(0.0f, available.height);
+    return { w, h };
 }
 
 void ScrollAreaNode::draw(SkCanvas* canvas) {
@@ -35,6 +39,14 @@ void ScrollAreaNode::draw(SkCanvas* canvas) {
     // Ensure layout is up to date for the scroll content
     content->syncSubtreeStyles();
     YGNodeCalculateLayout(content->getYGNode(), frame.width(), YGUndefined, YGDirectionLTR);
+
+    const float contentH = content->frame.height();
+    const float viewH = frame.height();
+    if (contentH <= viewH) {
+        scrollY = 0;
+    } else {
+        scrollY = std::clamp(scrollY, 0.0f, contentH - viewH);
+    }
 
     canvas->save();
     canvas->clipRect(frame);
@@ -57,8 +69,11 @@ SkRect ScrollAreaNode::getScrollbarRect() const {
     if (contentH <= viewH) return SkRect::MakeEmpty();
 
     float scrollbarH = std::max(20.0f, (viewH / contentH) * viewH);
+    scrollbarH = std::min(scrollbarH, viewH);
     float scrollbarY = frame.top() + (scrollY / (contentH - viewH)) * (viewH - scrollbarH);
-    
+    const float maxY = frame.bottom() - scrollbarH;
+    scrollbarY = std::clamp(scrollbarY, frame.top(), maxY);
+
     return SkRect::MakeXYWH(frame.right() - 8, scrollbarY, 6, scrollbarH);
 }
 

@@ -1,22 +1,22 @@
 [submodule "External/yoga"]
-	path = External/yoga
+	path = external/yoga
 	url = https://github.com/facebook/yoga.git
 [submodule "External/lucide"]
-	path = External/lucide
+	path = external/lucide
 	url = https://github.com/lucide-icons/lucide
 [submodule "External/rtaudio"]
-	path = External/rtaudio
+	path = external/rtaudio
 	url = https://github.com/thestk/rtaudio
 [submodule "External/rtmidi"]
-	path = External/rtmidi
+	path = external/rtmidi
 	url = https://github.com/thestk/rtmidi
 [submodule "External/nlohmann-json"]
-	path = External/nlohmann-json
+	path = external/nlohmann-json
 	url = https://github.com/nlohmann/json
 [submodule "External/kissfft"]
-	path = External/kissfft
+	path = external/kissfft
 	url = https://github.com/mborgerding/kissfft
 [submodule "External/skia"]
-	path = External/skia
+	path = external/skia
 	url = https://github.com/google/skia
     update = none

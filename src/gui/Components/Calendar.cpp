@@ -1,8 +1,6 @@
 #include <gui/Components/Calendar.hpp>
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/IconNode.hpp>
-#include <iomanip>
-#include <sstream>
 
 namespace MochiUI {
 
@@ -12,14 +10,14 @@ Calendar::Calendar() {
     currentYear = now->tm_year + 1900;
     currentMonth = now->tm_mon + 1;
     currentDay = now->tm_mday;
-    
+
     displayedYear = currentYear;
     displayedMonth = currentMonth;
-    
+
     selectedYear = currentYear;
     selectedMonth = currentMonth;
     selectedDay = currentDay;
-    
+
     style.setWidth(280.0f);
     style.setHeightAuto();
     style.backgroundColor = Theme::Card;
@@ -68,12 +66,12 @@ void Calendar::syncSubtreeStyles() {
 void Calendar::updateGrid() {
     needsUpdate = false;
     removeAllChildren();
-    
+
     // Header
     auto header = FlexNode::Row();
     header->style.setHeight(32.0f);
     header->style.setAlignItems(YGAlignCenter);
-    
+
     auto monthYearText = std::make_shared<TextNode>();
     static const std::string months[] = {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
     monthYearText->text = months[displayedMonth-1] + " " + std::to_string(displayedYear);
@@ -106,8 +104,10 @@ void Calendar::updateGrid() {
     header->addChild(navGroup);
     addChild(header);
 
-    // Weekdays
-    auto weekHeader = FlexNode::Row();
+    // Weekday labels — 7-column grid so gaps line up with the day grid below
+    auto weekHeader = GridLayoutNode::Create();
+    weekHeader->setColumns(7);
+    weekHeader->style.setGap(4.0f);
     weekHeader->style.setHeight(24.0f);
     static const std::string days_of_week[] = {"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"};
     for (const auto& d_name : days_of_week) {
@@ -116,18 +116,16 @@ void Calendar::updateGrid() {
         t->fontSize = 12.0f;
         t->color = Theme::TextSecondary;
         t->textAlign = TextAlign::Center;
-        t->style.setFlex(1.0f);
         weekHeader->addChild(t);
     }
     addChild(weekHeader);
 
-    // Days Grid
     struct tm firstDay = {0};
     firstDay.tm_year = displayedYear - 1900;
     firstDay.tm_mon = displayedMonth - 1;
     firstDay.tm_mday = 1;
     mktime(&firstDay);
-    
+
     int startDay = firstDay.tm_wday;
     int daysInMonth = 31;
     if (displayedMonth == 4 || displayedMonth == 6 || displayedMonth == 9 || displayedMonth == 11) daysInMonth = 30;
@@ -136,37 +134,33 @@ void Calendar::updateGrid() {
         daysInMonth = leap ? 29 : 28;
     }
 
-    auto grid = FlexNode::Column();
-    grid->style.setGap(4.0f);
-    
-    auto row = FlexNode::Row();
-    row->style.setHeight(32.0f);
-    row->style.setGap(4.0f);
-    
-    // Padding for start of month
+    constexpr float kDayCellH = 32.0f;
+    constexpr float kDayGap = 4.0f;
+
+    const int occupiedCells = startDay + daysInMonth;
+    const int paddedCells = ((occupiedCells + 6) / 7) * 7;
+    const int numRows = std::max(1, paddedCells / 7);
+    const float gridH = static_cast<float>(numRows) * kDayCellH
+        + static_cast<float>(std::max(0, numRows - 1)) * kDayGap;
+
+    auto dayGrid = GridLayoutNode::Create();
+    dayGrid->setColumns(7);
+    dayGrid->style.setGap(kDayGap);
+    dayGrid->style.setHeight(gridH);
+
     for (int i = 0; i < startDay; ++i) {
-        auto empty = FlexNode::Create();
-        empty->style.setFlex(1.0f);
-        row->addChild(empty);
+        dayGrid->addChild(FlexNode::Create());
     }
 
     for (int d = 1; d <= daysInMonth; ++d) {
-        if (row->children.size() == 7) {
-            grid->addChild(row);
-            row = FlexNode::Row();
-            row->style.setHeight(32.0f);
-            row->style.setGap(4.0f);
-        }
-        
         auto dayNode = std::make_shared<TextNode>();
         dayNode->text = std::to_string(d);
         dayNode->fontSize = 14.0f;
         dayNode->textAlign = TextAlign::Center;
-        dayNode->style.setFlex(1.0f);
-        dayNode->style.setHeight(32.0f);
+        dayNode->style.setHeight(kDayCellH);
         dayNode->style.borderRadius = 16.0f;
         dayNode->enableHover = true;
-        
+
         bool isSelected = (d == selectedDay && displayedMonth == selectedMonth && displayedYear == selectedYear);
         bool isToday = (d == currentDay && displayedMonth == currentMonth && displayedYear == currentYear);
 
@@ -184,20 +178,20 @@ void Calendar::updateGrid() {
             selectedDay = d;
             selectedMonth = displayedMonth;
             selectedYear = displayedYear;
-            updateGrid();
+            needsUpdate = true;
+            markDirty();
             if (onDateSelected) onDateSelected(selectedYear, selectedMonth, selectedDay);
         };
-        
-        row->addChild(dayNode);
+
+        dayGrid->addChild(dayNode);
     }
-    
-    while (row->children.size() < 7) {
-        auto empty = FlexNode::Create();
-        empty->style.setFlex(1.0f);
-        row->addChild(empty);
+
+    const int endPad = paddedCells - occupiedCells;
+    for (int i = 0; i < endPad; ++i) {
+        dayGrid->addChild(FlexNode::Create());
     }
-    grid->addChild(row);
-    addChild(grid);
+
+    addChild(dayGrid);
 }
 
 void Calendar::draw(SkCanvas* canvas) {

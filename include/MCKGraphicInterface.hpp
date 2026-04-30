@@ -3,6 +3,8 @@
 
 // ── Abstract window interface (IWindow, WindowMode) ───────────────────────────
 #include <core/Window.hpp>
+#include <gui/GridLayout.hpp>
+#include <core/events/FlexRootDispatch.hpp>
 
 // ── Platform window backend ───────────────────────────────────────────────────
 #ifdef MCK_PLATFORM_WINDOWS

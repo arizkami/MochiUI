@@ -10,6 +10,7 @@
 #include <include/core/SkColor.h>
 #include <yoga/Yoga.h>
 #include <core/IWindowHost.hpp>
+#include <core/events/Events.hpp>
 
 namespace MochiUI {
 
@@ -349,7 +350,7 @@ public:
         }
     }
 
-    void applyYogaLayout(float offsetX, float offsetY) {
+    virtual void applyYogaLayout(float offsetX, float offsetY) {
         float left = YGNodeLayoutGetLeft(ygNode) + offsetX;
         float top = YGNodeLayoutGetTop(getYGNode()) + offsetY;
         float width = YGNodeLayoutGetWidth(getYGNode());
@@ -489,3 +490,5 @@ private:
 inline YGNodeRef LayoutStyle::getYGNode() { return owner->getYGNode(); }
 
 } // namespace MochiUI
+
+#include <gui/GridLayout.hpp>

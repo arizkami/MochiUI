@@ -37,7 +37,7 @@ void ComboBox::draw(SkCanvas* canvas) {
                               ? items[selectedIndex] : placeholder;
     
     FontManager::getInstance().drawText(canvas, currentText, 
-                                        frame.left() + getLayoutPadding(YGEdgeLeft), frame.centerY() + 5.0f, 
+                                        frame.left() + getLayoutPadding(YGEdgeLeft), frame.centerY() + fontSize / 2.0f - 2.0f, 
                                         fontSize, textPaint);
 
     // 3. Draw Arrow
@@ -91,7 +91,7 @@ void ComboBox::draw(SkCanvas* canvas) {
             // Item text
             textPaint.setColor(textColor);
             FontManager::getInstance().drawText(canvas, items[i], 
-                                                itemRect.left() + getLayoutPadding(YGEdgeLeft), itemRect.centerY() + 5.0f, 
+                                                itemRect.left() + getLayoutPadding(YGEdgeLeft), itemRect.centerY() + fontSize / 2.0f - 2.0f,
                                                 fontSize, textPaint);
         }
     }

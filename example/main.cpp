@@ -1,6 +1,7 @@
 #include <MCKApplication.hpp>
 #include <MCKGraphicInterface.hpp>
 #include <MCKGraphicComponents.hpp>
+#include <chrono>
 #include <windows.h>
 
 using namespace MochiUI;
@@ -268,6 +269,12 @@ static FlexNode::Ptr CreateVisualizersTab() {
         auto prog = std::make_shared<ProgressBar>();
         prog->value = 0.45f;
         col->addChild(prog);
+
+        auto progBusy = std::make_shared<ProgressBar>();
+        progBusy->setIndeterminate(true);
+        progBusy->indeterminateSegment = 0.32f;
+        progBusy->indeterminatePeriod = std::chrono::milliseconds(1400);
+        col->addChild(progBusy);
 
         auto slider = std::make_shared<SliderNode>();
         slider->value = 0.45f;

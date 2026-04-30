@@ -38,35 +38,35 @@ endif()
 
 include_directories(
     include
-    External/prebuilt/skia
-    External/prebuilt/skia/include
-    External/yoga
-    External/rtaudio
+    external/prebuilt/skia
+    external/prebuilt/skia/include
+    external/yoga
+    external/rtaudio
 )
 
 set(SKIA_LIB_DIR ${SKIA_DIR}/lib)
 
 # ── Yoga layout engine ────────────────────────────────────────────────────────
 set(YOGA_SOURCES
-    External/yoga/yoga/YGConfig.cpp
-    External/yoga/yoga/YGEnums.cpp
-    External/yoga/yoga/YGNode.cpp
-    External/yoga/yoga/YGNodeLayout.cpp
-    External/yoga/yoga/YGNodeStyle.cpp
-    External/yoga/yoga/YGPixelGrid.cpp
-    External/yoga/yoga/YGValue.cpp
-    External/yoga/yoga/algorithm/AbsoluteLayout.cpp
-    External/yoga/yoga/algorithm/Baseline.cpp
-    External/yoga/yoga/algorithm/Cache.cpp
-    External/yoga/yoga/algorithm/CalculateLayout.cpp
-    External/yoga/yoga/algorithm/FlexLine.cpp
-    External/yoga/yoga/algorithm/PixelGrid.cpp
-    External/yoga/yoga/config/Config.cpp
-    External/yoga/yoga/debug/AssertFatal.cpp
-    External/yoga/yoga/debug/Log.cpp
-    External/yoga/yoga/event/event.cpp
-    External/yoga/yoga/node/LayoutResults.cpp
-    External/yoga/yoga/node/Node.cpp
+    external/yoga/yoga/YGConfig.cpp
+    external/yoga/yoga/YGEnums.cpp
+    external/yoga/yoga/YGNode.cpp
+    external/yoga/yoga/YGNodeLayout.cpp
+    external/yoga/yoga/YGNodeStyle.cpp
+    external/yoga/yoga/YGPixelGrid.cpp
+    external/yoga/yoga/YGValue.cpp
+    external/yoga/yoga/algorithm/AbsoluteLayout.cpp
+    external/yoga/yoga/algorithm/Baseline.cpp
+    external/yoga/yoga/algorithm/Cache.cpp
+    external/yoga/yoga/algorithm/CalculateLayout.cpp
+    external/yoga/yoga/algorithm/FlexLine.cpp
+    external/yoga/yoga/algorithm/PixelGrid.cpp
+    external/yoga/yoga/config/Config.cpp
+    external/yoga/yoga/debug/AssertFatal.cpp
+    external/yoga/yoga/debug/Log.cpp
+    external/yoga/yoga/event/event.cpp
+    external/yoga/yoga/node/LayoutResults.cpp
+    external/yoga/yoga/node/Node.cpp
 )
 
 # ── Resource generation ───────────────────────────────────────────────────────
@@ -126,6 +126,7 @@ set(MOCHIKIT_LIBS
 set(FOUNDATION_SOURCES
     ${YOGA_SOURCES}
     src/core/Application.cpp
+    src/core/events/EventKind.cpp
     src/core/ResourceManager.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp
@@ -196,7 +197,7 @@ target_link_libraries(MochiKit_GraphicComponent PUBLIC MochiKit_GraphicInterface
 # ══════════════════════════════════════════════════════════════════════════════
 set(DIRECT_AUDIO_SOURCES
     src/audio/MCKDirectAudioEngine.cpp
-    External/rtaudio/RtAudio.cpp
+    external/rtaudio/RtAudio.cpp
 )
 
 add_library(MochiKit_DirectAudioEngine SHARED ${DIRECT_AUDIO_SOURCES})

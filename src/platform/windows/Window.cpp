@@ -1,4 +1,6 @@
 #include <platform/windows/Window.hpp>
+#include <core/events/Win32Input.hpp>
+#include <core/events/FlexRootDispatch.hpp>
 #include <utils/Misc/ThemeSwitcher.hpp>
 #include <include/core/SkCanvas.h>
 #include <include/core/SkColorSpace.h>
@@ -459,51 +461,65 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             return 1; // Prevent flicker
         case WM_MOUSEMOVE:
             if (win && effectiveRoot) {
-                if (effectiveRoot->onMouseMove((float)LOWORD(lp), (float)HIWORD(lp))) {
+                using namespace events;
+                PointerEvent e = pointerEventFromClient(lp, pointerButtonsFromKeyState());
+                if (dispatchPointerMove(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
             }
             return 0;
         case WM_LBUTTONDOWN:
             if (win && effectiveRoot) {
-                if (effectiveRoot->onMouseDown((float)LOWORD(lp), (float)HIWORD(lp))) {
+                using namespace events;
+                PointerButton btns = pointerButtonsFromKeyState() | PointerButton::Primary;
+                PointerEvent e = pointerEventFromClient(lp, btns, PointerButton::Primary, true);
+                if (dispatchPointerPrimaryDown(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
             }
             return 0;
         case WM_LBUTTONUP:
             if (win && effectiveRoot) {
-                effectiveRoot->onMouseUp((float)LOWORD(lp), (float)HIWORD(lp));
+                using namespace events;
+                PointerEvent e = pointerEventFromClient(
+                    lp, pointerButtonsFromKeyState(), PointerButton::Primary, false);
+                dispatchPointerPrimaryUp(*effectiveRoot, e);
                 InvalidateRect(hwnd, NULL, FALSE);
             }
             return 0;
         case WM_RBUTTONDOWN:
             if (win && effectiveRoot) {
-                if (effectiveRoot->onRightDown((float)LOWORD(lp), (float)HIWORD(lp))) {
+                using namespace events;
+                PointerButton btns = pointerButtonsFromKeyState() | PointerButton::Secondary;
+                PointerEvent e = pointerEventFromClient(lp, btns, PointerButton::Secondary, true);
+                if (dispatchPointerSecondaryDown(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
             }
             return 0;
         case WM_MOUSEWHEEL:
             if (win && effectiveRoot) {
-                POINT pt = { (short)LOWORD(lp), (short)HIWORD(lp) };
-                ScreenToClient(hwnd, &pt);
-                float delta = GET_WHEEL_DELTA_WPARAM(wp) / (float)WHEEL_DELTA;
-                if (effectiveRoot->onMouseWheel((float)pt.x, (float)pt.y, delta)) {
+                using namespace events;
+                WheelEvent e = wheelEventFromMouseWheel(hwnd, wp, lp);
+                if (dispatchWheel(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
             }
             return 0;
         case WM_KEYDOWN:
             if (win && effectiveRoot) {
-                if (effectiveRoot->onKeyDown((uint32_t)wp)) {
+                using namespace events;
+                KeyEvent e = keyEventFromKeyDown(wp, lp);
+                if (dispatchKeyDown(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
             }
             return 0;
         case WM_CHAR:
             if (win && effectiveRoot) {
-                if (effectiveRoot->onChar((uint32_t)wp)) {
+                using namespace events;
+                TextEvent e = textEventFromWmChar(wp);
+                if (dispatchTextInput(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
             }

@@ -24,7 +24,7 @@ void RadioButtonNode::draw(SkCanvas* canvas) {
 
     drawSelf(canvas);
 
-    float radioX = frame.left() + style.padding;
+    float radioX = frame.left() + getLayoutPadding(YGEdgeLeft);
     float radioY = frame.centerY() - radioSize / 2;
 
     float centerX = radioX + radioSize / 2;

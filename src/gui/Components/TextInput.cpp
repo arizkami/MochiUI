@@ -180,7 +180,7 @@ bool TextInput::onMouseDown(float x, float y) {
     return FlexNode::onMouseDown(x, y);
 }
 
-    bool TextInput::onRightDown(float x, float y) {
+bool TextInput::onRightDown(float x, float y) {
     if (!hitTest(x, y)) return false;
 
     isFocused = true;
@@ -225,9 +225,9 @@ bool TextInput::onMouseDown(float x, float y) {
     }
 
     return true;
-    }
+}
 
-    bool TextInput::onMouseMove(float x, float y) {
+bool TextInput::onMouseMove(float x, float y) {
     bool handled = FlexNode::onMouseMove(x, y);
     if (isDragging && isFocused) {
         cursorIndex = getCursorIndexFromPosition(x);

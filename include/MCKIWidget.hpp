@@ -1,5 +1,6 @@
 #pragma once
 #include <MCKGraphicInterface.hpp>
+#include <core/events/Events.hpp>
 
 namespace MochiUI {
 

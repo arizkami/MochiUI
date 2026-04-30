@@ -19,6 +19,9 @@
     #endif
 #endif
 
+// ── Event payloads (pointer, key, Skia, layout phases, …) ─────────────────────
+#include <core/events/Events.hpp>
+
 // ── API export macro ──────────────────────────────────────────────────────────
 #ifdef MCK_BUILD_SHARED
     #define MCK_API __declspec(dllexport)

@@ -58,6 +58,12 @@ static FlexNode::Ptr Card(FlexNode::Ptr child, const std::string& title = "") {
     return card;
 }
 
+static std::shared_ptr<ScrollAreaNode> Scrollable(FlexNode::Ptr content) {
+    auto scroll = std::make_shared<ScrollAreaNode>();
+    scroll->setContent(content);
+    return scroll;
+}
+
 // ── Tab: Controls ─────────────────────────────────────────────────────────────
 
 static FlexNode::Ptr CreateControlsTab() {
@@ -543,11 +549,11 @@ static FlexNode::Ptr CreateGallery() {
     auto tabs = std::make_shared<TabsNode>();
     tabs->style.setFlex(1.0f);
 
-    tabs->addTab("Controls",    CreateControlsTab());
-    tabs->addTab("Inputs",      CreateInputsTab());
-    tabs->addTab("Visualizers", CreateVisualizersTab());
-    tabs->addTab("Palette",     CreatePaletteTab());
-    tabs->addTab("Data",        CreateDataTab());
+    tabs->addTab("Controls",    Scrollable(CreateControlsTab()));
+    tabs->addTab("Inputs",      Scrollable(CreateInputsTab()));
+    tabs->addTab("Visualizers", Scrollable(CreateVisualizersTab()));
+    tabs->addTab("Palette",     Scrollable(CreatePaletteTab()));
+    tabs->addTab("Data",        Scrollable(CreateDataTab()));
 
     body->addChild(tabs);
     root->addChild(body);

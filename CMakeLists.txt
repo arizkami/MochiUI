@@ -16,8 +16,8 @@ if(MSVC)
 endif()
 
 # ── Skia prebuilt binaries ────────────────────────────────────────────────────
-set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/External/prebuilt/skia)
-set(SKIA_ZIP ${CMAKE_CURRENT_SOURCE_DIR}/External/skia-prebuilt-binary.zip)
+set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
+set(SKIA_ZIP ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
 set(SKIA_URL "https://github.com/arizkami/MochiUI/releases/download/2026.04/skia-prebuilt-binary.zip")
 
 if(NOT EXISTS ${SKIA_DIR}/lib/skia.lib)
@@ -29,7 +29,7 @@ if(NOT EXISTS ${SKIA_DIR}/lib/skia.lib)
     endif()
     message(STATUS "Extracting Skia binaries...")
     file(ARCHIVE_EXTRACT INPUT ${SKIA_ZIP}
-         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/External/prebuilt/skia)
+         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
     file(REMOVE ${SKIA_ZIP})
     message(STATUS "Skia binaries installed successfully!")
 else()

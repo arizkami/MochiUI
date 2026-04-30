@@ -1,4 +1,4 @@
-#include <include/gui/Components/NumberInput.hpp>
+#include <gui/Components/NumberInput.hpp>
 #include <include/core/SkPathBuilder.h>
 #include <windows.h>
 #include <iomanip>

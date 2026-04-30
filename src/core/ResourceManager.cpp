@@ -1,4 +1,4 @@
-#include <include/core/ResourceManager.hpp>
+#include <core/ResourceManager.hpp>
 
 namespace MochiUI {
 

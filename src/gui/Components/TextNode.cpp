@@ -1,4 +1,4 @@
-#include <include/gui/Components/TextNode.hpp>
+#include <gui/Components/TextNode.hpp>
 #include <include/core/SkFontMetrics.h>
 
 namespace MochiUI {

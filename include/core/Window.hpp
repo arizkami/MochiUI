@@ -1,11 +1,17 @@
 #pragma once
 #include <string>
 #include <memory>
-#include <include/core/IWindowHost.hpp>
-#include <include/gui/Layout.hpp>
-#include <include/gui/MenuBar.hpp>
+#include <core/IWindowHost.hpp>
+#include <gui/Layout.hpp>
+#include <gui/MenuBar.hpp>
 
 namespace MochiUI {
+
+enum class WindowMode {
+    Windowed,
+    Borderless,
+    Fullscreen
+};
 
 class IWindow {
 public:
@@ -14,6 +20,7 @@ public:
     virtual void setTitle(const std::string& title) = 0;
     virtual void setDarkMode(bool enable) = 0;
     virtual void enableMica(bool enable) = 0;
+    virtual void setWindowMode(WindowMode mode) = 0;
     
     virtual void setMenuBar(std::unique_ptr<IMenuBar> bar) = 0;
     virtual void setRoot(FlexNode::Ptr node) = 0;

@@ -1,4 +1,4 @@
-#include <include/gui/Components/TextInput.hpp>
+#include <gui/Components/TextInput.hpp>
 #include <windows.h>
 
 namespace MochiUI {

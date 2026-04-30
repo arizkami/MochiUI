@@ -1,4 +1,4 @@
-#include <include/gui/Components/ColorPicker.hpp>
+#include <gui/Components/ColorPicker.hpp>
 #include <include/core/SkShader.h>
 #include <include/effects/SkGradient.h>
 #include <include/effects/SkRuntimeEffect.h>

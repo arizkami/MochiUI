@@ -1,7 +1,7 @@
-#include <include/gui/MenuBar.hpp>
-#include <include/gui/Components.hpp>
-#include <include/gui/Theme.hpp>
-#include <include/utils/FontManager/FontMgr.hpp>
+#include <gui/MenuBar.hpp>
+#include <MCKGraphicComponents.hpp>
+#include <gui/Theme.hpp>
+#include <utils/FontManager/FontMgr.hpp>
 #include <windows.h>
 #include <map>
 #include <include/core/SkCanvas.h>
@@ -79,8 +79,8 @@ public:
         FontManager::getInstance().getFontMetrics((float)fontSize, &metrics);
 
         float textWidth = FontManager::getInstance().measureText(text, (float)fontSize);
-        float textX = frame.left() + (frame.width() - textWidth) / 2.0f;
-        float textY = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f;
+        float textX = std::round(frame.left() + (frame.width() - textWidth) / 2.0f);
+        float textY = std::round(frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f);
 
         FontManager::getInstance().drawText(canvas, text, textX, textY, (float)fontSize, textPaint);
     }

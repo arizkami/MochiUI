@@ -1,4 +1,4 @@
-#include <include/gui/Components/SliderNode.hpp>
+#include <gui/Components/SliderNode.hpp>
 #include <algorithm>
 #include <windows.h>
 

@@ -4,3 +4,19 @@
 [submodule "External/lucide"]
 	path = External/lucide
 	url = https://github.com/lucide-icons/lucide
+[submodule "External/rtaudio"]
+	path = External/rtaudio
+	url = https://github.com/thestk/rtaudio
+[submodule "External/rtmidi"]
+	path = External/rtmidi
+	url = https://github.com/thestk/rtmidi
+[submodule "External/nlohmann-json"]
+	path = External/nlohmann-json
+	url = https://github.com/nlohmann/json
+[submodule "External/kissfft"]
+	path = External/kissfft
+	url = https://github.com/mborgerding/kissfft
+[submodule "External/skia"]
+	path = External/skia
+	url = https://github.com/google/skia
+    update = none

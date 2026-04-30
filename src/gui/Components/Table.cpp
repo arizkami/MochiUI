@@ -1,5 +1,5 @@
-#include <include/gui/Components/Table.hpp>
-#include <include/gui/Components/TextNode.hpp>
+#include <gui/Components/Table.hpp>
+#include <gui/Components/TextNode.hpp>
 
 namespace MochiUI {
 

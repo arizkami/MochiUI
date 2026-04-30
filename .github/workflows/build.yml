@@ -10,13 +10,13 @@ on:
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         submodules: true
-      
+
     - name: Setup MSVC Developer Command Prompt
       uses: ilammy/msvc-dev-cmd@v1
       with:
@@ -26,37 +26,46 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-        
+
     - name: Generate theme files
       run: python scripts/gen_theme.py
-      
+
     - name: Configure CMake
-      # Using NMake Makefiles as requested
       run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
-      
-    - name: Build MochiKit
-      run: cmake --build build --target MochiKit --config Release
-      
+
+    - name: Build MochiKit libraries
+      run: |
+        cmake --build build --target MochiKit_Foundation --config Release
+        cmake --build build --target MochiKit_GraphicInterface --config Release
+        cmake --build build --target MochiKit_GraphicComponent --config Release
+        cmake --build build --target MochiKit_DirectAudioEngine --config Release
+
     - name: Build MochiExample
       run: cmake --build build --target MochiExample --config Release
-      
-    - name: Upload MochiKit library
+
+    - name: Upload MochiKit libraries
       uses: actions/upload-artifact@v4
       with:
         name: MochiKit-lib
         path: |
-          build/MochiKit.lib
-          include/**/*.h
+          build/MochiKit.Foundation.dll
+          build/MochiKit.Foundation.lib
+          build/MochiKit.GraphicInterface.dll
+          build/MochiKit.GraphicInterface.lib
+          build/MochiKit.GraphicComponent.dll
+          build/MochiKit.GraphicComponent.lib
+          build/MochiKit.DirectAudioEngine.dll
+          build/MochiKit.DirectAudioEngine.lib
           include/**/*.hpp
         retention-days: 30
-        
+
     - name: Upload MochiExample executable
       uses: actions/upload-artifact@v4
       with:
         name: MochiExample-exe
         path: build/MochiExample.exe
         retention-days: 30
-        
+
     - name: Upload build logs
       if: failure()
       uses: actions/upload-artifact@v4

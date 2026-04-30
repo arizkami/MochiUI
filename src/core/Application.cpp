@@ -1,6 +1,6 @@
-#include <include/core/Application.hpp>
-#include <include/utils/FontManager/FontMgr.hpp>
-#include <include/utils/Misc/ThemeSwitcher.hpp>
+#include <core/Application.hpp>
+#include <utils/FontManager/FontMgr.hpp>
+#include <utils/Misc/ThemeSwitcher.hpp>
 #include <windows.h>
 #include <objbase.h>
 

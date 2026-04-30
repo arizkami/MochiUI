@@ -1,4 +1,4 @@
-#include <include/gui/Components/GroupBox.hpp>
+#include <gui/Components/GroupBox.hpp>
 #include <include/core/SkPathBuilder.h>
 #include <include/core/SkFontMetrics.h>
 

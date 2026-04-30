@@ -1,4 +1,4 @@
-#include <include/gui/MochiUI.h>
+#include <MCKGraphicInterface.hpp>
 
 // This file is now mostly empty as implementations moved to core and platform
 namespace MochiUI {

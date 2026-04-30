@@ -1,4 +1,4 @@
-#include <include/utils/FontManager/FontMgr.hpp>
+#include <utils/FontManager/FontMgr.hpp>
 #include <windows.h>
 #include <include/ports/SkTypeface_win.h>
 #include <vector>
@@ -152,6 +152,8 @@ SkFont FontManager::createFont(const std::string& familyName,
     font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
     font.setSubpixel(true);
     font.setHinting(SkFontHinting::kFull);
+    font.setBaselineSnap(true);
+    font.setLinearMetrics(false); // Sharpness is often better with linear metrics OFF if hinting is ON
     return font;
 }
 
@@ -164,6 +166,7 @@ float FontManager::drawText(SkCanvas* canvas, const std::string& text, float x, 
         font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
         font.setSubpixel(true);
         font.setHinting(SkFontHinting::kFull);
+        font.setBaselineSnap(true);
         canvas->drawSimpleText(run.text.c_str(), run.text.size(), SkTextEncoding::kUTF8, currentX, y, font, paint);
         currentX += font.measureText(run.text.c_str(), run.text.size(), SkTextEncoding::kUTF8);
     }
@@ -183,6 +186,7 @@ float FontManager::measureText(const std::string& text, size_t byteLength, float
         font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
         font.setSubpixel(true);
         font.setHinting(SkFontHinting::kFull);
+        font.setBaselineSnap(true);
         
         SkRect runBounds;
         float runWidth = font.measureText(run.text.c_str(), run.text.size(), SkTextEncoding::kUTF8, outBounds ? &runBounds : nullptr);

@@ -1,7 +1,8 @@
-#include <include/platform/windows/Window.hpp>
-#include <include/utils/Misc/ThemeSwitcher.hpp>
+#include <platform/windows/Window.hpp>
+#include <utils/Misc/ThemeSwitcher.hpp>
 #include <include/core/SkCanvas.h>
 #include <include/core/SkColorSpace.h>
+#include <include/core/SkSurfaceProps.h>
 #include <include/gpu/ganesh/GrDirectContext.h>
 #include <include/gpu/ganesh/d3d/GrD3DBackendContext.h>
 #include <include/gpu/ganesh/d3d/GrD3DDirectContext.h>
@@ -261,8 +262,9 @@ void Win32Window::resizeBuffers(int w, int h) {
                                       0);
 
         GrBackendRenderTarget backendRT = GrBackendRenderTargets::MakeD3D(w, h, info);
+        SkSurfaceProps props(0, kRGB_H_SkPixelGeometry);
         frames[i].surface = SkSurfaces::WrapBackendRenderTarget(
-            grContext.get(), backendRT, kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType, nullptr, nullptr);
+            grContext.get(), backendRT, kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType, nullptr, &props);
     }
 }
 
@@ -281,6 +283,46 @@ void Win32Window::setDarkMode(bool enable) {
 void Win32Window::enableMica(bool enable) {
     int value = enable ? 2 : 0; 
     DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, &value, sizeof(value));
+}
+
+void Win32Window::setWindowMode(WindowMode mode) {
+    if (currentMode == mode) return;
+
+    DWORD dwStyle = GetWindowLong(hwnd, GWL_STYLE);
+
+    if (mode == WindowMode::Fullscreen) {
+        if (currentMode == WindowMode::Windowed) {
+            GetWindowPlacement(hwnd, &wpPrev);
+        }
+        
+        MONITORINFO mi = { sizeof(mi) };
+        if (GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &mi)) {
+            SetWindowLongPtr(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+            SetWindowPos(hwnd, HWND_TOP,
+                         mi.rcMonitor.left, mi.rcMonitor.top,
+                         mi.rcMonitor.right - mi.rcMonitor.left,
+                         mi.rcMonitor.bottom - mi.rcMonitor.top,
+                         SWP_NOOWNERZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+        }
+    } else if (mode == WindowMode::Windowed) {
+        SetWindowLongPtr(hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+        if (currentMode == WindowMode::Fullscreen) {
+            SetWindowPlacement(hwnd, &wpPrev);
+        }
+        SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    } else if (mode == WindowMode::Borderless) {
+        if (currentMode == WindowMode::Windowed) {
+            GetWindowPlacement(hwnd, &wpPrev);
+        }
+        SetWindowLongPtr(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+        SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
+                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
+                     SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+    }
+
+    currentMode = mode;
 }
 
 void Win32Window::setMenuBar(std::unique_ptr<IMenuBar> bar) {

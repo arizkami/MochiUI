@@ -1,7 +1,7 @@
 #pragma once
-#include <include/gui/Layout.hpp>
-#include <include/gui/Theme.hpp>
-#include <include/utils/FontManager/FontMgr.hpp>
+#include <gui/Layout.hpp>
+#include <gui/Theme.hpp>
+#include <utils/FontManager/FontMgr.hpp>
 #include <include/core/SkCanvas.h>
 #include <include/core/SkPaint.h>
 #include <include/core/SkRRect.h>

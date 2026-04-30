@@ -1,5 +1,5 @@
 #pragma once
-#include <include/gui/Components/TextNode.hpp>
+#include <gui/Components/TextNode.hpp>
 
 namespace MochiUI {
 

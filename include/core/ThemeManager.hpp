@@ -1,5 +1,5 @@
 #pragma once
-#include <include/utils/Misc/ThemeSwitcher.hpp>
+#include <utils/Misc/ThemeSwitcher.hpp>
 
 namespace MochiUI {
 

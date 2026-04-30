@@ -1,4 +1,4 @@
-#include <include/gui/Components/CheckboxNode.hpp>
+#include <gui/Components/CheckboxNode.hpp>
 
 namespace MochiUI {
 

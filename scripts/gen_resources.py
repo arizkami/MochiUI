@@ -17,7 +17,7 @@ def generate_resources(xml_path, header_path, source_path):
     # Generate Source
     with open(source_path, 'w') as f:
         f.write(f'#include "{os.path.basename(header_path)}"\n')
-        f.write('#include <include/core/ResourceManager.hpp>\n\n')
+        f.write('#include <core/ResourceManager.hpp>\n\n')
         f.write('namespace MochiUI {\n\n')
         
         resources = []

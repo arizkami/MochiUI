@@ -1,6 +1,6 @@
 #pragma once
-#include <include/gui/Layout.hpp>
-#include <include/gui/Theme.hpp>
+#include <gui/Layout.hpp>
+#include <gui/Theme.hpp>
 
 namespace MochiUI {
 

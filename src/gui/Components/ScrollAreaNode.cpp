@@ -1,4 +1,4 @@
-#include <include/gui/Components/ScrollAreaNode.hpp>
+#include <gui/Components/ScrollAreaNode.hpp>
 #include <algorithm>
 
 namespace MochiUI {

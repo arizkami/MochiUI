@@ -1,4 +1,4 @@
-#include <include/gui/Components/KnobNode.hpp>
+#include <gui/Components/KnobNode.hpp>
 #include <algorithm>
 #include <windows.h> // For GetTickCount and GetKeyState
 

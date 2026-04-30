@@ -6,26 +6,30 @@
 namespace MochiUI {
 
 enum class ThemeType {
-    Auto,   // Automatically detect from Windows
+    Auto,       // Detect from Windows
     Dark,
     Light,
     System,
-    Minimal
+    Minimal,
+    Md3Dark,
+    Md3Light,
+    WinuiDark,
+    WinuiLight,
 };
 
 class ThemeSwitcher {
 public:
     static ThemeSwitcher& getInstance();
-    
+
     void setTheme(ThemeType theme);
     void setTheme(const std::string& themeName);
     ThemeType getCurrentTheme() const { return currentTheme; }
     std::string getCurrentThemeName() const;
-    
+
     void applyTheme();
     void detectAndApplyWindowsTheme();
     bool isWindowsInDarkMode();
-    
+
     void registerThemeChangeCallback(std::function<void(ThemeType)> callback);
     void notifyThemeChanged();
 
@@ -34,7 +38,7 @@ private:
     ~ThemeSwitcher() = default;
     ThemeSwitcher(const ThemeSwitcher&) = delete;
     ThemeSwitcher& operator=(const ThemeSwitcher&) = delete;
-    
+
     ThemeType currentTheme = ThemeType::Auto;
     std::vector<std::function<void(ThemeType)>> callbacks;
 };

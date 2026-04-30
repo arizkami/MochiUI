@@ -1,9 +1,6 @@
-#include <include/gui/MochiUI.h>
-#include <include/gui/Layout.hpp>
-#include <include/gui/Components.hpp>
-#include <include/gui/Theme.hpp>
-#include <include/core/Application.hpp>
-#include <include/platform/windows/Window.hpp>
+#include <MCKApplication.hpp>
+#include <MCKGraphicInterface.hpp>
+#include <MCKGraphicComponents.hpp>
 #include <windows.h>
 #include <psapi.h>
 #include <tlhelp32.h>

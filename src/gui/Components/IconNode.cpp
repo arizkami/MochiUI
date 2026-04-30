@@ -1,7 +1,7 @@
-#include <include/gui/Components/IconNode.hpp>
+#include <gui/Components/IconNode.hpp>
 #include <include/utils/SkParsePath.h>
 #include <include/core/SkPathBuilder.h>
-#include <include/core/ResourceManager.hpp>
+#include <core/ResourceManager.hpp>
 #include <fstream>
 #include <sstream>
 #include <regex>

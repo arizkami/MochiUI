@@ -1,6 +1,6 @@
 #pragma once
-#include <include/gui/Layout.hpp>
-#include <include/gui/Theme.hpp>
+#include <gui/Layout.hpp>
+#include <gui/Theme.hpp>
 #include <include/core/SkCanvas.h>
 #include <include/core/SkPaint.h>
 #include <include/core/SkRRect.h>

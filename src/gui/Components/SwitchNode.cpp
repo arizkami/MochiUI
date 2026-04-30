@@ -1,4 +1,4 @@
-#include <include/gui/Components/SwitchNode.hpp>
+#include <gui/Components/SwitchNode.hpp>
 #include <include/core/SkRRect.h>
 
 namespace MochiUI {

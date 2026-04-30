@@ -1,5 +1,5 @@
 #pragma once
-#include <include/gui/Components/TextInput.hpp>
+#include <gui/Components/TextInput.hpp>
 
 namespace MochiUI {
 

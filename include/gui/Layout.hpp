@@ -8,8 +8,8 @@
 #include <include/core/SkCanvas.h>
 #include <include/core/SkPaint.h>
 #include <include/core/SkColor.h>
-#include <External/yoga/yoga/Yoga.h>
-#include <include/core/IWindowHost.hpp>
+#include <yoga/Yoga.h>
+#include <core/IWindowHost.hpp>
 
 namespace MochiUI {
 
@@ -56,7 +56,14 @@ public:
     void setFlexDirection(YGFlexDirection dir) { 
         flexDirection = (dir == YGFlexDirectionRow) ? FlexDirection::Row : FlexDirection::Column;
     }
-    void setAlignItems(YGAlign align) { alignItems = (AlignItems)align; }
+    void setAlignItems(YGAlign align) {
+        switch (align) {
+            case YGAlignCenter:   alignItems = AlignItems::Center;   break;
+            case YGAlignFlexEnd:  alignItems = AlignItems::FlexEnd;  break;
+            case YGAlignStretch:  alignItems = AlignItems::Stretch;  break;
+            default:              alignItems = AlignItems::FlexStart; break;
+        }
+    }
     void setJustifyContent(YGJustify justify) { justifyContent = justify; }
     void setFlexWrap(YGWrap wrap) { flexWrap = wrap; }
     void setPositionType(YGPositionType type) { positionType = type; }

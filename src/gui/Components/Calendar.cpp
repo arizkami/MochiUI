@@ -1,6 +1,6 @@
-#include <include/gui/Components/Calendar.hpp>
-#include <include/gui/Components/TextNode.hpp>
-#include <include/gui/Components/IconNode.hpp>
+#include <gui/Components/Calendar.hpp>
+#include <gui/Components/TextNode.hpp>
+#include <gui/Components/IconNode.hpp>
 #include <iomanip>
 #include <sstream>
 

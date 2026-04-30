@@ -1,5 +1,5 @@
 #pragma once
-#include <include/core/Window.hpp>
+#include <core/Window.hpp>
 #include <windows.h>
 #include <d3d12.h>
 #include <dxgi1_4.h>
@@ -9,7 +9,7 @@
 
 class GrDirectContext;
 
-#include <include/gui/OverlayNode.hpp>
+#include <gui/OverlayNode.hpp>
 
 namespace MochiUI {
 
@@ -26,6 +26,7 @@ public:
     void setTitle(const std::string& title) override;
     void setDarkMode(bool enable) override;
     void enableMica(bool enable) override;
+    void setWindowMode(WindowMode mode) override;
     
     void setMenuBar(std::unique_ptr<IMenuBar> bar) override;
     void setRoot(FlexNode::Ptr node) override;
@@ -75,6 +76,8 @@ private:
     std::vector<FrameContext> frames;
     
     sk_sp<GrDirectContext> grContext;
+    WindowMode currentMode = WindowMode::Windowed;
+    WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
 };
 
 } // namespace MochiUI

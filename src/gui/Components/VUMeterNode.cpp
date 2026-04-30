@@ -1,4 +1,4 @@
-#include <include/gui/Components/VUMeterNode.hpp>
+#include <gui/Components/VUMeterNode.hpp>
 #include <algorithm>
 #include <sstream>
 #include <iomanip>

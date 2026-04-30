@@ -1,6 +1,6 @@
 #pragma once
-#include <include/gui/Components/TextInput.hpp>
-#include <include/gui/Components/BadgeNode.hpp>
+#include <gui/Components/TextInput.hpp>
+#include <gui/Components/BadgeNode.hpp>
 
 namespace MochiUI {
 

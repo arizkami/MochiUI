@@ -1,10 +1,10 @@
-#include <include/gui/Components/DatePicker.hpp>
-#include <include/gui/Components/Calendar.hpp>
-#include <include/gui/Components/Popover.hpp>
-#include <include/gui/Components/TextNode.hpp>
-#include <include/gui/Components/IconNode.hpp>
-#include <include/gui/OverlayNode.hpp>
-#include <include/core/Window.hpp>
+#include <gui/Components/DatePicker.hpp>
+#include <gui/Components/Calendar.hpp>
+#include <gui/Components/Popover.hpp>
+#include <gui/Components/TextNode.hpp>
+#include <gui/Components/IconNode.hpp>
+#include <gui/OverlayNode.hpp>
+#include <core/Window.hpp>
 #include <iomanip>
 #include <sstream>
 

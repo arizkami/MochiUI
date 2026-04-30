@@ -1,6 +1,6 @@
 #pragma once
-#include <include/gui/Components/ComboBox.hpp>
-#include <include/gui/Components/CheckboxNode.hpp>
+#include <gui/Components/ComboBox.hpp>
+#include <gui/Components/CheckboxNode.hpp>
 #include <set>
 
 namespace MochiUI {

@@ -1,8 +1,8 @@
 #pragma once
-#include <include/gui/Layout.hpp>
-#include <include/gui/Theme.hpp>
-#include <include/gui/Components/TextNode.hpp>
-#include <include/gui/Components/IconNode.hpp>
+#include <gui/Layout.hpp>
+#include <gui/Theme.hpp>
+#include <gui/Components/TextNode.hpp>
+#include <gui/Components/IconNode.hpp>
 
 namespace MochiUI {
 

@@ -228,3 +228,4 @@ target_link_libraries(MochiExample PRIVATE
 )
 
 add_subdirectory(example/ActivityMonitor)
+add_subdirectory(example/Mixer)

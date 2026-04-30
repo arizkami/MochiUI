@@ -2,7 +2,6 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 #include <utils/FontManager/FontMgr.hpp>
-#include <include/core/SkFontMetrics.h>
 #include <string>
 
 namespace MochiUI {
@@ -24,10 +23,16 @@ public:
     SkColor pressedColor = SkColorSetRGB(40, 40, 40);
     float borderRadius = -1.0f; // -1 to use Theme::BorderRadius
     float fontSize = 14.0f;
+    bool labelBold = false;
 
     Size measure(Size available) override {
-        SkRect bounds;
-        FontManager::getInstance().measureText(label, fontSize, &bounds);
+        SkRect bounds = SkRect::MakeEmpty();
+        if (labelBold) {
+            SkFont font = FontManager::getInstance().createFont(FontManager::DEFAULT_FONT, fontSize, SkFontStyle::Bold());
+            font.measureText(label.c_str(), label.size(), SkTextEncoding::kUTF8, &bounds);
+        } else {
+            FontManager::getInstance().measureText(label, fontSize, &bounds);
+        }
         float w = bounds.width() + 30.0f;
         float h = bounds.height() + 16.0f;
         
@@ -62,15 +67,26 @@ public:
         SkPaint textPaint;
         textPaint.setAntiAlias(true);
         textPaint.setColor(textCol);
-        
-        SkFontMetrics metrics;
-        FontManager::getInstance().getFontMetrics(fontSize, &metrics);
 
-        float textWidth = FontManager::getInstance().measureText(label, fontSize);
-        float tx = frame.left() + (frame.width() - textWidth) / 2.0f;
-        float ty = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f;
-        
-        FontManager::getInstance().drawText(canvas, label, tx, ty, fontSize, textPaint);
+        SkFontMetrics metrics{};
+        float textWidth = 0;
+        float tx = frame.left();
+        float ty = frame.top();
+
+        if (labelBold) {
+            SkFont font = FontManager::getInstance().createFont(FontManager::DEFAULT_FONT, fontSize, SkFontStyle::Bold());
+            font.getMetrics(&metrics);
+            textWidth = font.measureText(label.c_str(), label.size(), SkTextEncoding::kUTF8);
+            tx = frame.left() + (frame.width() - textWidth) / 2.0f;
+            ty = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f;
+            canvas->drawSimpleText(label.c_str(), label.size(), SkTextEncoding::kUTF8, tx, ty, font, textPaint);
+        } else {
+            FontManager::getInstance().getFontMetrics(fontSize, &metrics);
+            textWidth = FontManager::getInstance().measureText(label, fontSize);
+            tx = frame.left() + (frame.width() - textWidth) / 2.0f;
+            ty = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f;
+            FontManager::getInstance().drawText(canvas, label, tx, ty, fontSize, textPaint);
+        }
     }
 };
 

@@ -24,6 +24,8 @@ public:
     SkColor color = Theme::TextPrimary;
     float fontSize = 16.0f;
     TextAlign textAlign = TextAlign::Left;
+    // Uses Segoe UI bold (SkFontStyle::Bold) when true; otherwise shaped default path.
+    bool fontBold = false;
 
     Size measure(Size available) override;
     void draw(SkCanvas* canvas) override;

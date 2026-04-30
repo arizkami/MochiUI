@@ -16,3 +16,5 @@ src/gui/Theme.hpp
 *.user
 *.suo
 *.sln
+
+.codereview

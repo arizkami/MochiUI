@@ -5,7 +5,7 @@
 #include <gui/Layout.hpp>
 #include <gui/MenuBar.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 enum class WindowMode {
     Windowed,
@@ -21,12 +21,12 @@ public:
     virtual void setDarkMode(bool enable) = 0;
     virtual void enableMica(bool enable) = 0;
     virtual void setWindowMode(WindowMode mode) = 0;
-    
+
     virtual void setMenuBar(std::unique_ptr<IMenuBar> bar) = 0;
     virtual void setRoot(FlexNode::Ptr node) = 0;
     virtual void run() = 0;
-    
+
     virtual void* getNativeHandle() const = 0;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

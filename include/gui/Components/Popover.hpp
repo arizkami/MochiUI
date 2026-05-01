@@ -3,12 +3,12 @@
 #include <gui/Theme.hpp>
 #include <functional>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class Popover : public FlexNode {
 public:
     Popover(FlexNode::Ptr content, SkRect anchorRect);
-    
+
     void calculateLayout(SkRect availableSpace) override;
     void draw(SkCanvas* canvas) override;
     bool onMouseDown(float x, float y) override;
@@ -20,4 +20,4 @@ private:
     SkRect anchor;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

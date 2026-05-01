@@ -3,14 +3,14 @@
 #include <gui/Theme.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class RatingNode : public FlexNode {
 public:
     RatingNode(int maxStars = 5) : maxStars(maxStars) {
         style.setFlexDirection(YGFlexDirectionRow);
         style.setGap(4);
-        
+
         for (int i = 0; i < maxStars; ++i) {
             auto star = std::make_shared<IconNode>();
             star->setIcon("res://star.svg");
@@ -18,11 +18,11 @@ public:
             star->style.setHeight(20);
             star->color = Theme::TextSecondary;
             star->enableHover = true;
-            
+
             star->onClick = [this, i]() {
                 setRating(i + 1);
             };
-            
+
             stars.push_back(star);
             addChild(star);
         }
@@ -31,7 +31,7 @@ public:
     void setRating(int r) {
         rating = r;
         for (int i = 0; i < maxStars; ++i) {
-            stars[i]->color = (i < rating) ? SkColorSetRGB(255, 215, 0) : Theme::TextSecondary;
+            stars[i]->color = (i < rating) ? AUKColor::RGB(255, 215, 0) : AUKColor(Theme::TextSecondary);
         }
     }
 
@@ -41,4 +41,4 @@ private:
     std::vector<std::shared_ptr<IconNode>> stars;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

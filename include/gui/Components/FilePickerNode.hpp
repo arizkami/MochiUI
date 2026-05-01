@@ -4,7 +4,7 @@
 #include <gui/Components/ButtonNode.hpp>
 #include <gui/Components/TextInput.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class FilePickerNode : public FlexNode {
 public:
@@ -29,4 +29,4 @@ private:
     std::shared_ptr<ButtonNode> browseBtn;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

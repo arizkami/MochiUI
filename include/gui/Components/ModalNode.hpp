@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class ModalNode : public FlexNode {
 public:
@@ -10,9 +10,9 @@ public:
         style.setWidthPercent(100.0f);
         style.setHeightPercent(100.0f);
         style.setPositionType(YGPositionTypeAbsolute);
-        style.backgroundColor = SkColorSetA(SK_ColorBLACK, 150); // Dim background
+        style.backgroundColor = AUKColor::black().withAlpha(uint8_t(150)); // Dim background
         style.setAlignItems(YGAlignCenter);
-        
+
         container = FlexNode::Create();
         container->style.backgroundColor = Theme::Background;
         container->style.setPadding(20);
@@ -20,7 +20,7 @@ public:
         container->style.setWidthAuto();
         container->style.setHeightAuto();
         container->style.setMinWidth(300);
-        
+
         container->addChild(content);
         addChild(container);
     }
@@ -37,4 +37,4 @@ private:
     FlexNode::Ptr container;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

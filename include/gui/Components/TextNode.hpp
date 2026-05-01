@@ -2,12 +2,9 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 #include <utils/FontManager/FontMgr.hpp>
-#include <include/core/SkFont.h>
-#include <include/core/SkTypeface.h>
-#include <include/core/SkFontMgr.h>
 #include <string>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 enum class TextAlign { Left, Center, Right };
 
@@ -21,7 +18,7 @@ public:
     }
     std::string text;
     std::string fontFamily = FontManager::DEFAULT_FONT;
-    SkColor color = Theme::TextPrimary;
+    AUKColor color = Theme::TextPrimary;
     float fontSize = 16.0f;
     TextAlign textAlign = TextAlign::Left;
     // Uses Segoe UI bold (SkFontStyle::Bold) when true; otherwise shaped default path.
@@ -31,4 +28,4 @@ public:
     void draw(SkCanvas* canvas) override;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

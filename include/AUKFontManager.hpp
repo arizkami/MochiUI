@@ -1,3 +1,3 @@
 #pragma once
-#include <MCKFoundation.hpp>
+#include <AUKFoundation.hpp>
 #include <utils/FontManager/FontMgr.hpp>

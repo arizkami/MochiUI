@@ -3,12 +3,12 @@
 #include <gui/Theme.hpp>
 #include <ctime>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class DatePicker : public FlexNode {
 public:
     DatePicker();
-    
+
     void setDate(int year, int month, int day);
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
@@ -21,4 +21,4 @@ private:
     void updateText();
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

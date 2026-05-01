@@ -1,13 +1,10 @@
 #pragma once
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkPath.h>
 #include <functional>
 #include <cmath>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class KnobNode : public FlexNode {
 public:
@@ -19,14 +16,14 @@ public:
     float maxValue = 1.0f;
     float defaultValue = 0.5f;
     std::function<void(float)> onValueChange;
-    
-    SkColor knobBodyColor = SkColorSetRGB(45, 45, 48);
-    SkColor knobRingColor = SkColorSetRGB(60, 60, 65);
-    SkColor arcTrackColor = SkColorSetARGB(40, 255, 255, 255);
-    SkColor arcFillColor = Theme::Accent;
-    SkColor indicatorColor = Theme::Accent;
-    SkColor textColor = Theme::TextSecondary;
-    
+
+    AUKColor knobBodyColor = AUKColor::RGB(45, 45, 48);
+    AUKColor knobRingColor = AUKColor::RGB(60, 60, 65);
+    AUKColor arcTrackColor = AUKColor::RGB(255, 255, 255, 40);
+    AUKColor arcFillColor = Theme::Accent;
+    AUKColor indicatorColor = Theme::Accent;
+    AUKColor textColor = Theme::TextSecondary;
+
     float knobSize = 70.0f;
     float arcWidth = 4.0f;
     float startAngle = 135.0f;  // degrees
@@ -52,4 +49,4 @@ private:
     uint32_t lastClickTime = 0;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

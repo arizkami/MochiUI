@@ -2,7 +2,7 @@
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 Calendar::Calendar() {
     time_t t = time(nullptr);
@@ -199,4 +199,4 @@ void Calendar::draw(SkCanvas* canvas) {
     drawChildren(canvas);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

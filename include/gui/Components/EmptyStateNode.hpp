@@ -4,7 +4,7 @@
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class EmptyStateNode : public FlexNode {
 public:
@@ -33,4 +33,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

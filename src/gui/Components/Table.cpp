@@ -1,7 +1,7 @@
 #include <gui/Components/Table.hpp>
 #include <gui/Components/TextNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 TableHead::TableHead() {
     style.setFlexDirection(YGFlexDirectionRow);
@@ -28,7 +28,7 @@ void TableHead::addColumn(const std::string& title, float width) {
 void TableHead::draw(SkCanvas* canvas) {
     drawSelf(canvas);
     drawChildren(canvas);
-    
+
     // Draw bottom separator
     SkPaint paint;
     paint.setColor(SkColorSetA(Theme::TextSecondary, 50));
@@ -57,11 +57,11 @@ void Table::addRow(const std::vector<std::string>& cells) {
     // Zebra striping
     int rowCount = (int)children.size();
     if (header) rowCount--; // Don't count header for parity
-    
+
     if (rowCount % 2 == 1) {
         row->style.backgroundColor = SkColorSetA(Theme::TextSecondary, 15);
     }
-    
+
     // Add hover highlight to row
     row->style.borderRadius = 0.0f;
     row->enableHover = true;
@@ -76,7 +76,7 @@ void Table::addRow(const std::vector<std::string>& cells) {
             cell->color = Theme::TextPrimary;
             cell->fontFamily = fontFamily;
             cell->style.setPadding(8.0f);
-            
+
             // Match width/flex of header column
             if (headCol->style.widthMode == SizingMode::Fixed) {
                 cell->style.setWidth(headCol->style.width);
@@ -86,7 +86,7 @@ void Table::addRow(const std::vector<std::string>& cells) {
             row->addChild(cell);
         }
     }
-    
+
     addChild(row);
 }
 
@@ -96,9 +96,9 @@ void Table::draw(SkCanvas* canvas) {
     // Draw children but with manual row hover highlight logic
     // (Alternative: TextNode or FlexNode already handle hover if enabled)
     // Here we ensure the row itself draws its hover background if we didn't use a child component
-    
+
     drawChildren(canvas);
-    
+
     // Draw outer border
     SkPaint paint;
     paint.setAntiAlias(true);
@@ -107,4 +107,4 @@ void Table::draw(SkCanvas* canvas) {
     canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, paint);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

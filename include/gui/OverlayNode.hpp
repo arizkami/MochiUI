@@ -1,7 +1,7 @@
 #pragma once
 #include <gui/Layout.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 // Full-window layer for toasts: must not steal hits when empty or over transparent area.
 class ToastLayerNode : public FlexNode {
@@ -20,14 +20,14 @@ public:
     OverlayNode() {
         style.setWidthPercent(100.0f);
         style.setHeightPercent(100.0f);
-        
+
         toastLayer = std::make_shared<ToastLayerNode>();
         toastLayer->style.setWidthPercent(100.0f);
         toastLayer->style.setHeightPercent(100.0f);
         toastLayer->style.setPositionType(YGPositionTypeAbsolute);
         toastLayer->style.setPadding(20);
         toastLayer->style.setAlignItems(YGAlignFlexEnd); // Toast to the right/bottom
-        
+
         // Children will be added to specific layers
         addChild(toastLayer);
     }
@@ -67,4 +67,4 @@ private:
     FlexNode::Ptr toastLayer;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

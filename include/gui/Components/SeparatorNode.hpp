@@ -2,19 +2,19 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SeparatorNode : public FlexNode {
 public:
     enum class Orientation { Horizontal, Vertical };
-    
-    SeparatorNode(Orientation orientation = Orientation::Horizontal) 
+
+    SeparatorNode(Orientation orientation = Orientation::Horizontal)
         : orientation(orientation) {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     }
-    
+
     Orientation orientation;
-    SkColor color = SkColorSetA(Theme::TextSecondary, 50);
+    AUKColor color = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
     float thickness = -1.0f; // -1 to use Theme::BorderWidth
     float margin = 8.0f;
 
@@ -40,7 +40,7 @@ public:
         paint.setAntiAlias(true);
         paint.setColor(color);
         paint.setStrokeWidth(t);
-        
+
         if (orientation == Orientation::Horizontal) {
             float y = frame.centerY();
             canvas->drawLine(frame.left() + margin, y, frame.right() - margin, y, paint);
@@ -51,4 +51,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

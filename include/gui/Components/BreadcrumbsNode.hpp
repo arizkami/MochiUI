@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class BreadcrumbsNode : public FlexNode {
 public:
@@ -40,4 +40,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

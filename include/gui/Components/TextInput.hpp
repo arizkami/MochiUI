@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class TextInput : public FlexNode {
 public:
@@ -20,15 +20,15 @@ public:
     std::function<void(const std::string&)> onChanged;
     std::function<void()> onEnter;
 
-    SkColor backgroundColor = Theme::Card;
-    SkColor borderColor = SkColorSetA(Theme::TextSecondary, 50);
-    SkColor focusColor = Theme::Accent;
-    SkColor textColor = Theme::TextPrimary;
-    SkColor placeholderColor = SkColorSetA(Theme::TextSecondary, 120);
+    AUKColor backgroundColor = Theme::Card;
+    AUKColor borderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
+    AUKColor focusColor = Theme::Accent;
+    AUKColor textColor = Theme::TextPrimary;
+    AUKColor placeholderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(120));
 
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
-    
+
     bool onMouseDown(float x, float y) override;
     bool onRightDown(float x, float y) override;
     bool onMouseMove(float x, float y) override;
@@ -44,7 +44,7 @@ private:
     uint32_t lastBlinkTime = 0;
     bool showCursor = true;
     uint16_t highSurrogate = 0;
-    
+
     void deleteSelection();
     bool hasSelection() const;
     size_t getSelectionStart() const;
@@ -52,4 +52,4 @@ private:
     size_t getCursorIndexFromPosition(float x);
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

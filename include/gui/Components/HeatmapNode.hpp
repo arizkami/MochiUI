@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class HeatmapNode : public FlexNode {
 public:
@@ -10,7 +10,7 @@ public:
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
         style.setFlexDirection(YGFlexDirectionColumn);
         style.setGap(2);
-        
+
         for (int r = 0; r < rows; ++r) {
             auto rowNode = FlexNode::Row();
             rowNode->style.setGap(2);
@@ -18,7 +18,7 @@ public:
                 auto cell = FlexNode::Create();
                 cell->style.setWidth(15);
                 cell->style.setHeight(15);
-                cell->style.backgroundColor = SkColorSetRGB(230, 230, 230);
+                cell->style.backgroundColor = AUKColor::RGB(230, 230, 230);
                 rowNode->addChild(cell);
             }
             addChild(rowNode);
@@ -35,4 +35,4 @@ private:
     int rows, cols;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

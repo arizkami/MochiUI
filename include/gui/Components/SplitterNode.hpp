@@ -2,13 +2,13 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SplitterNode : public FlexNode {
 public:
     enum class Orientation { Horizontal, Vertical };
 
-    SplitterNode(Orientation orientation = Orientation::Horizontal) 
+    SplitterNode(Orientation orientation = Orientation::Horizontal)
         : orientation(orientation) {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
         style.cursorType = (orientation == Orientation::Horizontal) ? Cursor::SizeNS : Cursor::SizeWE;
@@ -67,4 +67,4 @@ private:
     float lastPos = 0;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

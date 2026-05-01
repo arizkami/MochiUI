@@ -1,12 +1,10 @@
 #include <gui/Components/TextNode.hpp>
-#include <include/core/SkFontMetrics.h>
-#include <include/core/SkFontStyle.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 Size TextNode::measure(Size available) {
     if (text.empty()) return { 0, 0 };
-    
+
     float width = 0;
     float height = 0;
     if (fontBold) {
@@ -21,7 +19,7 @@ Size TextNode::measure(Size available) {
         FontManager::getInstance().getFontMetrics(fontSize, &metrics, fontFamily);
         height = std::abs(metrics.fAscent) + std::abs(metrics.fDescent);
     }
-    
+
     width += style.paddingLeft + style.paddingRight;
     height += style.paddingTop + style.paddingBottom;
 
@@ -69,10 +67,10 @@ void TextNode::draw(SkCanvas* canvas) {
             y = std::round(y);
             FontManager::getInstance().drawText(canvas, text, x, y, fontSize, paint, fontFamily);
         }
-        
+
         canvas->restore();
     }
 
     drawChildren(canvas);
 }
-} // namespace MochiUI
+} // namespace AureliaUI

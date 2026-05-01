@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <gui/Components/TextNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class ToastNode : public FlexNode {
 public:
@@ -12,11 +12,11 @@ public:
         style.backgroundColor = Theme::Card;
         style.borderRadius = 8;
         style.setMargin(10);
-        
+
         auto label = std::make_shared<TextNode>(message);
         label->fontSize = Theme::FontNormal;
         addChild(label);
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

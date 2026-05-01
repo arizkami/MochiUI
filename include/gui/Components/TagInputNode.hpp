@@ -2,7 +2,7 @@
 #include <gui/Components/TextInput.hpp>
 #include <gui/Components/BadgeNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class TagInputNode : public FlexNode {
 public:
@@ -18,9 +18,9 @@ public:
 
         input = std::make_shared<TextInput>();
         input->style.setWidth(100);
-        input->style.backgroundColor = SK_ColorTRANSPARENT;
+        input->style.backgroundColor = AUKColor::transparent();
         input->placeholder = "Add tag...";
-        
+
         input->onEnter = [this]() {
             if (!input->text.empty()) {
                 addTag(input->text);
@@ -44,4 +44,4 @@ private:
     std::shared_ptr<TextInput> input;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SidebarNode : public FlexNode {
 public:
@@ -19,4 +19,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

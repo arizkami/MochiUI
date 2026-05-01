@@ -4,7 +4,7 @@
 #include <vector>
 #include <algorithm>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 struct Animation {
     float startValue;
@@ -33,7 +33,7 @@ public:
         animations.erase(std::remove_if(animations.begin(), animations.end(), [&](Animation& anim) {
             auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - anim.startTime);
             float progress = std::clamp((float)elapsed.count() / anim.duration.count(), 0.0f, 1.0f);
-            
+
             float currentValue = anim.startValue + (anim.endValue - anim.startValue) * progress;
             anim.onUpdate(currentValue);
 
@@ -52,4 +52,4 @@ private:
     std::vector<Animation> animations;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

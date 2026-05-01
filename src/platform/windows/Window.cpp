@@ -14,7 +14,7 @@
 #include <include/gpu/ganesh/GrBackendSurface.h>
 #include <dwmapi.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SimpleD3DAlloc : public GrD3DAlloc {};
 
@@ -26,14 +26,14 @@ public:
     ~SimpleD3DMemoryAllocator() override {
         fDevice->Release();
     }
-    
+
     gr_cp<ID3D12Resource> createResource(D3D12_HEAP_TYPE heapType, const D3D12_RESOURCE_DESC* desc,
                                          D3D12_RESOURCE_STATES initialResourceState,
                                          sk_sp<GrD3DAlloc>* allocation,
                                          const D3D12_CLEAR_VALUE* clearValue) override {
         D3D12_HEAP_PROPERTIES heapProps = {};
         heapProps.Type = heapType;
-        
+
         ID3D12Resource* resource = nullptr;
         HRESULT hr = fDevice->CreateCommittedResource(
             &heapProps,
@@ -44,11 +44,11 @@ public:
             IID_PPV_ARGS(&resource)
         );
         if (FAILED(hr)) return nullptr;
-        
+
         *allocation = sk_sp<GrD3DAlloc>(new SimpleD3DAlloc());
         return gr_cp<ID3D12Resource>(resource);
     }
-    
+
     gr_cp<ID3D12Resource> createAliasingResource(sk_sp<GrD3DAlloc>& allocation,
                                                  uint64_t localOffset,
                                                  const D3D12_RESOURCE_DESC*,
@@ -62,7 +62,7 @@ private:
 };
 
 Win32Window::Win32Window(const std::string& title, int width, int height) : width(width), height(height) {
-    const wchar_t CLASS_NAME[] = L"MochiUIWindow";
+    const wchar_t CLASS_NAME[] = L"AureliaUIWindow";
 
     WNDCLASSEXW wc = {};
     wc.cbSize = sizeof(WNDCLASSEXW);
@@ -92,17 +92,17 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
     );
     if (hwnd) {
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
-        
+
         // Ensure icon is set for the window and taskbar
         SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)wc.hIcon);
         SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)wc.hIconSm);
-        
+
         auto& switcher = ThemeSwitcher::getInstance();
-        bool isDark = (switcher.getCurrentTheme() == ThemeType::Auto) 
-                      ? switcher.isWindowsInDarkMode() 
+        bool isDark = (switcher.getCurrentTheme() == ThemeType::Auto)
+                      ? switcher.isWindowsInDarkMode()
                       : (switcher.getCurrentTheme() == ThemeType::Dark);
         setDarkMode(isDark);
-        
+
         initD3D12();
     }
 }
@@ -202,7 +202,7 @@ void Win32Window::cleanupD3D12() {
         grContext->releaseResourcesAndAbandonContext();
         grContext.reset();
     }
-    
+
     // Wait for the GPU to finish
     if (commandQueue && fence && fenceEvent) {
         const uint64_t fenceVal = fenceValue;
@@ -213,12 +213,12 @@ void Win32Window::cleanupD3D12() {
             WaitForSingleObject(fenceEvent, INFINITE);
         }
     }
-    
+
     if (fenceEvent) {
         CloseHandle(fenceEvent);
         fenceEvent = nullptr;
     }
-    
+
     fence.Reset();
     swapChain.Reset();
     commandQueue.Reset();
@@ -283,7 +283,7 @@ void Win32Window::setDarkMode(bool enable) {
 }
 
 void Win32Window::enableMica(bool enable) {
-    int value = enable ? 2 : 0; 
+    int value = enable ? 2 : 0;
     DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, &value, sizeof(value));
 }
 
@@ -296,7 +296,7 @@ void Win32Window::setWindowMode(WindowMode mode) {
         if (currentMode == WindowMode::Windowed) {
             GetWindowPlacement(hwnd, &wpPrev);
         }
-        
+
         MONITORINFO mi = { sizeof(mi) };
         if (GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &mi)) {
             SetWindowLongPtr(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
@@ -357,12 +357,12 @@ void Win32Window::onSize(int w, int h) {
                 masterRoot->setWindowHost(this);
                 masterRoot->style.setWidthPercent(100.0f);
                 masterRoot->style.setHeightPercent(100.0f);
-                
+
                 auto contentWrapper = FlexNode::Column();
                 contentWrapper->style.setFlex(1.0f);
                 contentWrapper->addChild(menuBar->getLayoutNode());
                 if (root) contentWrapper->addChild(root);
-                
+
                 overlayRoot->setMainContent(contentWrapper);
             }
         } else {
@@ -370,17 +370,17 @@ void Win32Window::onSize(int w, int h) {
         }
         overlayRoot->calculateLayout(SkRect::MakeWH((float)w, (float)h));
     }
-    
+
     // Synchronous paint to reduce jitter during resize
     onPaint();
 }
 
 void Win32Window::onPaint() {
     if (!overlayRoot || !grContext || frames.empty()) return;
-    
+
     currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
     if (currentFrameIndex >= frames.size()) return;
-    
+
     auto surface = frames[currentFrameIndex].surface;
     if (!surface) return;
 
@@ -390,7 +390,7 @@ void Win32Window::onPaint() {
     if (overlayRoot->dirtyLayout) {
         overlayRoot->calculateLayout(SkRect::MakeWH((float)width, (float)height));
     }
-    
+
     canvas->clear(SK_ColorTRANSPARENT);
 
     overlayRoot->draw(canvas);
@@ -405,12 +405,12 @@ void Win32Window::onPaint() {
     }
 
     bool needsMoreRedraw = overlayRoot->needsRedraw();
-    
+
     // Use VSync (1, 0) for normal use, (0, 0) for high refresh if needed
     // But (1, 0) is usually safer for UI.
     swapChain->Present(1, 0);
 
-    // Wait for the frame to finish to avoid piling up frames, 
+    // Wait for the frame to finish to avoid piling up frames,
     // but only if we are not trying to push maximum framerate.
     // For UI, waiting is usually okay to prevent 100% CPU/GPU usage.
     const uint64_t fenceVal = fenceValue;
@@ -427,7 +427,7 @@ void Win32Window::onPaint() {
 void Win32Window::run() {
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
-    
+
     // Initial layout
     RECT rect;
     GetClientRect(hwnd, &rect);
@@ -453,7 +453,7 @@ void Win32Window::run() {
 
 LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) {
     Win32Window* win = (Win32Window*)GetWindowLongPtr(hwnd, GWLP_USERDATA);
-    
+
     FlexNode::Ptr effectiveRoot = win ? win->overlayRoot : nullptr;
 
     switch (msg) {
@@ -549,6 +549,16 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             }
             break;
 
+        case WM_ENTERSIZEMOVE:
+            SetTimer(hwnd, 1, 16, NULL); // ~60fps during drag/resize modal loop
+            return 0;
+        case WM_EXITSIZEMOVE:
+            KillTimer(hwnd, 1);
+            return 0;
+        case WM_TIMER:
+            if (wp == 1) InvalidateRect(hwnd, NULL, FALSE);
+            return 0;
+
         case WM_SIZE:
             if (win) win->onSize(LOWORD(lp), HIWORD(lp));
             return 0;
@@ -563,5 +573,4 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return DefWindowProcW(hwnd, msg, wp, lp);
 }
 
-} // namespace MochiUI
-
+} // namespace AureliaUI

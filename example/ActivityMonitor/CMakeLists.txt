@@ -6,7 +6,7 @@ set(ACTIVITY_MONITOR_SOURCES
 add_executable(ActivityMonitor WIN32 ${ACTIVITY_MONITOR_SOURCES})
 
 target_link_libraries(ActivityMonitor PRIVATE
-    MochiKit_GraphicComponent
+    AureliaKit_GraphicComponent
 )
 
 # Copy exe to top-level ${CMAKE_BINARY_DIR} (same as project root build folder).

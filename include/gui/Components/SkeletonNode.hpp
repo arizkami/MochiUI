@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <chrono>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SkeletonNode : public FlexNode {
 public:
@@ -21,7 +21,7 @@ public:
     void drawSelf(SkCanvas* canvas) override {
         auto now = std::chrono::steady_clock::now();
         auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
-        
+
         float pulse = (sinf(elapsed * 0.005f) + 1.0f) / 2.0f; // 0 to 1
         SkColor base = Theme::Card;
         SkColor pulseColor = SkColorSetA(base, 100 + pulse * 100);
@@ -29,7 +29,7 @@ public:
         SkPaint paint;
         paint.setAntiAlias(true);
         paint.setColor(pulseColor);
-        
+
         if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, paint);
         else canvas->drawRect(frame, paint);
     }
@@ -40,4 +40,4 @@ private:
     std::chrono::steady_clock::time_point startTime;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

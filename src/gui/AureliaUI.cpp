@@ -1,6 +1,6 @@
-#include <MCKGraphicInterface.hpp>
+#include <AUKGraphicInterface.hpp>
 
 // This file is now mostly empty as implementations moved to core and platform
-namespace MochiUI {
+namespace AureliaUI {
     // Shared logic could go here if any
 }

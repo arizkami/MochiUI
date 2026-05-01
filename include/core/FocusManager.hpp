@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <memory>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class FocusManager {
 public:
@@ -29,4 +29,4 @@ private:
     FlexNode::Ptr focusedNode;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -1,7 +1,7 @@
 #pragma once
 #include <include/core/SkColor.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 // Dark Theme
 namespace DarkTheme {
@@ -139,4 +139,4 @@ inline float FontLarge       = 18.0f;
 inline float FontHeader      = 24.0f;
 } // namespace Theme
 
-} // namespace MochiUI
+} // namespace AureliaUI

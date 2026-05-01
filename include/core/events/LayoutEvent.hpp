@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace MochiUI::events {
+namespace AureliaUI::events {
 
 // Describes phases for Yoga-backed UI trees without including yoga/Yoga.h.
 enum class LayoutPhase : std::uint8_t {
@@ -21,4 +21,4 @@ struct LayoutDirtyEvent {
     std::uint64_t sourceToken = 0;
 };
 
-} // namespace MochiUI::events
+} // namespace AureliaUI::events

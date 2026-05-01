@@ -1,17 +1,11 @@
 #include <gui/MenuBar.hpp>
-#include <MCKGraphicComponents.hpp>
+#include <AUKGraphicComponents.hpp>
 #include <gui/Theme.hpp>
 #include <utils/FontManager/FontMgr.hpp>
 #include <windows.h>
 #include <map>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkFont.h>
-#include <include/core/SkFontMetrics.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkFontMgr.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 // --- Win32 Backend Implementation ---
 class Win32MenuBar : public IMenuBar {
@@ -53,16 +47,16 @@ public:
     MenuItemNode() {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     }
-    
+
     Size measure(Size available) override {
         SkRect textBounds;
         float textWidth = FontManager::getInstance().measureText(text, (float)fontSize, &textBounds);
         return { textWidth + 16.0f, 24.0f };
     }
-    
+
     void draw(SkCanvas* canvas) override {
         if (!canvas) return;
-        
+
         if (isHovered) {
             SkPaint bgPaint;
             bgPaint.setAntiAlias(true);
@@ -70,11 +64,11 @@ public:
             bgPaint.setAlphaf(0.2f);
             canvas->drawRect(frame, bgPaint);
         }
-        
+
         SkPaint textPaint;
         textPaint.setColor(textColor);
         textPaint.setAntiAlias(true);
-        
+
         SkFontMetrics metrics;
         FontManager::getInstance().getFontMetrics((float)fontSize, &metrics);
 
@@ -84,7 +78,7 @@ public:
 
         FontManager::getInstance().drawText(canvas, text, textX, textY, (float)fontSize, textPaint);
     }
-    
+
     bool onMouseDown(float x, float y) override {
         if (hitTest(x, y)) {
             showPopupMenu();
@@ -92,21 +86,21 @@ public:
         }
         return false;
     }
-    
+
     void showPopupMenu() {
         if (menuItems.empty()) return;
-        
+
         HMENU hMenu = CreatePopupMenu();
         for (const auto& item : menuItems) {
             AppendMenuA(hMenu, MF_STRING, item.id, item.label.c_str());
         }
-        
+
         POINT pt = { (long)frame.left(), (long)frame.bottom() };
         ClientToScreen((HWND)GetActiveWindow(), &pt);
-        
+
         int cmd = TrackPopupMenu(hMenu, TPM_RETURNCMD | TPM_NONOTIFY,
                                 pt.x, pt.y, 0, GetActiveWindow(), nullptr);
-        
+
         if (cmd > 0) {
             for (const auto& item : menuItems) {
                 if (item.id == cmd && item.action) {
@@ -144,7 +138,7 @@ public:
     }
 
     void attach(void* windowHandle) override { }
-    
+
     FlexNode::Ptr getLayoutNode() override {
         return rootNode;
     }
@@ -155,4 +149,4 @@ std::unique_ptr<IMenuBar> MenuBarFactory::Create(MenuBackend backend) {
     return std::make_unique<SkiaMenuBar>();
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class AccordionItem : public FlexNode {
 public:
@@ -16,20 +16,20 @@ public:
         header->style.setAlignItems(YGAlignStretch);
         header->enableHover = true;
         header->style.backgroundColor = Theme::Card;
-        
+
         auto label = std::make_shared<TextNode>(title);
         label->fontSize = Theme::FontNormal;
         header->addChild(label);
 
         header->onClick = [this]() { setExpanded(!expanded); };
-        
+
         addChild(header);
-        
+
         contentWrapper = FlexNode::Create();
         contentWrapper->style.setPadding(10);
         contentWrapper->style.setHeightAuto();
         contentWrapper->addChild(content);
-        
+
         setExpanded(false);
     }
 
@@ -62,4 +62,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

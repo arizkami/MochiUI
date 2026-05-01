@@ -1,6 +1,6 @@
 #include <gui/Components/RadioButtonNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 Size RadioButtonNode::measure(Size available) {
     float labelWidth = 0;
@@ -35,7 +35,7 @@ void RadioButtonNode::draw(SkCanvas* canvas) {
     outerPaint.setAntiAlias(true);
     outerPaint.setStyle(SkPaint::kStroke_Style);
     outerPaint.setStrokeWidth(2.0f);
-    outerPaint.setColor(isHovered ? radioColor : SkColorSetA(radioColor, 180));
+    outerPaint.setColor(isHovered ? radioColor : radioColor.withAlpha(uint8_t(180)));
 
     canvas->drawCircle(centerX, centerY, outerRadius - 1.0f, outerPaint);
 
@@ -78,4 +78,4 @@ bool RadioButtonNode::onMouseDown(float x, float y) {
     return FlexNode::onMouseDown(x, y);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

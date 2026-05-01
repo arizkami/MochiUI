@@ -9,7 +9,7 @@
 #include <core/events/KeyEvent.hpp>
 #include <core/events/TextEvent.hpp>
 
-namespace MochiUI::events {
+namespace AureliaUI::events {
 
 inline float clientXFromLParam(LPARAM lp) noexcept {
     return static_cast<float>(static_cast<short>(LOWORD(lp)));
@@ -83,6 +83,6 @@ inline TextEvent textEventFromWmChar(WPARAM wp) noexcept {
     return e;
 }
 
-} // namespace MochiUI::events
+} // namespace AureliaUI::events
 
 #endif // _WIN32

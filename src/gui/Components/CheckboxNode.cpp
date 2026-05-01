@@ -1,6 +1,6 @@
 #include <gui/Components/CheckboxNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 Size CheckboxNode::measure(Size available) {
     float labelWidth = 0;
@@ -13,7 +13,7 @@ Size CheckboxNode::measure(Size available) {
         labelHeight = bounds.height();
     }
 
-    // Yoga adds padding automatically based on style, 
+    // Yoga adds padding automatically based on style,
     // so we should only return the intrinsic content size here.
     float totalWidth = checkboxSize + (label.empty() ? 0 : (spacing + labelWidth));
     float totalHeight = std::max(checkboxSize, labelHeight);
@@ -35,7 +35,7 @@ void CheckboxNode::draw(SkCanvas* canvas) {
     boxPaint.setAntiAlias(true);
     boxPaint.setStyle(SkPaint::kStroke_Style);
     boxPaint.setStrokeWidth(Theme::BorderWidth);
-    boxPaint.setColor(checked ? checkboxColor : (isHovered ? checkboxColor : Theme::Border));
+    boxPaint.setColor(checked ? checkboxColor : (isHovered ? checkboxColor : AUKColor(Theme::Border)));
 
     float radius = std::min(4.0f, Theme::BorderRadius);
     canvas->drawRoundRect(checkboxRect, radius, radius, boxPaint);
@@ -94,4 +94,4 @@ bool CheckboxNode::onMouseDown(float x, float y) {
     return FlexNode::onMouseDown(x, y);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -1,5 +1,5 @@
 #pragma once
-#include <MCKFoundation.hpp>
+#include <AUKFoundation.hpp>
 #include <string>
 #include <vector>
 #include <functional>
@@ -10,7 +10,7 @@
     #define DAUX_API __declspec(dllimport)
 #endif
 
-namespace MochiUI {
+namespace AureliaUI {
 namespace Audio {
 
 enum class AudioBackend {
@@ -50,4 +50,4 @@ private:
 };
 
 } // namespace Audio
-} // namespace MochiUI
+} // namespace AureliaUI

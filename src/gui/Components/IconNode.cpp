@@ -1,12 +1,10 @@
 #include <gui/Components/IconNode.hpp>
-#include <include/utils/SkParsePath.h>
-#include <include/core/SkPathBuilder.h>
 #include <core/ResourceManager.hpp>
 #include <fstream>
 #include <sstream>
 #include <regex>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 std::string IconNode::iconsDir = "External/lucide/icons";
 
@@ -45,7 +43,7 @@ void IconNode::setIcon(const std::string& name) {
 
 void IconNode::parseSVG(const std::string& content) {
     commands.clear();
-    
+
     // Simple regex parser for Lucide icons
     std::regex pathRegex("<path [^>]*d=\"([^\"]+)\"");
     std::regex circleRegex("<circle [^>]*cx=\"([^\"]+)\" [^>]*cy=\"([^\"]+)\" [^>]*r=\"([^\"]+)\"");
@@ -76,7 +74,7 @@ void IconNode::parseSVG(const std::string& content) {
     for (; it != end; ++it) {
         DrawCommand cmd;
         cmd.type = DrawCommand::Rect;
-        cmd.rect = SkRect::MakeXYWH(std::stof((*it)[3].str()), std::stof((*it)[4].str()), 
+        cmd.rect = SkRect::MakeXYWH(std::stof((*it)[3].str()), std::stof((*it)[4].str()),
                                     std::stof((*it)[1].str()), std::stof((*it)[2].str()));
         commands.push_back(cmd);
     }
@@ -129,7 +127,7 @@ void IconNode::parseSVG(const std::string& content) {
 
 void IconNode::draw(SkCanvas* canvas) {
     drawSelf(canvas);
-    
+
     SkPaint paint;
     paint.setAntiAlias(true);
     paint.setColor(color);
@@ -163,8 +161,8 @@ void IconNode::draw(SkCanvas* canvas) {
         }
     }
     canvas->restore();
-    
+
     drawChildren(canvas);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

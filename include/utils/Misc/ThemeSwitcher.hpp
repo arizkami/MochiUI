@@ -3,7 +3,7 @@
 #include <functional>
 #include <vector>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 enum class ThemeType {
     Auto,       // Detect from Windows
@@ -43,4 +43,4 @@ private:
     std::vector<std::function<void(ThemeType)>> callbacks;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

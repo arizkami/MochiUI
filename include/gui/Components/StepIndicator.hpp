@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <gui/Components/TextNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class StepIndicator : public FlexNode {
 public:
@@ -32,12 +32,12 @@ public:
             circle->style.borderRadius = 12;
             circle->style.backgroundColor = (i <= currentStep) ? Theme::Accent : Theme::Card;
             circle->style.setAlignItems(YGAlignCenter);
-            
+
             auto num = std::make_shared<TextNode>(std::to_string(i + 1));
             num->fontSize = 12;
-            num->color = (i <= currentStep) ? SK_ColorWHITE : Theme::TextSecondary;
+            num->color = (i <= currentStep) ? AUKColor::white() : AUKColor(Theme::TextSecondary);
             circle->addChild(num);
-            
+
             addChild(circle);
         }
     }
@@ -47,4 +47,4 @@ private:
     size_t currentStep = 0;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

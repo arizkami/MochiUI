@@ -1,7 +1,7 @@
 #pragma once
 #include <gui/Components/TextInput.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class NumberInput : public TextInput {
 public:
@@ -13,7 +13,7 @@ public:
     std::function<void(double)> onValueChanged;
 
     NumberInput();
-    
+
     void draw(SkCanvas* canvas) override;
     bool onChar(uint32_t charCode) override;
     bool onKeyDown(uint32_t key) override;
@@ -29,4 +29,4 @@ private:
     bool isHoveringDown = false;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

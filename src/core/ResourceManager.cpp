@@ -1,6 +1,6 @@
 #include <core/ResourceManager.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 ResourceManager& ResourceManager::getInstance() {
     static ResourceManager instance;
@@ -23,4 +23,4 @@ std::string ResourceManager::getResourceString(const std::string& path) {
     return "";
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

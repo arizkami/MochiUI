@@ -6,40 +6,67 @@
 #include <vector>
 #include <functional>
 
-namespace MochiUI {
+namespace AureliaUI {
+
+// Overlay node that renders the open dropdown on top of all other content.
+class ComboBoxDropdown : public FlexNode {
+public:
+    using Ptr = std::shared_ptr<ComboBoxDropdown>;
+
+    SkRect dropdownRect = SkRect::MakeEmpty();
+    const std::vector<std::string>* items = nullptr;
+    AUKColor backgroundColor = Theme::Sidebar; // solid; must be opaque
+    AUKColor borderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
+    AUKColor textColor = Theme::TextPrimary;
+    AUKColor accentColor = Theme::Accent;
+    float fontSize = Theme::FontNormal;
+    float itemHeight = Theme::ControlHeight;
+    int hoveredItemIndex = -1;
+    std::function<void(int)> onPick; // idx >= 0 = selection, -1 = dismiss
+
+    bool hitTest(float x, float y) override { return true; } // absorb all events
+    void draw(SkCanvas* canvas) override;
+    bool onMouseDown(float x, float y) override;
+    bool onMouseMove(float x, float y) override;
+};
 
 class ComboBox : public FlexNode {
 public:
     ComboBox() {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
     }
+
+    ~ComboBox() {
+        if (isOpen && windowHost && dropdownOverlay)
+            windowHost->removeOverlay(dropdownOverlay);
+    }
+
     std::vector<std::string> items;
     int selectedIndex = -1;
     std::string placeholder = "Select item...";
     std::function<void(int)> onSelectionChanged;
 
-    void addItem(const std::string& item) {
-        items.push_back(item);
-    }
+    void addItem(const std::string& item) { items.push_back(item); }
 
-    SkColor backgroundColor = Theme::Card;
-    SkColor borderColor = SkColorSetA(Theme::TextSecondary, 50);
-    SkColor textColor = Theme::TextPrimary;
-    SkColor accentColor = Theme::Accent;
+    AUKColor backgroundColor = Theme::Card;
+    AUKColor borderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
+    AUKColor textColor = Theme::TextPrimary;
+    AUKColor accentColor = Theme::Accent;
     float fontSize = Theme::FontNormal;
 
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
-    
     bool onMouseDown(float x, float y) override;
     bool onMouseMove(float x, float y) override;
 
 private:
     bool isOpen = false;
-    int hoveredItemIndex = -1;
     float itemHeight = Theme::ControlHeight;
-    
+    ComboBoxDropdown::Ptr dropdownOverlay;
+
     SkRect getDropdownRect() const;
+    void openDropdown();
+    void closeDropdown();
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -1,11 +1,10 @@
 #include <gui/Components/NumberInput.hpp>
-#include <include/core/SkPathBuilder.h>
 #include <windows.h>
 #include <iomanip>
 #include <sstream>
 #include <cmath>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 NumberInput::NumberInput() {
     syncTextFromValue();
@@ -16,13 +15,13 @@ void NumberInput::syncTextFromValue() {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(precision) << value;
     std::string s = ss.str();
-    
+
     // Remove trailing zeros
     if (precision > 0) {
         s.erase(s.find_last_not_of('0') + 1, std::string::npos);
         if (s.back() == '.') s.pop_back();
     }
-    
+
     text = s;
 }
 
@@ -62,7 +61,7 @@ void NumberInput::draw(SkCanvas* canvas) {
     SkPaint btnPaint;
     btnPaint.setAntiAlias(true);
     btnPaint.setColor(SkColorSetA(Theme::TextSecondary, 40));
-    
+
     canvas->drawRect(upRect, btnPaint);
     canvas->drawRect(downRect, btnPaint);
 
@@ -89,7 +88,7 @@ void NumberInput::draw(SkCanvas* canvas) {
 
 bool NumberInput::onChar(uint32_t charCode) {
     if (!isFocused) return false;
-    
+
     // Only allow numbers, dot, and minus
     if ((charCode >= '0' && charCode <= '9') || charCode == '.' || charCode == '-' || charCode == 8) {
         bool handled = TextInput::onChar(charCode);
@@ -147,4 +146,4 @@ bool NumberInput::onMouseWheel(float x, float y, float delta) {
     return false;
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

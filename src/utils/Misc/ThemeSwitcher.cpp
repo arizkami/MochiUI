@@ -2,7 +2,7 @@
 #include <gui/Theme.hpp>
 #include <windows.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 ThemeSwitcher& ThemeSwitcher::getInstance() {
     static ThemeSwitcher instance;
@@ -112,4 +112,4 @@ void ThemeSwitcher::notifyThemeChanged() {
     for (auto& cb : callbacks) cb(currentTheme);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

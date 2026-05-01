@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 DatePicker::DatePicker() {
     YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
@@ -29,13 +29,13 @@ DatePicker::DatePicker() {
     enableHover = true;
 
     onClick = [this]() { showCalendar(); };
-    
+
     updateText();
 }
 
 void DatePicker::updateText() {
     removeAllChildren();
-    
+
     auto icon = std::make_shared<IconNode>();
     icon->setIcon("res://calendar.svg");
     icon->style.setWidth(18.0f);
@@ -65,7 +65,7 @@ void DatePicker::setDate(int year, int month, int day) {
 void DatePicker::showCalendar() {
     auto calendar = std::make_shared<Calendar>();
     calendar->setDate(selectedYear, selectedMonth, selectedDay);
-    
+
     // Find OverlayNode by climbing up
     FlexNode* current = this;
     OverlayNode* overlayNode = nullptr;
@@ -80,7 +80,7 @@ void DatePicker::showCalendar() {
     // Use absolute position for the popover anchor
     SkRect absoluteFrame = frame;
     auto popover = std::make_shared<Popover>(calendar, absoluteFrame);
-    
+
     calendar->onDateSelected = [this, popover, overlayNode](int y, int m, int d) {
         setDate(y, m, d);
         if (onDateChanged) onDateChanged(y, m, d);
@@ -103,4 +103,4 @@ Size DatePicker::measure(Size available) {
     return { 200.0f, 36.0f };
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

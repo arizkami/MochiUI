@@ -1,7 +1,7 @@
 #include <gui/Components/ScrollAreaNode.hpp>
 #include <algorithm>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 ScrollAreaNode::ScrollAreaNode() {
     style.setFlex(1.0f);
@@ -233,4 +233,4 @@ void ScrollAreaNode::onMouseUp(float x, float y) {
     FlexNode::onMouseUp(x, y);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

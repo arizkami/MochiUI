@@ -1,11 +1,10 @@
 #pragma once
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
-#include <include/core/SkRRect.h>
 #include <chrono>
 #include <cmath>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class ProgressBar : public FlexNode {
 public:
@@ -14,8 +13,8 @@ public:
     }
 
     float value = 0.0f; // 0.0 to 1.0 (determinate only)
-    SkColor fillColor = Theme::Accent;
-    SkColor backgroundColor = Theme::Sidebar;
+    AUKColor fillColor = Theme::Accent;
+    AUKColor backgroundColor = Theme::Sidebar;
     float borderRadius = 4.0f;
     bool showPercentage = false;
 
@@ -88,4 +87,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

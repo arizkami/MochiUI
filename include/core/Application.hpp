@@ -1,6 +1,6 @@
 #pragma once
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class Application {
 public:
@@ -11,4 +11,4 @@ private:
     Application() = default;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -1,7 +1,6 @@
 #include <gui/Components/SwitchNode.hpp>
-#include <include/core/SkRRect.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 Size SwitchNode::measure(Size available) {
     float labelWidth = 0;
@@ -34,7 +33,7 @@ void SwitchNode::draw(SkCanvas* canvas) {
     SkPaint trackPaint;
     trackPaint.setAntiAlias(true);
     trackPaint.setColor(isOn ? activeColor : inactiveColor);
-    
+
     canvas->drawRoundRect(trackRect, radius, radius, trackPaint);
 
     // Draw Thumb
@@ -47,7 +46,7 @@ void SwitchNode::draw(SkCanvas* canvas) {
     SkPaint thumbPaint;
     thumbPaint.setAntiAlias(true);
     thumbPaint.setColor(thumbColor);
-    
+
     canvas->drawRoundRect(thumbRect, thumbSize / 2, thumbSize / 2, thumbPaint);
 
     if (!label.empty()) {
@@ -78,4 +77,4 @@ bool SwitchNode::onMouseDown(float x, float y) {
     return FlexNode::onMouseDown(x, y);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

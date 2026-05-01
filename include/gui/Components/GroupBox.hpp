@@ -4,21 +4,21 @@
 #include <utils/FontManager/FontMgr.hpp>
 #include <string>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class GroupBox : public FlexNode {
 public:
     std::string title;
     float fontSize = 14.0f;
-    SkColor borderColor = SkColorSetA(Theme::TextSecondary, 80);
-    SkColor titleColor = Theme::TextSecondary;
+    AUKColor borderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(80));
+    AUKColor titleColor = Theme::TextSecondary;
     float strokeWidth = 1.0f;
 
     GroupBox();
-    
+
     void draw(SkCanvas* canvas) override;
     void drawSelf(SkCanvas* canvas) override;
     void syncSubtreeStyles() override;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

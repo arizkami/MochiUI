@@ -1,8 +1,8 @@
-# MochiKit — Work in Progress
+# AureliaKit — Work in Progress
 
 > This project is currently under active development and is not yet stable.
 
-![MochiKit UI preview](./assets/preview.png)
+![AureliaKit UI preview](./assets/preview.png)
 
 ---
 

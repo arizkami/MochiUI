@@ -3,11 +3,11 @@
 #include <sstream>
 #include <iomanip>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 void VUMeterNode::setValue(float val) {
     value = std::clamp(val, 0.0f, 1.0f);
-    
+
     // Update peak if current value is higher
     if (value > peakValue) {
         peakValue = value;
@@ -36,9 +36,9 @@ Size VUMeterNode::measure(Size available) {
 
 void VUMeterNode::draw(SkCanvas* canvas) {
     FlexNode::draw(canvas);
-    
+
     float meterX, meterY, meterW, meterH;
-    
+
     if (vertical) {
         meterX = frame.left() + 5;
         meterY = frame.top() + 5;
@@ -50,7 +50,7 @@ void VUMeterNode::draw(SkCanvas* canvas) {
         meterW = frame.width() - 10 - (showNumber ? 50 : 0);
         meterH = meterWidth;
     }
-    
+
     // Draw background
     SkPaint bgPaint;
     bgPaint.setAntiAlias(true);
@@ -60,24 +60,24 @@ void VUMeterNode::draw(SkCanvas* canvas) {
         2.0f, 2.0f
     );
     canvas->drawRRect(bgRect, bgPaint);
-    
+
     // Draw segments
     int numSegments = vertical ? 30 : 20;
     float segmentGap = 1.0f;
-    
+
     for (int i = 0; i < numSegments; i++) {
         float segmentValue = (float)(i + 1) / numSegments;
-        
+
         if (segmentValue > value) continue;
-        
+
         SkPaint segmentPaint;
         segmentPaint.setAntiAlias(true);
         segmentPaint.setColor(getColorForValue(segmentValue));
-        
+
         if (vertical) {
             float segmentHeight = (meterH / numSegments) - segmentGap;
             float segmentY = meterY + meterH - ((i + 1) * (meterH / numSegments));
-            
+
             SkRRect segmentRect = SkRRect::MakeRectXY(
                 SkRect::MakeXYWH(meterX + 2, segmentY + segmentGap, meterW - 4, segmentHeight),
                 1.0f, 1.0f
@@ -86,7 +86,7 @@ void VUMeterNode::draw(SkCanvas* canvas) {
         } else {
             float segmentWidth = (meterW / numSegments) - segmentGap;
             float segmentX = meterX + (i * (meterW / numSegments));
-            
+
             SkRRect segmentRect = SkRRect::MakeRectXY(
                 SkRect::MakeXYWH(segmentX + segmentGap, meterY + 2, segmentWidth, meterH - 4),
                 1.0f, 1.0f
@@ -94,13 +94,13 @@ void VUMeterNode::draw(SkCanvas* canvas) {
             canvas->drawRRect(segmentRect, segmentPaint);
         }
     }
-    
+
     // Draw peak indicator
     if (peakValue > 0.0f && peakHoldTimer > 0.0f) {
         SkPaint peakPaint;
         peakPaint.setAntiAlias(true);
         peakPaint.setColor(peakColor);
-        
+
         if (vertical) {
             float peakY = meterY + meterH - (peakValue * meterH);
             canvas->drawRect(SkRect::MakeXYWH(meterX + 1, peakY - 1, meterW - 2, 2), peakPaint);
@@ -109,7 +109,7 @@ void VUMeterNode::draw(SkCanvas* canvas) {
             canvas->drawRect(SkRect::MakeXYWH(peakX - 1, meterY + 1, 2, meterH - 2), peakPaint);
         }
     }
-    
+
     // Draw numeric value
     if (showNumber) {
         SkPaint textPaint;
@@ -130,13 +130,13 @@ void VUMeterNode::draw(SkCanvas* canvas) {
             FontManager::getInstance().drawText(canvas, valueText, textX, textY, 12.0f, textPaint);
         }
     }
-    
+
     // Draw scale marks
     SkPaint markPaint;
     markPaint.setAntiAlias(true);
     markPaint.setColor(SkColorSetARGB(100, 255, 255, 255));
     markPaint.setStrokeWidth(1.0f);
-    
+
     float marks[] = { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
     for (float mark : marks) {
         if (vertical) {
@@ -156,7 +156,7 @@ float VUMeterNode::valueToDB(float normalized) const {
 
 std::string VUMeterNode::formatValue(float val) const {
     std::ostringstream oss;
-    
+
     if (useDecibels) {
         float db = valueToDB(val);
         if (db <= -60.0f) {
@@ -167,24 +167,23 @@ std::string VUMeterNode::formatValue(float val) const {
     } else {
         oss << std::fixed << std::setprecision(0) << (val * 100.0f) << "%";
     }
-    
+
     return oss.str();
 }
 
-SkColor VUMeterNode::getColorForValue(float val) const {
+AUKColor VUMeterNode::getColorForValue(float val) const {
     if (val >= redThreshold) {
         return redColor;
     } else if (val >= yellowThreshold) {
-        // Blend between green and yellow
         float t = (val - yellowThreshold) / (redThreshold - yellowThreshold);
-        return SkColorSetRGB(
-            SkColorGetR(greenColor) + t * (SkColorGetR(yellowColor) - SkColorGetR(greenColor)),
-            SkColorGetG(greenColor) + t * (SkColorGetG(yellowColor) - SkColorGetG(greenColor)),
-            SkColorGetB(greenColor) + t * (SkColorGetB(yellowColor) - SkColorGetB(greenColor))
+        return AUKColor::RGB(
+            uint8_t(greenColor.r() + t * (yellowColor.r() - greenColor.r())),
+            uint8_t(greenColor.g() + t * (yellowColor.g() - greenColor.g())),
+            uint8_t(greenColor.b() + t * (yellowColor.b() - greenColor.b()))
         );
     } else {
         return greenColor;
     }
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

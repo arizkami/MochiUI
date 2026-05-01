@@ -4,7 +4,7 @@
 #include <vector>
 #include <memory>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class ResourceManager {
 public:
@@ -25,4 +25,4 @@ private:
     std::map<std::string, ResourceData> resources;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

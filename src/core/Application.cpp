@@ -4,7 +4,7 @@
 #include <windows.h>
 #include <objbase.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 Application& Application::getInstance() {
     static Application instance;
@@ -17,4 +17,4 @@ void Application::init() {
     ThemeSwitcher::getInstance().applyTheme();
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

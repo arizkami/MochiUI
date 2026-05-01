@@ -1,6 +1,6 @@
 #pragma once
 
-// Umbrella header for MochiUI event payloads (input, window, Skia, layout/Yoga pipeline).
+// Umbrella header for AureliaUI event payloads (input, window, Skia, layout/Yoga pipeline).
 
 #include <core/events/EventKind.hpp>
 #include <core/events/PointerEvent.hpp>

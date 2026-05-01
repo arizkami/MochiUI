@@ -3,7 +3,7 @@
 #include <include/ports/SkTypeface_win.h>
 #include <vector>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 namespace {
     struct Run {
@@ -73,7 +73,7 @@ namespace {
             sk_sp<SkTypeface> tf = defaultTypeface;
             if (defaultTypeface && defaultTypeface->unicharToGlyph(unichar) == 0 && unichar > 32) {
                 sk_sp<SkTypeface> fallback = nullptr;
-                
+
                 // Try our curated list of modern UI fonts first
                 for (const auto& fallbackName : fallbackFonts) {
                     auto candidate = mgr->matchFamilyStyle(fallbackName.c_str(), SkFontStyle());
@@ -82,13 +82,13 @@ namespace {
                         break;
                     }
                 }
-                
+
                 // If not found in curated list, ask the OS
                 if (!fallback) {
                     fallback = mgr->matchFamilyStyleCharacter(
                         defaultFamily.c_str(), SkFontStyle(), nullptr, 0, unichar);
                 }
-                
+
                 if (fallback) {
                     tf = fallback;
                 }
@@ -119,33 +119,33 @@ void FontManager::initialize() {
     }
 }
 
-sk_sp<SkTypeface> FontManager::getTypeface(const std::string& familyName, 
+sk_sp<SkTypeface> FontManager::getTypeface(const std::string& familyName,
                                             SkFontStyle style) {
     if (!fFontMgr) {
         initialize();
     }
-    
-    std::string cacheKey = familyName + "_" + 
+
+    std::string cacheKey = familyName + "_" +
                           std::to_string(style.weight()) + "_" +
                           std::to_string(style.width()) + "_" +
                           std::to_string(style.slant());
-    
+
     auto it = fTypefaceCache.find(cacheKey);
     if (it != fTypefaceCache.end()) {
         return it->second;
     }
-    
+
     sk_sp<SkTypeface> typeface = fFontMgr->matchFamilyStyle(familyName.c_str(), style);
-    
+
     if (typeface) {
         fTypefaceCache[cacheKey] = typeface;
     }
-    
+
     return typeface;
 }
 
-SkFont FontManager::createFont(const std::string& familyName, 
-                                float size, 
+SkFont FontManager::createFont(const std::string& familyName,
+                                float size,
                                 SkFontStyle style) {
     auto typeface = getTypeface(familyName, style);
     SkFont font(typeface, size);
@@ -177,20 +177,20 @@ float FontManager::measureText(const std::string& text, size_t byteLength, float
     if (!fFontMgr) initialize();
     std::string subText = text.substr(0, byteLength);
     auto runs = shapeText(subText, fFontMgr.get(), familyName);
-    
+
     float totalWidth = 0.0f;
     SkRect totalBounds = SkRect::MakeEmpty();
-    
+
     for (const auto& run : runs) {
         SkFont font(run.typeface, fontSize);
         font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
         font.setSubpixel(true);
         font.setHinting(SkFontHinting::kFull);
         font.setBaselineSnap(true);
-        
+
         SkRect runBounds;
         float runWidth = font.measureText(run.text.c_str(), run.text.size(), SkTextEncoding::kUTF8, outBounds ? &runBounds : nullptr);
-        
+
         if (outBounds) {
             runBounds.offset(totalWidth, 0);
             if (totalBounds.isEmpty()) {
@@ -201,7 +201,7 @@ float FontManager::measureText(const std::string& text, size_t byteLength, float
         }
         totalWidth += runWidth;
     }
-    
+
     if (outBounds) {
         *outBounds = totalBounds;
     }
@@ -219,4 +219,4 @@ void FontManager::getFontMetrics(float fontSize, SkFontMetrics* metrics, const s
     font.getMetrics(metrics);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

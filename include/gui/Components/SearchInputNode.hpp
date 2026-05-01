@@ -2,7 +2,7 @@
 #include <gui/Components/TextInput.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SearchInputNode : public FlexNode {
 public:
@@ -15,7 +15,7 @@ public:
         style.setGap(8);
 
         auto searchIcon = std::make_shared<IconNode>();
-        searchIcon->setIcon("res://search.svg"); 
+        searchIcon->setIcon("res://search.svg");
         searchIcon->style.setWidth(16);
         searchIcon->style.setHeight(16);
         searchIcon->color = Theme::TextSecondary;
@@ -23,13 +23,13 @@ public:
 
         input = std::make_shared<TextInput>();
         input->style.setFlex(1.0f);
-        input->style.backgroundColor = SK_ColorTRANSPARENT;
+        input->style.backgroundColor = AUKColor::transparent();
         input->style.setPadding(0);
         input->placeholder = "Search...";
         addChild(input);
 
         clearBtn = std::make_shared<IconNode>();
-        clearBtn->setIcon("res://x.svg"); 
+        clearBtn->setIcon("res://x.svg");
         clearBtn->style.setWidth(14);
         clearBtn->style.setHeight(14);
         clearBtn->color = Theme::TextSecondary;
@@ -43,4 +43,4 @@ private:
     std::shared_ptr<IconNode> clearBtn;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

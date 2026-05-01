@@ -1,6 +1,6 @@
-#include <MCKApplication.hpp>
-#include <MCKGraphicInterface.hpp>
-#include <MCKGraphicComponents.hpp>
+#include <AUKApplication.hpp>
+#include <AUKGraphicInterface.hpp>
+#include <AUKGraphicComponents.hpp>
 #include <windows.h>
 #include <psapi.h>
 #include <tlhelp32.h>
@@ -10,7 +10,7 @@
 #include <chrono>
 #include <map>
 
-using namespace MochiUI;
+using namespace AureliaUI;
 
 struct ProcessInfo {
     uint32_t pid;
@@ -48,7 +48,7 @@ public:
                     if (GetProcessMemoryInfo(hProc, &pmc, sizeof(pmc))) {
                         info.memoryUsage = pmc.WorkingSetSize;
                     }
-                    
+
                     FILETIME createTime, exitTime, kernelTime, userTime;
                     if (GetProcessTimes(hProc, &createTime, &exitTime, &kernelTime, &userTime)) {
                         ULARGE_INTEGER k, u;
@@ -58,8 +58,8 @@ public:
                         auto procTime = k.QuadPart + u.QuadPart;
                         if (states.count(info.pid)) {
                             auto deltaProc = procTime - states[info.pid].lastProcTime;
-                            info.cpuUsage = (float)deltaProc / 100000.0f; 
-                            if (info.cpuUsage > 100.0f) info.cpuUsage = 0.1f; 
+                            info.cpuUsage = (float)deltaProc / 100000.0f;
+                            if (info.cpuUsage > 100.0f) info.cpuUsage = 0.1f;
                         } else info.cpuUsage = 0.0f;
                         states[info.pid] = { (ULONGLONG)now, (ULONGLONG)procTime };
                     }
@@ -156,10 +156,10 @@ FlexNode::Ptr CreateUI() {
 
     auto header = FlexNode::Row();
     header->style.setHeight(32);
-    header->style.backgroundColor = SkColorSetRGB(50, 50, 50);
+    header->style.backgroundColor = AUKColor::RGB(50, 50, 50);
     header->style.setPadding(5);
     header->style.setGap(10);
-    
+
     auto createH = [](std::string t, float w, bool flex = false) {
         auto n = std::make_shared<TextNode>();
         n->text = t; n->fontSize = 11; n->color = Theme::TextSecondary;
@@ -198,7 +198,7 @@ FlexNode::Ptr CreateUI() {
 
     ramGraph = std::make_shared<GraphNode>();
     ramGraph->style.setFlex(1.0f);
-    ramGraph->lineColor = SkColorSetRGB(0, 255, 120);
+    ramGraph->lineColor = AUKColor::RGB(0, 255, 120);
     bottom->addChild(ramGraph);
 
     root->addChild(bottom);

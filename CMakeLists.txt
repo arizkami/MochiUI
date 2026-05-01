@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
 
-project(MochiUI)
+project(Aurelia)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,7 +18,7 @@ endif()
 # ── Skia prebuilt binaries ────────────────────────────────────────────────────
 set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
 set(SKIA_ZIP ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
-set(SKIA_URL "https://github.com/arizkami/MochiUI/releases/download/2026.04/skia-prebuilt-binary.zip")
+set(SKIA_URL "https://github.com/arizkami/Aurelia/releases/download/2026.04/skia-prebuilt-binary.zip")
 
 if(NOT EXISTS ${SKIA_DIR}/lib/skia.lib)
     message(STATUS "Skia binaries not found. Downloading...")
@@ -121,7 +121,7 @@ set(MOCHIKIT_LIBS
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  MochiKit.Foundation  —  core windowing, rendering, fonts, resources
+#  AureliaKit.Foundation  —  core windowing, rendering, fonts, resources
 # ══════════════════════════════════════════════════════════════════════════════
 set(FOUNDATION_SOURCES
     ${YOGA_SOURCES}
@@ -135,33 +135,33 @@ set(FOUNDATION_SOURCES
     ${GENERATED_RESOURCES_CPP}
 )
 
-add_library(MochiKit_Foundation SHARED ${FOUNDATION_SOURCES})
-set_target_properties(MochiKit_Foundation PROPERTIES
-    OUTPUT_NAME "MochiKit.Foundation"
+add_library(AureliaKit_Foundation SHARED ${FOUNDATION_SOURCES})
+set_target_properties(AureliaKit_Foundation PROPERTIES
+    OUTPUT_NAME "AureliaKit.Foundation"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(MochiKit_Foundation PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(MochiKit_Foundation PUBLIC ${MOCHIKIT_LIBS})
+target_compile_definitions(AureliaKit_Foundation PUBLIC ${MOCHIKIT_DEFINITIONS})
+target_link_libraries(AureliaKit_Foundation PUBLIC ${MOCHIKIT_LIBS})
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  MochiKit.GraphicInterface  —  widget, menu bar, overlay, MochiUI layer
+#  AureliaKit.GraphicInterface  —  widget, menu bar, overlay, AureliaUI layer
 # ══════════════════════════════════════════════════════════════════════════════
 set(GRAPHIC_INTERFACE_SOURCES
-    src/core/MochiWidget.cpp
-    src/gui/MochiUI.cpp
+    src/core/AureliaWidget.cpp
+    src/gui/AureliaUI.cpp
     src/gui/MenuBar.cpp
 )
 
-add_library(MochiKit_GraphicInterface SHARED ${GRAPHIC_INTERFACE_SOURCES})
-set_target_properties(MochiKit_GraphicInterface PROPERTIES
-    OUTPUT_NAME "MochiKit.GraphicInterface"
+add_library(AureliaKit_GraphicInterface SHARED ${GRAPHIC_INTERFACE_SOURCES})
+set_target_properties(AureliaKit_GraphicInterface PROPERTIES
+    OUTPUT_NAME "AureliaKit.GraphicInterface"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(MochiKit_GraphicInterface PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(MochiKit_GraphicInterface PUBLIC MochiKit_Foundation)
+target_compile_definitions(AureliaKit_GraphicInterface PUBLIC ${MOCHIKIT_DEFINITIONS})
+target_link_libraries(AureliaKit_GraphicInterface PUBLIC AureliaKit_Foundation)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  MochiKit.GraphicComponent  —  all UI components
+#  AureliaKit.GraphicComponent  —  all UI components
 # ══════════════════════════════════════════════════════════════════════════════
 set(GRAPHIC_COMPONENT_SOURCES
     src/gui/Components/TextNode.cpp
@@ -184,32 +184,32 @@ set(GRAPHIC_COMPONENT_SOURCES
     src/gui/Components/RadioButtonNode.cpp
 )
 
-add_library(MochiKit_GraphicComponent SHARED ${GRAPHIC_COMPONENT_SOURCES})
-set_target_properties(MochiKit_GraphicComponent PROPERTIES
-    OUTPUT_NAME "MochiKit.GraphicComponent"
+add_library(AureliaKit_GraphicComponent SHARED ${GRAPHIC_COMPONENT_SOURCES})
+set_target_properties(AureliaKit_GraphicComponent PROPERTIES
+    OUTPUT_NAME "AureliaKit.GraphicComponent"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(MochiKit_GraphicComponent PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(MochiKit_GraphicComponent PUBLIC MochiKit_GraphicInterface)
+target_compile_definitions(AureliaKit_GraphicComponent PUBLIC ${MOCHIKIT_DEFINITIONS})
+target_link_libraries(AureliaKit_GraphicComponent PUBLIC AureliaKit_GraphicInterface)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  MochiKit.DirectAudioEngine  —  WASAPI / DirectSound audio (was DAUx)
+#  AureliaKit.DirectAudioEngine  —  WASAPI / DirectSound audio (was DAUx)
 # ══════════════════════════════════════════════════════════════════════════════
 set(DIRECT_AUDIO_SOURCES
-    src/audio/MCKDirectAudioEngine.cpp
+    src/audio/AUKDirectAudioEngine.cpp
     external/rtaudio/RtAudio.cpp
 )
 
-add_library(MochiKit_DirectAudioEngine SHARED ${DIRECT_AUDIO_SOURCES})
-set_target_properties(MochiKit_DirectAudioEngine PROPERTIES
-    OUTPUT_NAME "MochiKit.DirectAudioEngine"
+add_library(AureliaKit_DirectAudioEngine SHARED ${DIRECT_AUDIO_SOURCES})
+set_target_properties(AureliaKit_DirectAudioEngine PROPERTIES
+    OUTPUT_NAME "AureliaKit.DirectAudioEngine"
 )
-target_compile_definitions(MochiKit_DirectAudioEngine PRIVATE DAUX_EXPORTS)
-target_compile_definitions(MochiKit_DirectAudioEngine PUBLIC
+target_compile_definitions(AureliaKit_DirectAudioEngine PRIVATE DAUX_EXPORTS)
+target_compile_definitions(AureliaKit_DirectAudioEngine PUBLIC
     __WINDOWS_WASAPI__
     __WINDOWS_DS__
 )
-target_link_libraries(MochiKit_DirectAudioEngine PRIVATE
+target_link_libraries(AureliaKit_DirectAudioEngine PRIVATE
     mfplat.lib
     mfuuid.lib
     wmcodecdspuuid.lib
@@ -219,12 +219,12 @@ target_link_libraries(MochiKit_DirectAudioEngine PRIVATE
 )
 
 # ── Examples ──────────────────────────────────────────────────────────────────
-add_executable(MochiExample WIN32
+add_executable(AureliaExample WIN32
     example/main.cpp
     example/app.rc
 )
-target_link_libraries(MochiExample PRIVATE
-    MochiKit_GraphicComponent
+target_link_libraries(AureliaExample PRIVATE
+    AureliaKit_GraphicComponent
 )
 
 add_subdirectory(example/ActivityMonitor)

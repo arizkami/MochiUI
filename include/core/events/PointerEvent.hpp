@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace MochiUI::events {
+namespace AureliaUI::events {
 
 enum class PointerButton : std::uint32_t {
     None = 0,
@@ -36,4 +36,4 @@ struct PointerEvent {
     bool handled = false;
 };
 
-} // namespace MochiUI::events
+} // namespace AureliaUI::events

@@ -1,8 +1,6 @@
 #include <gui/Components/GroupBox.hpp>
-#include <include/core/SkPathBuilder.h>
-#include <include/core/SkFontMetrics.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 GroupBox::GroupBox() {
     style.setPadding(15);
@@ -11,7 +9,7 @@ GroupBox::GroupBox() {
 
 void GroupBox::syncSubtreeStyles() {
     style.syncLegacy();
-    
+
     float titleHeight = 0.0f;
     if (!title.empty()) {
         SkRect bounds;
@@ -31,7 +29,7 @@ void GroupBox::drawSelf(SkCanvas* canvas) {
 
     // Background usually fills the whole frame or the border area.
     // If we want it to look like a groupbox, it should probably fill the borderRect.
-    
+
     float titleHeight = 0.0f;
     if (!title.empty()) {
         SkRect bounds;
@@ -103,7 +101,7 @@ void GroupBox::draw(SkCanvas* canvas) {
         float titleMargin = 10.0f;
         float x1 = borderRect.left() + titleMargin;
         float x2 = x1 + titleWidth + 10.0f;
-        
+
         float r = (style.borderRadius > 0) ? style.borderRadius : Theme::BorderRadius;
         if (r > 0) {
             SkPathBuilder path;
@@ -129,20 +127,20 @@ void GroupBox::draw(SkCanvas* canvas) {
             path.lineTo(x1, borderRect.top());
             canvas->drawPath(path.detach(), borderPaint);
         }
-        
+
         SkPaint textPaint;
         textPaint.setAntiAlias(true);
         textPaint.setColor(titleColor);
-        
+
         // Center text on the line
         float textY = borderRect.top() - (metrics.fAscent + metrics.fDescent) / 2.0f;
-        
-        FontManager::getInstance().drawText(canvas, title, 
-                                            x1 + 5.0f, textY, 
+
+        FontManager::getInstance().drawText(canvas, title,
+                                            x1 + 5.0f, textY,
                                             fontSize, textPaint);
     }
 
     drawChildren(canvas);
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

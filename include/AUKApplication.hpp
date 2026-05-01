@@ -1,5 +1,5 @@
 #pragma once
-#include <MCKFoundation.hpp>
+#include <AUKFoundation.hpp>
 
 // ── Application singleton (init, getInstance) ─────────────────────────────────
 #include <core/Application.hpp>

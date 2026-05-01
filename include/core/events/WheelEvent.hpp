@@ -1,6 +1,6 @@
 #pragma once
 
-namespace MochiUI::events {
+namespace AureliaUI::events {
 
 // Wheel deltas: host-defined units (e.g. Windows wheel delta / WHEEL_DELTA).
 struct WheelEvent {
@@ -12,4 +12,4 @@ struct WheelEvent {
     bool handled = false;
 };
 
-} // namespace MochiUI::events
+} // namespace AureliaUI::events

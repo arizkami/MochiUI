@@ -4,15 +4,13 @@
 #include <string>
 #include <functional>
 #include <algorithm>
-#include <include/core/SkRect.h>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkColor.h>
+#include <gui/SkiaDraw.hpp>
+#include <AUKColor.hpp>
 #include <yoga/Yoga.h>
 #include <core/IWindowHost.hpp>
 #include <core/events/Events.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 enum class FlexDirection { Row, Column };
 enum class SizingMode { Fixed, Flex, Hug };
@@ -25,7 +23,7 @@ class LayoutStyle {
 public:
     FlexNode* owner = nullptr;
     Cursor cursorType = Cursor::Arrow;
-    
+
     void setWidth(float w) { width = w; widthMode = SizingMode::Fixed; }
     void setHeight(float h) { height = h; heightMode = SizingMode::Fixed; }
     void setWidthFull() { widthMode = SizingMode::Flex; widthPercent = 100.0f; }
@@ -34,12 +32,12 @@ public:
     void setHeightPercent(float p) { heightMode = SizingMode::Flex; heightPercent = p; }
     void setWidthAuto() { widthMode = SizingMode::Hug; }
     void setHeightAuto() { heightMode = SizingMode::Hug; }
-    
+
     void setMinWidth(float w) { minWidth = w; }
     void setMinHeight(float h) { minHeight = h; }
     void setMinWidthPercent(float p) { minWidth = -1e9f; minWidthPercent = p; }
     void setMinHeightPercent(float p) { minHeight = -1e9f; minHeightPercent = p; }
-    
+
     void setFlex(float f) { flex = f; }
     void setFlexGrow(float f) { flex = f; }
     void setFlexShrink(float f) { flexShrink = f; }
@@ -48,13 +46,13 @@ public:
     void setPadding(float p) { paddingLeft = paddingTop = paddingRight = paddingBottom = p; }
     void setPadding(float h, float v) { paddingLeft = paddingRight = h; paddingTop = paddingBottom = v; }
     void setPadding(float l, float t, float r, float b) { paddingLeft = l; paddingTop = t; paddingRight = r; paddingBottom = b; }
-    
+
     void setMargin(float m) { marginLeft = marginTop = marginRight = marginBottom = m; }
     void setMargin(float h, float v) { marginLeft = marginRight = h; marginTop = marginBottom = v; }
-    
+
     void setGap(float g) { gap = g; }
-    
-    void setFlexDirection(YGFlexDirection dir) { 
+
+    void setFlexDirection(YGFlexDirection dir) {
         flexDirection = (dir == YGFlexDirectionRow) ? FlexDirection::Row : FlexDirection::Column;
     }
     void setAlignItems(YGAlign align) {
@@ -75,13 +73,13 @@ public:
         else if (edge == YGEdgeBottom) bottom = value;
     }
 
-    SkColor backgroundColor = SK_ColorTRANSPARENT;
+    AUKColor backgroundColor = AUKColor::transparent();
     float borderRadius = 0;
     bool overflowHidden = false;
 
     void syncLegacy() {
         YGNodeRef node = getYGNode();
-        
+
         if (widthMode == SizingMode::Fixed) {
             YGNodeStyleSetWidth(node, width);
         } else if (widthMode == SizingMode::Flex) {
@@ -100,15 +98,15 @@ public:
 
         YGNodeStyleSetFlexGrow(node, flex);
         YGNodeStyleSetFlexShrink(node, flexShrink);
-        
+
         if (flexBasis < 0) YGNodeStyleSetFlexBasisAuto(node);
         else YGNodeStyleSetFlexBasis(node, flexBasis);
-        
+
         YGNodeStyleSetPadding(node, YGEdgeLeft, paddingLeft != 0 ? paddingLeft : padding);
         YGNodeStyleSetPadding(node, YGEdgeTop, paddingTop != 0 ? paddingTop : padding);
         YGNodeStyleSetPadding(node, YGEdgeRight, paddingRight != 0 ? paddingRight : padding);
         YGNodeStyleSetPadding(node, YGEdgeBottom, paddingBottom != 0 ? paddingBottom : padding);
-        
+
         YGNodeStyleSetMargin(node, YGEdgeLeft, marginLeft != 0 ? marginLeft : margin);
         YGNodeStyleSetMargin(node, YGEdgeTop, marginTop != 0 ? marginTop : margin);
         YGNodeStyleSetMargin(node, YGEdgeRight, marginRight != 0 ? marginRight : margin);
@@ -136,7 +134,7 @@ public:
 
         if (minWidth != -1e9f) YGNodeStyleSetMinWidth(node, minWidth);
         else if (minWidthPercent != 0) YGNodeStyleSetMinWidthPercent(node, minWidthPercent);
-        
+
         if (minHeight != -1e9f) YGNodeStyleSetMinHeight(node, minHeight);
         else if (minHeightPercent != 0) YGNodeStyleSetMinHeightPercent(node, minHeightPercent);
     }
@@ -154,16 +152,16 @@ public:
     float flex = 0;
     float flexShrink = 1.0f;
     float flexBasis = -1.0f; // -1 for Auto
-    
+
     float padding = 0;
     float margin = 0;
     float gap = 0;
-    
+
     float paddingLeft = 0;
     float paddingTop = 0;
     float paddingRight = 0;
     float paddingBottom = 0;
-    
+
     float marginLeft = 0;
     float marginTop = 0;
     float marginRight = 0;
@@ -215,14 +213,14 @@ public:
     SkRect frame = SkRect::MakeEmpty();
     std::vector<Ptr> children;
     FlexNode* parent = nullptr;
-    
+
     bool dirtyLayout = true;
     void markDirty() {
         dirtyLayout = true;
         if (parent) parent->markDirty();
         requestRedraw();
     }
-    
+
     IWindowHost* windowHost = nullptr;
     virtual void setWindowHost(IWindowHost* host) {
         windowHost = host;
@@ -232,7 +230,7 @@ public:
     virtual void requestRedraw() {
         if (windowHost) windowHost->requestRedraw();
     }
-    
+
     bool isHovered = false;
     bool isPressed = false;
     bool isFocused = false;
@@ -275,7 +273,7 @@ public:
     }
 
     static Ptr Create() { return std::make_shared<FlexNode>(); }
-    
+
     static Ptr Row() {
         auto node = Create();
         node->style.flexDirection = FlexDirection::Row;
@@ -314,10 +312,10 @@ public:
     static YGSize MeasureCallback(YGNodeConstRef node, float width, YGMeasureMode widthMode, float height, YGMeasureMode heightMode) {
         FlexNode* flexNode = (FlexNode*)YGNodeGetContext(node);
         Size available = { width, height };
-        
+
         // Convert Yoga Undefined to something easier to handle if needed
         // But passing it as is (NAN) is also okay if measure handles it.
-        
+
         Size measured = flexNode->measure(available);
         YGSize result;
         result.width = measured.width;
@@ -378,7 +376,7 @@ public:
         if (enableHover && isHovered) {
             SkPaint hoverPaint;
             hoverPaint.setAntiAlias(true);
-            hoverPaint.setColor(SkColorSetARGB(40, 255, 255, 255)); // Generic light overlay
+            hoverPaint.setColor(AUKColor::RGB(255, 255, 255, 40)); // Generic light overlay
             if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, hoverPaint);
             else canvas->drawRect(frame, hoverPaint);
         }
@@ -460,7 +458,7 @@ public:
         isPressed = false;
         for (auto& child : children) child->onMouseUp(x, y);
     }
-    
+
     virtual bool onMouseWheel(float x, float y, float delta) {
         for (auto it = children.rbegin(); it != children.rend(); ++it) {
             if ((*it)->onMouseWheel(x, y, delta)) return true;
@@ -489,6 +487,6 @@ private:
 
 inline YGNodeRef LayoutStyle::getYGNode() { return owner->getYGNode(); }
 
-} // namespace MochiUI
+} // namespace AureliaUI
 
 #include <gui/GridLayout.hpp>

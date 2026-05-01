@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <gui/Components/TextNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class TimelineNode : public FlexNode {
 public:
@@ -38,4 +38,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

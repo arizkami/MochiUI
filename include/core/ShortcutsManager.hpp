@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 struct Shortcut {
     uint32_t key;
@@ -40,4 +40,4 @@ private:
     std::vector<Shortcut> shortcuts;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

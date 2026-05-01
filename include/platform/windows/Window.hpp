@@ -4,14 +4,13 @@
 #include <d3d12.h>
 #include <dxgi1_4.h>
 #include <wrl/client.h>
-#include <include/core/SkSurface.h>
 #include <vector>
 
 class GrDirectContext;
 
 #include <gui/OverlayNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 struct FrameContext {
     Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
@@ -27,23 +26,23 @@ public:
     void setDarkMode(bool enable) override;
     void enableMica(bool enable) override;
     void setWindowMode(WindowMode mode) override;
-    
+
     void setMenuBar(std::unique_ptr<IMenuBar> bar) override;
     void setRoot(FlexNode::Ptr node) override;
     void run() override;
-    
+
     void* getNativeHandle() const override { return (void*)hwnd; }
-    
+
     void requestRedraw() override {
         InvalidateRect(hwnd, NULL, FALSE);
     }
-    
-    void addOverlay(FlexNode::Ptr overlay) {
+
+    void addOverlay(FlexNode::Ptr overlay) override {
         if (!overlayRoot) overlayRoot = std::make_shared<OverlayNode>();
         overlayRoot->addOverlay(overlay);
     }
-    
-    void removeOverlay(FlexNode::Ptr overlay) {
+
+    void removeOverlay(FlexNode::Ptr overlay) override {
         if (overlayRoot) overlayRoot->removeOverlay(overlay);
     }
 
@@ -51,11 +50,11 @@ private:
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
     void onPaint();
     void onSize(int w, int h);
-    
+
     bool initD3D12();
     void cleanupD3D12();
     void resizeBuffers(int width, int height);
-    
+
     HWND hwnd;
     OverlayNode::Ptr overlayRoot;
     FlexNode::Ptr root; // Keep for compatibility if needed, but we use overlayRoot
@@ -70,14 +69,14 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Fence> fence;
     HANDLE fenceEvent = nullptr;
     uint64_t fenceValue = 0;
-    
+
     static const int bufferCount = 2;
     int currentFrameIndex = 0;
     std::vector<FrameContext> frames;
-    
+
     sk_sp<GrDirectContext> grContext;
     WindowMode currentMode = WindowMode::Windowed;
     WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -1,7 +1,7 @@
 #pragma once
 #include <utils/Misc/ThemeSwitcher.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class ThemeManager {
 public:
@@ -21,4 +21,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

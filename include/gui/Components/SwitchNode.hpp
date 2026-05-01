@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SwitchNode : public FlexNode {
 public:
@@ -13,24 +13,24 @@ public:
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
         enableHover = true;
     }
-    
+
     std::string label;
     bool isOn = false;
-    SkColor activeColor = Theme::Accent;
-    SkColor inactiveColor = SkColorSetRGB(150, 150, 150);
-    SkColor thumbColor = SK_ColorWHITE;
-    SkColor labelColor = Theme::TextPrimary;
-    
+    AUKColor activeColor = Theme::Accent;
+    AUKColor inactiveColor = AUKColor::RGB(150, 150, 150);
+    AUKColor thumbColor = AUKColor::white();
+    AUKColor labelColor = Theme::TextPrimary;
+
     float fontSize = 14.0f;
     float switchWidth = 40.0f;
     float switchHeight = 22.0f;
     float spacing = 8.0f;
-    
+
     std::function<void(bool)> onChanged;
-    
+
     Size measure(Size available) override;
     void draw(SkCanvas* canvas) override;
     bool onMouseDown(float x, float y) override;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

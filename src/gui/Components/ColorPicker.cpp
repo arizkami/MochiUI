@@ -1,10 +1,7 @@
 #include <gui/Components/ColorPicker.hpp>
-#include <include/core/SkShader.h>
-#include <include/effects/SkGradient.h>
-#include <include/effects/SkRuntimeEffect.h>
 #include <algorithm>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 ColorPicker::ColorPicker() {
     YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
@@ -63,10 +60,10 @@ void ColorPicker::draw(SkCanvas* canvas) {
 
     float padding = 10.0f;
     float hueWidth = 20.0f;
-    SkRect svRect = SkRect::MakeXYWH(frame.left() + padding, frame.top() + padding, 
-                                     frame.width() - 3 * padding - hueWidth, 
+    SkRect svRect = SkRect::MakeXYWH(frame.left() + padding, frame.top() + padding,
+                                     frame.width() - 3 * padding - hueWidth,
                                      frame.height() - 2 * padding);
-    SkRect hRect = SkRect::MakeXYWH(svRect.right() + padding, frame.top() + padding, 
+    SkRect hRect = SkRect::MakeXYWH(svRect.right() + padding, frame.top() + padding,
                                     hueWidth, frame.height() - 2 * padding);
 
     // Draw SV Box
@@ -93,7 +90,7 @@ void ColorPicker::draw(SkCanvas* canvas) {
         SkPoint pts[2] = { {svRect.left(), svRect.top()}, {svRect.right(), svRect.top()} };
         SkColor4f colorsW[2] = { SkColor4f::FromColor(SK_ColorWHITE), SkColor4f::FromColor(hColor) };
         SkGradient grad(SkGradient::Colors(colorsW, SkTileMode::kClamp), {});
-        
+
         SkPaint svPaint;
         svPaint.setShader(SkShaders::LinearGradient(pts, grad));
         canvas->drawRect(svRect, svPaint);
@@ -116,23 +113,23 @@ void ColorPicker::draw(SkCanvas* canvas) {
     cursorPaint.setStyle(SkPaint::kStroke_Style);
     cursorPaint.setStrokeWidth(2.0f);
     cursorPaint.setColor(v > 0.5f ? SK_ColorBLACK : SK_ColorWHITE);
-    canvas->drawCircle(svRect.left() + s * svRect.width(), 
+    canvas->drawCircle(svRect.left() + s * svRect.width(),
                        svRect.top() + (1.0f - v) * svRect.height(), 4.0f, cursorPaint);
 
     // Draw Hue Bar
     {
         SkPoint ptsH[2] = { {hRect.left(), hRect.top()}, {hRect.left(), hRect.bottom()} };
-        SkColor4f hColors[7] = { 
-            SkColor4f::FromColor(0xFFFF0000), 
-            SkColor4f::FromColor(0xFFFFFF00), 
-            SkColor4f::FromColor(0xFF00FF00), 
-            SkColor4f::FromColor(0xFF00FFFF), 
-            SkColor4f::FromColor(0xFF0000FF), 
-            SkColor4f::FromColor(0xFFFF00FF), 
-            SkColor4f::FromColor(0xFFFF0000) 
+        SkColor4f hColors[7] = {
+            SkColor4f::FromColor(0xFFFF0000),
+            SkColor4f::FromColor(0xFFFFFF00),
+            SkColor4f::FromColor(0xFF00FF00),
+            SkColor4f::FromColor(0xFF00FFFF),
+            SkColor4f::FromColor(0xFF0000FF),
+            SkColor4f::FromColor(0xFFFF00FF),
+            SkColor4f::FromColor(0xFFFF0000)
         };
         SkGradient gradH(SkGradient::Colors(hColors, SkTileMode::kClamp), {});
-        
+
         SkPaint hPaint;
         hPaint.setShader(SkShaders::LinearGradient(ptsH, gradH));
         canvas->drawRect(hRect, hPaint);
@@ -143,7 +140,7 @@ void ColorPicker::draw(SkCanvas* canvas) {
     hCursorPaint.setColor(SK_ColorBLACK);
     hCursorPaint.setStyle(SkPaint::kStroke_Style);
     hCursorPaint.setStrokeWidth(2.0f);
-    canvas->drawRect(SkRect::MakeXYWH(hRect.left() - 2, hRect.top() + h * hRect.height() - 2, 
+    canvas->drawRect(SkRect::MakeXYWH(hRect.left() - 2, hRect.top() + h * hRect.height() - 2,
                                       hRect.width() + 4, 4), hCursorPaint);
 }
 
@@ -170,10 +167,10 @@ void ColorPicker::onMouseUp(float x, float y) {
 void ColorPicker::updateFromXY(float x, float y) {
     float padding = 10.0f;
     float hueWidth = 20.0f;
-    SkRect svRect = SkRect::MakeXYWH(frame.left() + padding, frame.top() + padding, 
-                                     frame.width() - 3 * padding - hueWidth, 
+    SkRect svRect = SkRect::MakeXYWH(frame.left() + padding, frame.top() + padding,
+                                     frame.width() - 3 * padding - hueWidth,
                                      frame.height() - 2 * padding);
-    SkRect hRect = SkRect::MakeXYWH(svRect.right() + padding, frame.top() + padding, 
+    SkRect hRect = SkRect::MakeXYWH(svRect.right() + padding, frame.top() + padding,
                                     hueWidth, frame.height() - 2 * padding);
 
     if (hRect.contains(x, y) || draggingH) {
@@ -188,4 +185,4 @@ void ColorPicker::updateFromXY(float x, float y) {
     }
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

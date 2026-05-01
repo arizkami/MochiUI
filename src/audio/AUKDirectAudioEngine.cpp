@@ -1,11 +1,11 @@
-#include <MCKDirectAudioEngine.hpp>
+#include <AUKDirectAudioEngine.hpp>
 #define RTAUDIO_EXPORT
 #include <RtAudio.h>
 #include <iostream>
 
 using namespace rt::audio;
 
-namespace MochiUI {
+namespace AureliaUI {
 namespace Audio {
 
 class DAUx::Impl {
@@ -112,4 +112,4 @@ bool DAUx::isStreamRunning() const {
 }
 
 } // namespace Audio
-} // namespace MochiUI
+} // namespace AureliaUI

@@ -4,7 +4,7 @@
 #include <utils/FontManager/FontMgr.hpp>
 #include <string>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class ButtonNode : public FlexNode {
 public:
@@ -13,14 +13,14 @@ public:
         enableHover = true;
     }
     std::string label = "Button";
-    SkColor textColor = Theme::TextPrimary;
-    SkColor normalColor = Theme::Card;
-    
+    AUKColor textColor = Theme::TextPrimary;
+    AUKColor normalColor = Theme::Card;
+
     // If true, will use Theme::* colors dynamically in draw()
     bool useThemeColors = true;
-    
-    SkColor hoverColor = SkColorSetRGB(60, 60, 60);
-    SkColor pressedColor = SkColorSetRGB(40, 40, 40);
+
+    AUKColor hoverColor = AUKColor::RGB(60, 60, 60);
+    AUKColor pressedColor = AUKColor::RGB(40, 40, 40);
     float borderRadius = -1.0f; // -1 to use Theme::BorderRadius
     float fontSize = 14.0f;
     bool labelBold = false;
@@ -35,30 +35,30 @@ public:
         }
         float w = bounds.width() + 30.0f;
         float h = bounds.height() + 16.0f;
-        
+
         if (style.widthMode == SizingMode::Fixed) w = style.width;
         if (style.heightMode == SizingMode::Fixed) h = style.height;
-        
+
         return { w, h };
     }
 
     void draw(SkCanvas* canvas) override {
-        SkColor bg = normalColor;
-        SkColor textCol = textColor;
-        
+        AUKColor bg = normalColor;
+        AUKColor textCol = textColor;
+
         if (useThemeColors) {
             bg = Theme::Card;
             textCol = Theme::TextPrimary;
         }
 
         if (isPressed) {
-            bg = useThemeColors ? SkColorSetA(Theme::Accent, 180) : pressedColor;
+            bg = useThemeColors ? AUKColor(Theme::Accent).withAlpha(uint8_t(180)) : pressedColor;
         } else if (isHovered) {
-            bg = useThemeColors ? SkColorSetA(Theme::Accent, 100) : hoverColor;
+            bg = useThemeColors ? AUKColor(Theme::Accent).withAlpha(uint8_t(100)) : hoverColor;
         }
-        
+
         float r = (borderRadius < 0) ? Theme::BorderRadius : borderRadius;
-        
+
         SkPaint bgPaint;
         bgPaint.setAntiAlias(true);
         bgPaint.setColor(bg);
@@ -90,4 +90,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

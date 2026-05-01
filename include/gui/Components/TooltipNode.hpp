@@ -3,21 +3,21 @@
 #include <gui/Theme.hpp>
 #include <gui/Components/TextNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class TooltipNode : public FlexNode {
 public:
     TooltipNode(const std::string& text) {
         style.setPositionType(YGPositionTypeAbsolute);
-        style.backgroundColor = SkColorSetRGB(40, 40, 40);
+        style.backgroundColor = AUKColor::RGB(40, 40, 40);
         style.setPadding(8, 4);
         style.borderRadius = 4;
-        
+
         auto label = std::make_shared<TextNode>(text);
-        label->color = SK_ColorWHITE;
+        label->color = AUKColor::white();
         label->fontSize = Theme::FontSmall;
         addChild(label);
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

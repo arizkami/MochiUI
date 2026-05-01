@@ -1,7 +1,7 @@
 #include <gui/Components/TextInput.hpp>
 #include <windows.h>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 namespace {
     void SetClipboardText(const std::string& text) {
@@ -75,7 +75,7 @@ size_t TextInput::getCursorIndexFromPosition(float x) {
     float lastWidth = 0.0f;
     for (size_t i = 0; i <= text.size(); ++i) {
         if (i < text.size() && (text[i] & 0xC0) == 0x80) continue;
-        
+
         float widthUpToI = FontManager::getInstance().measureText(text, i, fontSize);
         if (relX < widthUpToI) {
             if (relX < (lastWidth + (widthUpToI - lastWidth) / 2.0f)) {
@@ -100,7 +100,7 @@ void TextInput::draw(SkCanvas* canvas) {
     borderPaint.setStyle(SkPaint::kStroke_Style);
     borderPaint.setStrokeWidth(isFocused ? Theme::BorderWidth + 1.0f : Theme::BorderWidth);
     borderPaint.setColor(isFocused ? focusColor : borderColor);
-    
+
     SkRect borderRect = frame;
     if (isFocused) borderRect.inset(0.5f, 0.5f);
     float r = (style.borderRadius > 0) ? style.borderRadius : Theme::BorderRadius;
@@ -109,7 +109,7 @@ void TextInput::draw(SkCanvas* canvas) {
     // 3. Draw Text or Placeholder
     SkPaint textPaint;
     textPaint.setAntiAlias(true);
-    
+
     float textX = frame.left() + getLayoutPadding(YGEdgeLeft) + 4.0f;
     float textY = frame.centerY() + fontSize / 2.0f - 2.0f;
 
@@ -121,15 +121,15 @@ void TextInput::draw(SkCanvas* canvas) {
         if (hasSelection() && isFocused) {
             float startX = textX + FontManager::getInstance().measureText(text, getSelectionStart(), fontSize);
             float endX = textX + FontManager::getInstance().measureText(text, getSelectionEnd(), fontSize);
-            
+
             SkPaint selPaint;
-            selPaint.setColor(SkColorSetA(focusColor, 100)); // Semi-transparent accent
+            selPaint.setColor(focusColor.withAlpha(uint8_t(100))); // Semi-transparent accent
             canvas->drawRect(SkRect::MakeLTRB(startX, textY - fontSize + 2.0f, endX, textY + 4.0f), selPaint);
         }
 
         textPaint.setColor(textColor);
         FontManager::getInstance().drawText(canvas, text, textX, textY, fontSize, textPaint);
-        
+
         // 4. Draw Cursor if focused
         if (isFocused) {
             uint32_t currentTime = GetTickCount();
@@ -137,13 +137,13 @@ void TextInput::draw(SkCanvas* canvas) {
                 showCursor = !showCursor;
                 lastBlinkTime = currentTime;
             }
-            
+
             if (showCursor) {
                 float cursorX = textX;
                 if (cursorIndex > 0) {
                     cursorX += FontManager::getInstance().measureText(text, cursorIndex, fontSize);
                 }
-                
+
                 SkPaint cursorPaint;
                 cursorPaint.setColor(focusColor);
                 cursorPaint.setStrokeWidth(1.5f);
@@ -160,7 +160,7 @@ bool TextInput::onMouseDown(float x, float y) {
         isFocused = true;
         showCursor = true;
         lastBlinkTime = GetTickCount();
-        
+
         bool shiftPressed = GetKeyState(VK_SHIFT) & 0x8000;
         size_t newIndex = getCursorIndexFromPosition(x);
 
@@ -171,12 +171,12 @@ bool TextInput::onMouseDown(float x, float y) {
         } else {
             selectionAnchor = newIndex; // start dragging anchor
         }
-        
+
         cursorIndex = newIndex;
         isDragging = true;
         return true;
     }
-    
+
     return FlexNode::onMouseDown(x, y);
 }
 
@@ -248,7 +248,7 @@ void TextInput::onMouseUp(float x, float y) {
 
 bool TextInput::onChar(uint32_t charCode) {
     if (!isFocused) return false;
-    
+
     // Ignore control characters meant for shortcuts
     if (charCode < 32 && charCode != 8 && charCode != 13) return false;
 
@@ -271,7 +271,7 @@ bool TextInput::onChar(uint32_t charCode) {
         if (onEnter) onEnter();
     } else if (charCode >= 32) { // Normal character
         uint32_t codepoint = charCode;
-        
+
         // Handle UTF-16 surrogates from Windows WM_CHAR
         if (charCode >= 0xD800 && charCode <= 0xDBFF) {
             highSurrogate = (uint16_t)charCode;
@@ -312,7 +312,7 @@ bool TextInput::onChar(uint32_t charCode) {
         cursorIndex += utf8Str.length();
         if (onChanged) onChanged(text);
     }
-    
+
     showCursor = true;
     lastBlinkTime = GetTickCount();
     return true;
@@ -410,4 +410,4 @@ bool TextInput::needsRedraw() {
     return isFocused; // Keep blinking
 }
 
-} // namespace MochiUI
+} // namespace AureliaUI

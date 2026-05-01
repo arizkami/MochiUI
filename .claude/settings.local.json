@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(cmd /c build.cmd)"
+      "Bash(cmd /c build.cmd)",
+      "Bash(xargs grep *)"
     ]
   }
 }

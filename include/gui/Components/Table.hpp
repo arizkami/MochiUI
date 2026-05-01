@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class TableHead : public FlexNode {
 public:
@@ -36,4 +36,4 @@ private:
     std::shared_ptr<TableHead> header;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

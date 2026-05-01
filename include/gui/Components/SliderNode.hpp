@@ -1,12 +1,9 @@
 #pragma once
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
-#include <include/core/SkCanvas.h>
-#include <include/core/SkPaint.h>
-#include <include/core/SkRRect.h>
 #include <functional>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class SliderNode : public FlexNode {
 public:
@@ -18,11 +15,11 @@ public:
     float maxValue = 1.0f;
     bool vertical = false;
     std::function<void(float)> onValueChange;
-    
-    SkColor trackColor = Theme::Card;
-    SkColor fillColor = Theme::Accent;
-    SkColor thumbColor = SK_ColorWHITE;
-    
+
+    AUKColor trackColor = Theme::Card;
+    AUKColor fillColor = Theme::Accent;
+    AUKColor thumbColor = AUKColor::white();
+
     float trackHeight = 4.0f;
     float thumbRadius = 8.0f;
 
@@ -39,4 +36,4 @@ private:
     bool isDragging = false;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

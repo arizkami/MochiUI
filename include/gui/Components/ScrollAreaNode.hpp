@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class ScrollAreaNode : public FlexNode {
 public:
@@ -35,4 +35,4 @@ private:
     void drawScrollbars(SkCanvas* canvas);
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

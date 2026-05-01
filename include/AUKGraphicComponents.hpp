@@ -1,5 +1,12 @@
 #pragma once
-#include <MCKFoundation.hpp>
+#include <AUKFoundation.hpp>
+
+// Undefine Win32 RGB macro so AUKColor::RGB(...) works in component headers.
+// windows.h (pulled in via AUKGraphicInterface.hpp) defines RGB before this
+// header is processed; AUKColor.hpp's own #undef fires too early to help.
+#ifdef RGB
+#undef RGB
+#endif
 
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/CheckboxNode.hpp>

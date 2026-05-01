@@ -3,7 +3,7 @@
 #include <gui/Components/CheckboxNode.hpp>
 #include <set>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class MultiSelectNode : public FlexNode {
 public:
@@ -12,7 +12,7 @@ public:
         style.backgroundColor = Theme::Card;
         style.setAlignItems(YGAlignCenter);
         style.setPadding(8, 0);
-        
+
         label = std::make_shared<TextNode>("Select...");
         label->fontSize = Theme::FontNormal;
         addChild(label);
@@ -20,9 +20,9 @@ public:
 
     std::vector<std::string> items;
     std::set<int> selectedIndices;
-    
+
 private:
     std::shared_ptr<TextNode> label;
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

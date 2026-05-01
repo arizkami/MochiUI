@@ -4,13 +4,13 @@
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class TreeItem : public FlexNode {
 public:
     TreeItem(const std::string& label, bool hasChildren = false) {
         style.setFlexDirection(YGFlexDirectionColumn);
-        
+
         header = FlexNode::Row();
         header->style.setHeight(Theme::ControlHeight);
         header->style.setAlignItems(YGAlignCenter);
@@ -21,7 +21,7 @@ public:
         toggleIcon->setIcon("res://chevron-right.svg");
         toggleIcon->style.setWidth(12);
         toggleIcon->style.setHeight(12);
-        toggleIcon->color = hasChildren ? Theme::TextSecondary : SK_ColorTRANSPARENT;
+        toggleIcon->color = hasChildren ? AUKColor(Theme::TextSecondary) : AUKColor::transparent();
         header->addChild(toggleIcon);
 
         auto text = std::make_shared<TextNode>(label);
@@ -32,7 +32,7 @@ public:
 
         childContainer = FlexNode::Column();
         childContainer->style.setPadding(20, 0, 0, 0); // Indent
-        
+
         header->onClick = [this, hasChildren]() {
             if (hasChildren) setExpanded(!expanded);
         };
@@ -68,4 +68,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

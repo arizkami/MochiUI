@@ -1,12 +1,10 @@
 #pragma once
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
-#include <include/core/SkPath.h>
-#include <include/core/SkPathBuilder.h>
 #include <vector>
 #include <deque>
 
-namespace MochiUI {
+namespace AureliaUI {
 
 class GraphNode : public FlexNode {
 public:
@@ -15,8 +13,8 @@ public:
     }
     std::deque<float> dataPoints;
     size_t maxPoints = 50;
-    SkColor lineColor = Theme::Accent;
-    SkColor fillColor = SkColorSetA(Theme::Accent, 40);
+    AUKColor lineColor = Theme::Accent;
+    AUKColor fillColor = AUKColor(Theme::Accent).withAlpha(uint8_t(40));
     float strokeWidth = 2.0f;
     bool showGrid = true;
 
@@ -47,7 +45,7 @@ public:
         for (size_t i = 0; i < dataPoints.size(); ++i) {
             float x = frame.left() + i * xStep;
             float y = frame.bottom() - (dataPoints[i] * h);
-            
+
             if (i == 0) {
                 pathBuilder.moveTo(x, y);
                 areaPathBuilder.moveTo(x, frame.bottom());
@@ -56,7 +54,7 @@ public:
                 pathBuilder.lineTo(x, y);
                 areaPathBuilder.lineTo(x, y);
             }
-            
+
             if (i == dataPoints.size() - 1) {
                 areaPathBuilder.lineTo(x, frame.bottom());
                 areaPathBuilder.close();
@@ -78,4 +76,4 @@ public:
     }
 };
 
-} // namespace MochiUI
+} // namespace AureliaUI

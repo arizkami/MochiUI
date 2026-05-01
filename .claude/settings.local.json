@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(cmd /c build.cmd)",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\\\\src\\\\gui\\\\Components\" -Recurse -File)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

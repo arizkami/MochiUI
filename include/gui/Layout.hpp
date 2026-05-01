@@ -134,9 +134,11 @@ public:
 
         if (minWidth != -1e9f) YGNodeStyleSetMinWidth(node, minWidth);
         else if (minWidthPercent != 0) YGNodeStyleSetMinWidthPercent(node, minWidthPercent);
+        else if (widthMode == SizingMode::Fixed) YGNodeStyleSetMinWidth(node, width);
 
         if (minHeight != -1e9f) YGNodeStyleSetMinHeight(node, minHeight);
         else if (minHeightPercent != 0) YGNodeStyleSetMinHeightPercent(node, minHeightPercent);
+        else if (heightMode == SizingMode::Fixed) YGNodeStyleSetMinHeight(node, height);
     }
 
     float width = 0;

@@ -5,6 +5,7 @@ namespace AureliaUI {
 
 ScrollAreaNode::ScrollAreaNode() {
     style.setFlex(1.0f);
+    style.setWidthFull();
     style.overflowHidden = true;
 }
 

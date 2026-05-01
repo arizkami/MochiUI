@@ -18,3 +18,4 @@ src/gui/Theme.hpp
 *.sln
 
 .codereview
+__cmake_systeminformation

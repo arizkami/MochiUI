@@ -20,3 +20,9 @@
 	path = external/skia
 	url = https://github.com/google/skia
     update = none
+[submodule "external/libpng"]
+	path = external/libpng
+	url = https://github.com/pnggroup/libpng
+[submodule "external/webp"]
+	path = external/webp
+	url = https://github.com/jacklicn/libwebp

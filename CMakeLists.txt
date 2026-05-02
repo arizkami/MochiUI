@@ -10,30 +10,30 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Match Skia's official build runtime and architecture
 if(MSVC)
-    string(REPLACE "/MD"  "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-    string(REPLACE "/MDd" "" CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
-    add_compile_options(/arch:AVX2 /wd4244 /wd4267)
+  string(REPLACE "/MD"  "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+  string(REPLACE "/MDd" "" CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
+  add_compile_options(/arch:AVX2 /wd4244 /wd4267)
 endif()
 
 # ── Skia prebuilt binaries ────────────────────────────────────────────────────
 set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
 set(SKIA_ZIP ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
-set(SKIA_URL "https://github.com/arizkami/Aurelia/releases/download/2026.04/skia-prebuilt-binary.zip")
+set(SKIA_URL "https://github.com/arizkami/Aurelia/releases/download/2026.05/skia-prebuilt-binary.zip")
 
 if(NOT EXISTS ${SKIA_DIR}/lib/skia.lib)
-    message(STATUS "Skia binaries not found. Downloading...")
-    file(DOWNLOAD ${SKIA_URL} ${SKIA_ZIP} SHOW_PROGRESS STATUS DOWNLOAD_STATUS)
-    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-    if(NOT STATUS_CODE EQUAL 0)
-        message(FATAL_ERROR "Failed to download Skia binaries from ${SKIA_URL}")
-    endif()
-    message(STATUS "Extracting Skia binaries...")
-    file(ARCHIVE_EXTRACT INPUT ${SKIA_ZIP}
+  message(STATUS "Skia binaries not found. Downloading...")
+  file(DOWNLOAD ${SKIA_URL} ${SKIA_ZIP} SHOW_PROGRESS STATUS DOWNLOAD_STATUS)
+  list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+  if(NOT STATUS_CODE EQUAL 0)
+    message(FATAL_ERROR "Failed to download Skia binaries from ${SKIA_URL}")
+  endif()
+  message(STATUS "Extracting Skia binaries...")
+  file(ARCHIVE_EXTRACT INPUT ${SKIA_ZIP}
          DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
-    file(REMOVE ${SKIA_ZIP})
-    message(STATUS "Skia binaries installed successfully!")
+  file(REMOVE ${SKIA_ZIP})
+  message(STATUS "Skia binaries installed successfully!")
 else()
-    message(STATUS "Skia binaries found at ${SKIA_DIR}")
+  message(STATUS "Skia binaries found at ${SKIA_DIR}")
 endif()
 
 include_directories(
@@ -187,7 +187,7 @@ target_include_directories(skia_svg PRIVATE
 )
 target_compile_definitions(skia_svg PRIVATE ${MOCHIKIT_DEFINITIONS})
 if(MSVC)
-    target_compile_options(skia_svg PRIVATE /wd4244 /wd4267 /wd4291 /wd4146 /wd4661)
+  target_compile_options(skia_svg PRIVATE /wd4244 /wd4267 /wd4291 /wd4146 /wd4661)
 endif()
 
 # ══════════════════════════════════════════════════════════════════════════════

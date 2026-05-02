@@ -1,13 +1,5 @@
 #include <AUKSvg.hpp>
 #include <include/core/SkStream.h>
-#include <optional>
-
-// Fallback for missing SkOptAddressOrNull in some Skia prebuilts
-template <typename T>
-static inline const T* SkOptAddressOrNull(const std::optional<T>& opt) {
-    return opt ? &*opt : nullptr;
-}
-
 #include <modules/svg/include/SkSVGDOM.h>
 #include <modules/svg/include/SkSVGSVG.h>
 #include <modules/svg/include/SkSVGRenderContext.h>

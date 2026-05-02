@@ -51,8 +51,8 @@ public:
     // Render a single named element by id (e.g. "#icon-path")
     void renderNode(SkCanvas* canvas, const SkRect& dst, const char* nodeId) const;
 
-private:
     struct Impl;
+private:
     std::shared_ptr<Impl> _impl;
     explicit AUKSvg(std::shared_ptr<Impl> impl) : _impl(std::move(impl)) {}
 };

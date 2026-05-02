@@ -12,41 +12,75 @@ jobs:
     runs-on: windows-latest
 
     steps:
+      # ── Source ───────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: true
 
-      - name: Setup MSVC Developer Command Prompt
+      # ── Toolchain ─────────────────────────────────────────────────────────────
+      - name: Setup MSVC (x64)
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
 
-      - name: Setup Python
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Generate theme files
+      # ── Skia prebuilt cache ───────────────────────────────────────────────────
+      # Cache the downloaded+extracted Skia binaries so we don't re-download
+      # on every run. Cache key is the download URL embedded in CMakeLists.txt.
+      - name: Cache Skia prebuilt
+        id: cache-skia
+        uses: actions/cache@v4
+        with:
+          path: external/prebuilt/skia
+          key: skia-${{ hashFiles('CMakeLists.txt') }}
+
+      # ── Code generation ───────────────────────────────────────────────────────
+      - name: Generate theme header
         run: python scripts/gen_theme.py
 
+      # ── CMake configure ───────────────────────────────────────────────────────
+      # Skia download (if cache miss) happens here via file(DOWNLOAD …) in CMake.
       - name: Configure CMake
-        run: cmake -B build -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+        run: >
+          cmake -B build -G "Ninja"
+          -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build AureliaKit libraries
-        run: |
-          cmake --build build --target AureliaKit_Foundation --config Release
-          cmake --build build --target AureliaKit_GraphicInterface --config Release
-          cmake --build build --target AureliaKit_GraphicComponent --config Release
-          cmake --build build --target AureliaKit_DirectAudioEngine --config Release
+      # ── Build: libraries ──────────────────────────────────────────────────────
+      - name: Build AureliaKit.Foundation
+        run: cmake --build build --target AureliaKit_Foundation --config Release -j
 
+      - name: Build AureliaKit.GraphicInterface
+        run: cmake --build build --target AureliaKit_GraphicInterface --config Release -j
+
+      - name: Build AureliaKit.GraphicComponent
+        run: cmake --build build --target AureliaKit_GraphicComponent --config Release -j
+
+      - name: Build AureliaKit.DirectAudioEngine
+        run: cmake --build build --target AureliaKit_DirectAudioEngine --config Release -j
+
+      # ── Build: examples ───────────────────────────────────────────────────────
       - name: Build AureliaExample
-        run: cmake --build build --target AureliaExample --config Release
+        run: cmake --build build --target AureliaExample --config Release -j
 
-      - name: Upload AureliaKit libraries
+      - name: Build ActivityMonitor
+        run: cmake --build build --target ActivityMonitor --config Release -j
+
+      - name: Build MixerConsole
+        run: cmake --build build --target MixerConsole --config Release -j
+
+      - name: Build BorderlessPlayer
+        run: cmake --build build --target BorderlessPlayer --config Release -j
+
+      # ── Artifacts: SDK (libs + all public headers) ────────────────────────────
+      - name: Upload AureliaKit SDK
         uses: actions/upload-artifact@v4
         with:
-          name: AureliaKit-lib
+          name: AureliaKit-SDK
           path: |
             build/AureliaKit.Foundation.dll
             build/AureliaKit.Foundation.lib
@@ -56,20 +90,43 @@ jobs:
             build/AureliaKit.GraphicComponent.lib
             build/AureliaKit.DirectAudioEngine.dll
             build/AureliaKit.DirectAudioEngine.lib
-            include/**/*.hpp
+            include/AUKApplication.hpp
+            include/AUKColor.hpp
+            include/AUKDirectAudioEngine.hpp
+            include/AUKFoundation.hpp
+            include/AUKGraphicComponents.hpp
+            include/AUKGraphicInterface.hpp
+            include/AUKIWidget.hpp
+            include/AUKImage.hpp
+            include/AUKPainter.hpp
+            include/AUKSvg.hpp
+            include/audio/Streaming.hpp
+            include/core/**
+            include/gui/**
+            include/platform/**
+            include/utils/**
           retention-days: 30
 
-      - name: Upload AureliaExample executable
+      # ── Artifacts: examples ───────────────────────────────────────────────────
+      - name: Upload examples
         uses: actions/upload-artifact@v4
         with:
-          name: AureliaExample-exe
-          path: build/AureliaExample.exe
+          name: AureliaKit-Examples
+          path: |
+            build/AureliaExample.exe
+            build/ActivityMonitor.exe
+            build/MixerConsole.exe
+            build/BorderlessPlayer.exe
           retention-days: 30
 
-      - name: Upload build logs
+      # ── Artifacts: failure logs ───────────────────────────────────────────────
+      - name: Upload build logs on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: build-logs
-          path: build/**/*.log
+          path: |
+            build/**/*.log
+            build/CMakeFiles/CMakeError.log
+            build/CMakeFiles/CMakeOutput.log
           retention-days: 7

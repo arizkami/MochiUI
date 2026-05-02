@@ -1,3 +1,34 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Skia GN args — Windows / x64 / static / official                        ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  This config produces the prebuilt drop consumed by CMakeLists.txt at    ║
+# ║  the repo root via external/prebuilt/skia. Because is_component_build is ║
+# ║  false, every Skia module compiles to its own static .lib alongside      ║
+# ║  skia.lib — they do NOT get merged. The packaging step that produces     ║
+# ║  skia-prebuilt-binary.zip MUST therefore include each of:                ║
+# ║                                                                          ║
+# ║      out/<cfg>/skia.lib              (always)                            ║
+# ║      out/<cfg>/svg.lib               (skia_enable_svg)                   ║
+# ║      out/<cfg>/skshaper.lib          (skia_enable_skshaper)              ║
+# ║      out/<cfg>/skunicode.lib         (skia_enable_skunicode)             ║
+# ║      out/<cfg>/skresources.lib       (transitive: svg, skottie)          ║
+# ║      out/<cfg>/skottie.lib           (skia_enable_skottie, optional)     ║
+# ║      out/<cfg>/skcms.lib             (always)                            ║
+# ║      out/<cfg>/d3d12allocator.lib    (skia_use_direct3d)                 ║
+# ║      out/<cfg>/expat.lib             (skia_use_expat, used by SVG XML)   ║
+# ║      out/<cfg>/libpng.lib            (skia_use_libpng_decode/encode)     ║
+# ║      out/<cfg>/libjpeg.lib           (skia_use_libjpeg_turbo_*)          ║
+# ║      out/<cfg>/libwebp.lib           (skia_use_libwebp_*)                ║
+# ║      out/<cfg>/zlib.lib              (skia_use_zlib)                     ║
+# ║      out/<cfg>/wuffs.lib             (skia_use_wuffs)                    ║
+# ║      out/<cfg>/spirv_cross.lib       (Vulkan/D3D shader cross-compile)   ║
+# ║                                                                          ║
+# ║  Until the packaging step picks up svg.lib + skshaper.lib + skunicode.lib║
+# ║  the consumer CMakeLists.txt compiles the SVG/skshaper sources in-tree.  ║
+# ║  Once the next prebuilt drop ships those libs, that workaround can be    ║
+# ║  removed and AureliaKit_GraphicInterface can simply link against them.   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
 # --- Compiler & Toolchain ---
 is_clang = false
 use_lld = false
@@ -6,28 +37,39 @@ win_vc = "C:/Program Files/Microsoft Visual Studio/18/Community/VC"
 # --- Build ---
 is_debug = false
 is_official_build = true
-is_component_build = false
+is_component_build = false                # static libs (.lib), not DLLs
 skia_enable_optimize_size = false
-extra_cflags = [ "/arch:AVX2", "/MT" ]
+extra_cflags = [ "/arch:AVX2", "/MT" ]    # match consumer /MT runtime
 
 # --- Backends ---
 skia_enable_gpu = true
 skia_use_gl = false
 skia_use_vulkan = true
-skia_use_direct3d = true        
+skia_use_direct3d = true
 skia_use_directwrite = true
 
-# --- Features ---
-skia_enable_svg = true
-skia_enable_skottie = true
-skia_use_harfbuzz = true
-skia_use_sfntly = false
+# --- Modules ---
+# These each produce a separate .lib that must be packaged into the zip.
+skia_enable_svg        = true             # → svg.lib
+skia_enable_skshaper   = true             # → skshaper.lib
+skia_enable_skunicode  = true             # → skunicode.lib (needed by svg text)
+skia_enable_skottie    = true             # → skottie.lib
+
+# --- Text shaping / unicode dependencies ---
+# harfbuzz + icu give SVG <text> proper shaping & bidi; both are vendored.
+skia_use_harfbuzz   = true
+skia_use_icu        = true
+skia_use_bidi       = false               # set true if RTL SVG text is needed
+skia_use_sfntly     = false
+
+# --- Disabled features ---
 skia_enable_pdf = false
 
-# --- Third Party ---
-skia_use_system_libjpeg_turbo = false
-skia_use_system_libpng = false
-skia_use_system_libwebp = false
-skia_use_system_zlib = false
-skia_use_system_icu = false
-skia_use_system_expat = false
+# --- Third-party (vendored, not system) ---
+skia_use_expat                  = true    # required by SVG XML parser
+skia_use_system_libjpeg_turbo   = false
+skia_use_system_libpng          = false
+skia_use_system_libwebp         = false
+skia_use_system_zlib            = false
+skia_use_system_icu             = false
+skia_use_system_expat           = false

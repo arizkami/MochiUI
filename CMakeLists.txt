@@ -120,6 +120,76 @@ set(MOCHIKIT_LIBS
     Psapi.lib
 )
 
+# ── Skia SVG module (compiled in-tree because the prebuilt skia.lib does not
+#    bundle the SVG renderer). The SVG sources live alongside the prebuilt
+#    headers; they reference internal Skia headers (src/xml/SkDOM.h, etc.) which
+#    are only present in the full source tree at external/skia.
+#    SVG text also pulls in SkShaper, so we compile the primitive (no
+#    harfbuzz/icu) shaper from the same Skia source drop. ──────────────────────
+set(SKIA_SVG_SOURCES
+    external/prebuilt/skia/modules/svg/src/SkSVGAttribute.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGAttributeParser.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGCircle.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGClipPath.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGContainer.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGDOM.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGEllipse.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFe.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeBlend.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeColorMatrix.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeComponentTransfer.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeComposite.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeDisplacementMap.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeFlood.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeGaussianBlur.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeImage.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeLightSource.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeLighting.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeMerge.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeMorphology.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeOffset.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFeTurbulence.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFilter.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGFilterContext.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGGradient.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGImage.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGLine.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGLinearGradient.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGMask.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGNode.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGOpenTypeSVGDecoder.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGPath.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGPattern.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGPoly.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGRadialGradient.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGRect.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGRenderContext.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGSVG.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGShape.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGStop.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGText.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGTransformableNode.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGUse.cpp
+    external/prebuilt/skia/modules/svg/src/SkSVGValue.cpp
+)
+
+set(SKIA_SHAPER_SOURCES
+    external/prebuilt/skia/modules/skshaper/src/SkShaper.cpp
+    external/prebuilt/skia/modules/skshaper/src/SkShaper_factory.cpp
+    external/prebuilt/skia/modules/skshaper/src/SkShaper_primitive.cpp
+)
+
+add_library(skia_svg STATIC ${SKIA_SVG_SOURCES} ${SKIA_SHAPER_SOURCES})
+target_include_directories(skia_svg PRIVATE
+    ${SKIA_DIR}
+    ${SKIA_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/external/skia
+)
+target_compile_definitions(skia_svg PRIVATE ${MOCHIKIT_DEFINITIONS})
+if(MSVC)
+    target_compile_options(skia_svg PRIVATE /wd4244 /wd4267 /wd4291 /wd4146 /wd4661)
+endif()
+
 # ══════════════════════════════════════════════════════════════════════════════
 #  AureliaKit.Foundation  —  core windowing, rendering, fonts, resources
 # ══════════════════════════════════════════════════════════════════════════════
@@ -150,6 +220,8 @@ set(GRAPHIC_INTERFACE_SOURCES
     src/core/AureliaWidget.cpp
     src/gui/AureliaUI.cpp
     src/gui/MenuBar.cpp
+    src/gui/AUKImage.cpp
+    src/gui/AUKSvg.cpp
 )
 
 add_library(AureliaKit_GraphicInterface SHARED ${GRAPHIC_INTERFACE_SOURCES})
@@ -158,7 +230,10 @@ set_target_properties(AureliaKit_GraphicInterface PROPERTIES
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 target_compile_definitions(AureliaKit_GraphicInterface PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(AureliaKit_GraphicInterface PUBLIC AureliaKit_Foundation)
+target_link_libraries(AureliaKit_GraphicInterface
+    PUBLIC AureliaKit_Foundation
+    PRIVATE skia_svg
+)
 
 # ══════════════════════════════════════════════════════════════════════════════
 #  AureliaKit.GraphicComponent  —  all UI components

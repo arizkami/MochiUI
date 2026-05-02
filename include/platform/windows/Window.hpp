@@ -26,6 +26,24 @@ public:
     void setDarkMode(bool enable) override;
     void enableMica(bool enable) override;
     void setWindowMode(WindowMode mode) override;
+    void setOpacity(float opacity) override;
+    void setAlwaysOnTop(bool enable) override;
+    void setCornerPreference(CornerPreference corner) override;
+    void setShadow(bool enable) override;
+
+    void setSize(int width, int height) override;
+    void setPosition(int x, int y) override;
+    void center() override;
+    void setMinSize(int width, int height) override;
+    int getWidth() const override { return width; }
+    int getHeight() const override { return height; }
+
+    void minimize() override;
+    void maximize() override;
+    void restore() override;
+    void close() override;
+
+    void startDrag() override;
 
     void setMenuBar(std::unique_ptr<IMenuBar> bar) override;
     void setRoot(FlexNode::Ptr node) override;
@@ -77,6 +95,8 @@ private:
     sk_sp<GrDirectContext> grContext;
     WindowMode currentMode = WindowMode::Windowed;
     WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
+    int minWidth = 0;
+    int minHeight = 0;
 };
 
 } // namespace AureliaUI

@@ -43,4 +43,16 @@
     <file>search.svg</file>
     <file>x.svg</file>
     <file>chevron-down.svg</file>
+    <file>minus.svg</file>
+    <file>maximize.svg</file>
+    <file>play.svg</file>
+    <file>pause.svg</file>
+    <file>skip-back.svg</file>
+    <file>skip-forward.svg</file>
+    <file>volume-2.svg</file>
+    <file>shuffle.svg</file>
+    <file>repeat.svg</file>
+    <file>disc-3.svg</file>
+    <file>headphones.svg</file>
+    <file>grip.svg</file>
 </resources>

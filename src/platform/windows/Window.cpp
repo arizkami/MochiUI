@@ -13,8 +13,19 @@
 #include <include/gpu/ganesh/d3d/GrD3DBackendSurface.h>
 #include <include/gpu/ganesh/GrBackendSurface.h>
 #include <dwmapi.h>
+#include <windowsx.h>
 
 namespace AureliaUI {
+
+// Aero-borderless style: WS_CAPTION kept so DWM provides shadow, snap, and
+// window animations; WM_NCCALCSIZE strips the visual chrome at zero cost.
+static constexpr DWORD kAeroBorderlessStyle =
+    WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
+
+static bool compositionEnabled() {
+    BOOL enabled = FALSE;
+    return DwmIsCompositionEnabled(&enabled) == S_OK && enabled;
+}
 
 class SimpleD3DAlloc : public GrD3DAlloc {};
 
@@ -290,13 +301,17 @@ void Win32Window::enableMica(bool enable) {
 void Win32Window::setWindowMode(WindowMode mode) {
     if (currentMode == mode) return;
 
+    WindowMode prevMode = currentMode;
+    // Set currentMode BEFORE any SetWindowPos/ShowWindow so that WM_NCCALCSIZE
+    // (fired synchronously by SWP_FRAMECHANGED) sees the new mode immediately.
+    currentMode = mode;
+
     DWORD dwStyle = GetWindowLong(hwnd, GWL_STYLE);
 
     if (mode == WindowMode::Fullscreen) {
-        if (currentMode == WindowMode::Windowed) {
+        if (prevMode == WindowMode::Windowed) {
             GetWindowPlacement(hwnd, &wpPrev);
         }
-
         MONITORINFO mi = { sizeof(mi) };
         if (GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY), &mi)) {
             SetWindowLongPtr(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
@@ -307,24 +322,115 @@ void Win32Window::setWindowMode(WindowMode mode) {
                          SWP_NOOWNERZORDER | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
         }
     } else if (mode == WindowMode::Windowed) {
-        SetWindowLongPtr(hwnd, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
-        if (currentMode == WindowMode::Fullscreen) {
+        SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
+        MARGINS margins = {0, 0, 0, 0};
+        DwmExtendFrameIntoClientArea(hwnd, &margins);
+        if (prevMode == WindowMode::Fullscreen || prevMode == WindowMode::Borderless) {
             SetWindowPlacement(hwnd, &wpPrev);
         }
         SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
                      SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+        ShowWindow(hwnd, SW_SHOW);
     } else if (mode == WindowMode::Borderless) {
-        if (currentMode == WindowMode::Windowed) {
+        if (prevMode == WindowMode::Windowed) {
             GetWindowPlacement(hwnd, &wpPrev);
         }
-        SetWindowLongPtr(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
+        SetWindowLongPtr(hwnd, GWL_STYLE, kAeroBorderlessStyle);
+        if (compositionEnabled()) {
+            MARGINS margins = {1, 1, 1, 1};
+            DwmExtendFrameIntoClientArea(hwnd, &margins);
+        }
         SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
                      SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+        ShowWindow(hwnd, SW_SHOW);
     }
+}
 
-    currentMode = mode;
+void Win32Window::setOpacity(float opacity) {
+    LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+    if (opacity < 1.0f) {
+        SetWindowLong(hwnd, GWL_EXSTYLE, exStyle | WS_EX_LAYERED);
+        SetLayeredWindowAttributes(hwnd, 0, (BYTE)(opacity * 255), LWA_ALPHA);
+    } else {
+        SetWindowLong(hwnd, GWL_EXSTYLE, exStyle & ~WS_EX_LAYERED);
+    }
+}
+
+void Win32Window::setAlwaysOnTop(bool enable) {
+    SetWindowPos(hwnd, enable ? HWND_TOPMOST : HWND_NOTOPMOST,
+                 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+}
+
+void Win32Window::setCornerPreference(CornerPreference corner) {
+    // DWMWA_WINDOW_CORNER_PREFERENCE = 33, available since Windows 11 Build 22000
+    static constexpr DWORD DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+    DWORD value = 0; // DWMWCP_DEFAULT
+    switch (corner) {
+        case CornerPreference::None:       value = 1; break; // DWMWCP_DONOTROUND
+        case CornerPreference::Round:      value = 2; break; // DWMWCP_ROUND
+        case CornerPreference::RoundSmall: value = 3; break; // DWMWCP_ROUNDSMALL
+        default:                           value = 0; break; // DWMWCP_DEFAULT
+    }
+    DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &value, sizeof(value));
+}
+
+void Win32Window::setShadow(bool enable) {
+    if (compositionEnabled()) {
+        MARGINS margins = enable ? MARGINS{1, 1, 1, 1} : MARGINS{0, 0, 0, 0};
+        DwmExtendFrameIntoClientArea(hwnd, &margins);
+    }
+}
+
+void Win32Window::setSize(int w, int h) {
+    SetWindowPos(hwnd, NULL, 0, 0, w, h,
+                 SWP_NOMOVE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+}
+
+void Win32Window::setPosition(int x, int y) {
+    SetWindowPos(hwnd, NULL, x, y, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+}
+
+void Win32Window::center() {
+    HMONITOR mon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+    MONITORINFO mi = { sizeof(mi) };
+    GetMonitorInfo(mon, &mi);
+    RECT wr;
+    GetWindowRect(hwnd, &wr);
+    int ww = wr.right - wr.left;
+    int wh = wr.bottom - wr.top;
+    int mx = mi.rcWork.left + (mi.rcWork.right  - mi.rcWork.left - ww) / 2;
+    int my = mi.rcWork.top  + (mi.rcWork.bottom - mi.rcWork.top  - wh) / 2;
+    SetWindowPos(hwnd, NULL, mx, my, 0, 0,
+                 SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER);
+}
+
+void Win32Window::setMinSize(int w, int h) {
+    minWidth  = w;
+    minHeight = h;
+}
+
+void Win32Window::minimize() {
+    ShowWindow(hwnd, SW_MINIMIZE);
+}
+
+void Win32Window::maximize() {
+    ShowWindow(hwnd, SW_MAXIMIZE);
+}
+
+void Win32Window::restore() {
+    ShowWindow(hwnd, SW_RESTORE);
+}
+
+void Win32Window::close() {
+    PostMessage(hwnd, WM_CLOSE, 0, 0);
+}
+
+void Win32Window::startDrag() {
+    ReleaseCapture();
+    SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
 }
 
 void Win32Window::setMenuBar(std::unique_ptr<IMenuBar> bar) {
@@ -425,7 +531,9 @@ void Win32Window::onPaint() {
 }
 
 void Win32Window::run() {
-    ShowWindow(hwnd, SW_SHOW);
+    // SW_SHOWNORMAL triggers the OS open animation for both windowed and
+    // aero-borderless (WS_CAPTION is present in both, so DWM animates them).
+    ShowWindow(hwnd, SW_SHOWNORMAL);
     UpdateWindow(hwnd);
 
     // Initial layout
@@ -457,6 +565,58 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     FlexNode::Ptr effectiveRoot = win ? win->overlayRoot : nullptr;
 
     switch (msg) {
+        case WM_NCCALCSIZE:
+            // When borderless, tell Windows the client area = entire window rect.
+            // This removes the native title bar / borders visually while DWM still
+            // recognises the window as having WS_CAPTION (shadow + snap intact).
+            if (wp == TRUE && win && win->currentMode == WindowMode::Borderless) {
+                auto& params = *reinterpret_cast<NCCALCSIZE_PARAMS*>(lp);
+                // When maximised the window rect extends beyond the monitor edges;
+                // clip to the work area so content isn't hidden behind the taskbar.
+                if (IsZoomed(hwnd)) {
+                    MONITORINFO mi = { sizeof(mi) };
+                    if (GetMonitorInfo(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST), &mi))
+                        params.rgrc[0] = mi.rcWork;
+                }
+                return 0;
+            }
+            break;
+
+        case WM_NCHITTEST: {
+            // For borderless windows provide resize hit-zones at the edges so that
+            // aero-snap and manual resizing still work without native chrome.
+            if (win && win->currentMode == WindowMode::Borderless) {
+                RECT wr;
+                GetWindowRect(hwnd, &wr);
+                POINT cur = { GET_X_LPARAM(lp), GET_Y_LPARAM(lp) };
+                const int bx = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+                const int by = GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+                const int L = (cur.x <  wr.left   + bx);
+                const int R = (cur.x >= wr.right  - bx);
+                const int T = (cur.y <  wr.top    + by);
+                const int B = (cur.y >= wr.bottom - by);
+                switch (L | (R << 1) | (T << 2) | (B << 3)) {
+                    case 0b0001: return HTLEFT;
+                    case 0b0010: return HTRIGHT;
+                    case 0b0100: return HTTOP;
+                    case 0b1000: return HTBOTTOM;
+                    case 0b0101: return HTTOPLEFT;
+                    case 0b0110: return HTTOPRIGHT;
+                    case 0b1001: return HTBOTTOMLEFT;
+                    case 0b1010: return HTBOTTOMRIGHT;
+                }
+                return HTCLIENT;
+            }
+            break;
+        }
+
+        case WM_NCACTIVATE:
+            // Without DWM composition the default handler would briefly repaint the
+            // native frame on activation; return 1 to suppress that artefact.
+            if (win && win->currentMode == WindowMode::Borderless && !compositionEnabled())
+                return 1;
+            break;
+
         case WM_ERASEBKGND:
             return 1; // Prevent flicker
         case WM_MOUSEMOVE:
@@ -558,6 +718,15 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         case WM_TIMER:
             if (wp == 1) InvalidateRect(hwnd, NULL, FALSE);
             return 0;
+
+        case WM_GETMINMAXINFO:
+            if (win && (win->minWidth > 0 || win->minHeight > 0)) {
+                auto* mmi = reinterpret_cast<MINMAXINFO*>(lp);
+                if (win->minWidth  > 0) mmi->ptMinTrackSize.x = win->minWidth;
+                if (win->minHeight > 0) mmi->ptMinTrackSize.y = win->minHeight;
+                return 0;
+            }
+            break;
 
         case WM_SIZE:
             if (win) win->onSize(LOWORD(lp), HIWORD(lp));

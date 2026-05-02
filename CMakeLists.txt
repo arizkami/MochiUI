@@ -197,6 +197,7 @@ target_link_libraries(AureliaKit_GraphicComponent PUBLIC AureliaKit_GraphicInter
 # ══════════════════════════════════════════════════════════════════════════════
 set(DIRECT_AUDIO_SOURCES
     src/audio/AUKDirectAudioEngine.cpp
+    src/audio/Streaming.cpp
     external/rtaudio/RtAudio.cpp
 )
 
@@ -229,3 +230,4 @@ target_link_libraries(AureliaExample PRIVATE
 
 add_subdirectory(example/ActivityMonitor)
 add_subdirectory(example/Mixer)
+add_subdirectory(example/Borderless)

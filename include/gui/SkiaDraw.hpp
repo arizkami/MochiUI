@@ -32,6 +32,12 @@
 #include <include/effects/SkGradient.h>
 #include <include/effects/SkRuntimeEffect.h>
 
+// ── Image ─────────────────────────────────────────────────────────────────────
+#include <include/core/SkImage.h>
+#include <include/core/SkBitmap.h>
+#include <include/core/SkData.h>
+#include <include/core/SkSamplingOptions.h>
+
 // ── Utilities ─────────────────────────────────────────────────────────────────
 #include <include/utils/SkParsePath.h>
 

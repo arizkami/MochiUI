@@ -8,32 +8,46 @@ project(Aurelia)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Match Skia's official build runtime and architecture
+# Match Skia's official build runtime / arch per platform
 if(MSVC)
-  string(REPLACE "/MD"  "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-  string(REPLACE "/MDd" "" CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
-  add_compile_options(/arch:AVX2 /wd4244 /wd4267)
+    string(REPLACE "/MD"  "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+    string(REPLACE "/MDd" "" CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
+    add_compile_options(/arch:AVX2 /wd4244 /wd4267)
+elseif(UNIX AND NOT APPLE)
+    # Skia's prebuilt was built with -fPIC -fvisibility=hidden -mavx2; mirror.
+    add_compile_options(-mavx2 -fPIC -fvisibility=hidden -fvisibility-inlines-hidden)
 endif()
 
 # ── Skia prebuilt binaries ────────────────────────────────────────────────────
 set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
-set(SKIA_ZIP ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
-set(SKIA_URL "https://github.com/arizkami/Aurelia/releases/download/2026.05/skia-prebuilt-binary.zip")
 
-if(NOT EXISTS ${SKIA_DIR}/lib/skia.lib)
-  message(STATUS "Skia binaries not found. Downloading...")
-  file(DOWNLOAD ${SKIA_URL} ${SKIA_ZIP} SHOW_PROGRESS STATUS DOWNLOAD_STATUS)
-  list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
-  if(NOT STATUS_CODE EQUAL 0)
-    message(FATAL_ERROR "Failed to download Skia binaries from ${SKIA_URL}")
-  endif()
-  message(STATUS "Extracting Skia binaries...")
-  file(ARCHIVE_EXTRACT INPUT ${SKIA_ZIP}
-         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
-  file(REMOVE ${SKIA_ZIP})
-  message(STATUS "Skia binaries installed successfully!")
+if(WIN32)
+    set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
+    set(SKIA_URL      "https://github.com/arizkami/Aurelia/releases/download/2026.05/skia-prebuilt-binary.zip")
+    set(SKIA_SENTINEL ${SKIA_DIR}/lib/skia.lib)
+elseif(UNIX AND NOT APPLE)
+    set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-linux.tar.gz)
+    set(SKIA_URL      "https://github.com/arizkami/Aurelia/releases/download/2026.05/skia-prebuilt-linux.tar.gz")
+    set(SKIA_SENTINEL ${SKIA_DIR}/lib/libskia.a)
 else()
-  message(STATUS "Skia binaries found at ${SKIA_DIR}")
+    message(FATAL_ERROR "Aurelia: unsupported platform '${CMAKE_SYSTEM_NAME}'. "
+                        "Only Windows and Linux are wired up so far.")
+endif()
+
+if(NOT EXISTS ${SKIA_SENTINEL})
+    message(STATUS "Skia binaries not found. Downloading from ${SKIA_URL}...")
+    file(DOWNLOAD ${SKIA_URL} ${SKIA_ARCHIVE} SHOW_PROGRESS STATUS DOWNLOAD_STATUS)
+    list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
+    if(NOT STATUS_CODE EQUAL 0)
+        message(FATAL_ERROR "Failed to download Skia binaries from ${SKIA_URL}")
+    endif()
+    message(STATUS "Extracting Skia binaries...")
+    file(ARCHIVE_EXTRACT INPUT ${SKIA_ARCHIVE}
+         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
+    file(REMOVE ${SKIA_ARCHIVE})
+    message(STATUS "Skia binaries installed successfully!")
+else()
+    message(STATUS "Skia binaries found at ${SKIA_DIR}")
 endif()
 
 include_directories(
@@ -90,35 +104,74 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/generated)
 set(MOCHIKIT_DEFINITIONS
     SKIA_STATIC
     SK_RELEASE
-    SK_D3D
-    SK_DIRECTWRITE
     SK_DISABLE_LEGACY_PATH_METHODS
-    NOMINMAX
-    WIN32_LEAN_AND_MEAN
 )
+if(WIN32)
+    list(APPEND MOCHIKIT_DEFINITIONS
+        SK_D3D
+        SK_DIRECTWRITE
+        NOMINMAX
+        WIN32_LEAN_AND_MEAN
+    )
+elseif(UNIX AND NOT APPLE)
+    list(APPEND MOCHIKIT_DEFINITIONS
+        SK_GL
+        SK_VULKAN
+    )
+endif()
 
-# Skia + D3D12 + Windows system libraries (used by Foundation; inherited downstream)
-set(MOCHIKIT_LIBS
-    ${SKIA_LIB_DIR}/skia.lib
-    ${SKIA_LIB_DIR}/libpng.lib
-    ${SKIA_LIB_DIR}/zlib.lib
-    ${SKIA_LIB_DIR}/d3d12allocator.lib
-    d3d12.lib
-    dxgi.lib
-    d3dcompiler.lib
-    Dwrite.lib
-    User32.lib
-    Gdi32.lib
-    Ole32.lib
-    Shell32.lib
-    Usp10.lib
-    Dwmapi.lib
-    Shlwapi.lib
-    ComCtl32.lib
-    Imm32.lib
-    Pdh.lib
-    Psapi.lib
-)
+# Skia + system libraries (used by Foundation; inherited downstream)
+if(WIN32)
+    set(MOCHIKIT_LIBS
+        ${SKIA_LIB_DIR}/skia.lib
+        ${SKIA_LIB_DIR}/libpng.lib
+        ${SKIA_LIB_DIR}/zlib.lib
+        ${SKIA_LIB_DIR}/d3d12allocator.lib
+        d3d12.lib
+        dxgi.lib
+        d3dcompiler.lib
+        Dwrite.lib
+        User32.lib
+        Gdi32.lib
+        Ole32.lib
+        Shell32.lib
+        Usp10.lib
+        Dwmapi.lib
+        Shlwapi.lib
+        ComCtl32.lib
+        Imm32.lib
+        Pdh.lib
+        Psapi.lib
+    )
+elseif(UNIX AND NOT APPLE)
+    find_package(Threads    REQUIRED)
+    find_package(OpenGL     REQUIRED)
+    find_package(Freetype   REQUIRED)
+    find_package(Fontconfig REQUIRED)
+
+    # The Linux prebuilt drop ships every Skia module + every vendored
+    # third-party as its own libfoo.a. List them in dependency order so that
+    # static-link symbol resolution happens in a single pass.
+    set(MOCHIKIT_LIBS
+        ${SKIA_LIB_DIR}/libskia.a
+        ${SKIA_LIB_DIR}/libskcms.a
+        ${SKIA_LIB_DIR}/libpng.a
+        ${SKIA_LIB_DIR}/libjpeg.a
+        ${SKIA_LIB_DIR}/libwebp.a
+        ${SKIA_LIB_DIR}/libwuffs.a
+        ${SKIA_LIB_DIR}/libz.a
+        ${SKIA_LIB_DIR}/libfreetype2.a
+        ${SKIA_LIB_DIR}/libharfbuzz.a
+        ${SKIA_LIB_DIR}/libicu.a
+        ${SKIA_LIB_DIR}/libexpat.a
+        Fontconfig::Fontconfig
+        Freetype::Freetype
+        OpenGL::GL
+        Threads::Threads
+        ${CMAKE_DL_LIBS}
+        m
+    )
+endif()
 
 # ── Skia SVG module (compiled in-tree because the prebuilt skia.lib does not
 #    bundle the SVG renderer). The SVG sources live alongside the prebuilt
@@ -187,7 +240,7 @@ target_include_directories(skia_svg PRIVATE
 )
 target_compile_definitions(skia_svg PRIVATE ${MOCHIKIT_DEFINITIONS})
 if(MSVC)
-  target_compile_options(skia_svg PRIVATE /wd4244 /wd4267 /wd4291 /wd4146 /wd4661)
+    target_compile_options(skia_svg PRIVATE /wd4244 /wd4267 /wd4291 /wd4146 /wd4661)
 endif()
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -200,10 +253,13 @@ set(FOUNDATION_SOURCES
     src/core/ResourceManager.cpp
     src/utils/FontManager/FontMgr.cpp
     src/utils/Misc/ThemeSwitcher.cpp
-    src/platform/windows/Window.cpp
     ${GENERATED_RESOURCES_H}
     ${GENERATED_RESOURCES_CPP}
 )
+if(WIN32)
+    list(APPEND FOUNDATION_SOURCES src/platform/windows/Window.cpp)
+endif()
+# TODO(linux): add src/platform/linux/Window.cpp once an X11/Wayland backend exists.
 
 add_library(AureliaKit_Foundation SHARED ${FOUNDATION_SOURCES})
 set_target_properties(AureliaKit_Foundation PROPERTIES
@@ -268,41 +324,48 @@ target_compile_definitions(AureliaKit_GraphicComponent PUBLIC ${MOCHIKIT_DEFINIT
 target_link_libraries(AureliaKit_GraphicComponent PUBLIC AureliaKit_GraphicInterface)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  AureliaKit.DirectAudioEngine  —  WASAPI / DirectSound audio (was DAUx)
+#  AureliaKit.DirectAudioEngine  —  WASAPI / DirectSound audio (Windows-only)
 # ══════════════════════════════════════════════════════════════════════════════
-set(DIRECT_AUDIO_SOURCES
-    src/audio/AUKDirectAudioEngine.cpp
-    src/audio/Streaming.cpp
-    external/rtaudio/RtAudio.cpp
-)
+if(WIN32)
+    set(DIRECT_AUDIO_SOURCES
+        src/audio/AUKDirectAudioEngine.cpp
+        src/audio/Streaming.cpp
+        external/rtaudio/RtAudio.cpp
+    )
 
-add_library(AureliaKit_DirectAudioEngine SHARED ${DIRECT_AUDIO_SOURCES})
-set_target_properties(AureliaKit_DirectAudioEngine PROPERTIES
-    OUTPUT_NAME "AureliaKit.DirectAudioEngine"
-)
-target_compile_definitions(AureliaKit_DirectAudioEngine PRIVATE DAUX_EXPORTS)
-target_compile_definitions(AureliaKit_DirectAudioEngine PUBLIC
-    __WINDOWS_WASAPI__
-    __WINDOWS_DS__
-)
-target_link_libraries(AureliaKit_DirectAudioEngine PRIVATE
-    mfplat.lib
-    mfuuid.lib
-    wmcodecdspuuid.lib
-    ole32.lib
-    User32.lib
-    dsound.lib
-)
+    add_library(AureliaKit_DirectAudioEngine SHARED ${DIRECT_AUDIO_SOURCES})
+    set_target_properties(AureliaKit_DirectAudioEngine PROPERTIES
+        OUTPUT_NAME "AureliaKit.DirectAudioEngine"
+    )
+    target_compile_definitions(AureliaKit_DirectAudioEngine PRIVATE DAUX_EXPORTS)
+    target_compile_definitions(AureliaKit_DirectAudioEngine PUBLIC
+        __WINDOWS_WASAPI__
+        __WINDOWS_DS__
+    )
+    target_link_libraries(AureliaKit_DirectAudioEngine PRIVATE
+        mfplat.lib
+        mfuuid.lib
+        wmcodecdspuuid.lib
+        ole32.lib
+        User32.lib
+        dsound.lib
+    )
+endif()
+# TODO(linux): wire ALSA / PulseAudio / PipeWire backends behind the same target.
 
 # ── Examples ──────────────────────────────────────────────────────────────────
-add_executable(AureliaExample WIN32
-    example/main.cpp
-    example/app.rc
-)
-target_link_libraries(AureliaExample PRIVATE
-    AureliaKit_GraphicComponent
-)
+# The examples currently embed a Win32 .rc and use the WIN32 GUI subsystem;
+# they only build on Windows until they grow a portable entry point.
+if(WIN32)
+    add_executable(AureliaExample WIN32
+        example/main.cpp
+        example/app.rc
+    )
+    target_link_libraries(AureliaExample PRIVATE
+        AureliaKit_GraphicComponent
+    )
 
-add_subdirectory(example/ActivityMonitor)
-add_subdirectory(example/Mixer)
-add_subdirectory(example/Borderless)
+    add_subdirectory(example/ActivityMonitor)
+    add_subdirectory(example/Mixer)
+    add_subdirectory(example/Borderless)
+endif()

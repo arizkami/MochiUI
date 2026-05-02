@@ -1,0 +1,103 @@
+# ╔══════════════════════════════════════════════════════════════════════════╗
+# ║  Skia GN args — Linux / x86_64 / static / official                       ║
+# ╠══════════════════════════════════════════════════════════════════════════╣
+# ║  This config produces the prebuilt drop consumed by CMakeLists.txt at    ║
+# ║  the repo root via external/prebuilt/skia. Because is_component_build is ║
+# ║  false, every Skia module compiles to its own static .a alongside        ║
+# ║  libskia.a — they do NOT get merged. The packaging step that produces    ║
+# ║  skia-prebuilt-binary.zip MUST therefore include each of:                ║
+# ║                                                                          ║
+# ║      out/<cfg>/libskia.a              (always)                           ║
+# ║      out/<cfg>/libsvg.a               (skia_enable_svg)                  ║
+# ║      out/<cfg>/libskshaper.a          (skia_enable_skshaper)             ║
+# ║      out/<cfg>/libskunicode.a         (skia_enable_skunicode)            ║
+# ║      out/<cfg>/libskresources.a       (transitive: svg, skottie)         ║
+# ║      out/<cfg>/libskottie.a           (skia_enable_skottie, optional)    ║
+# ║      out/<cfg>/libskcms.a             (always)                           ║
+# ║      out/<cfg>/libexpat.a             (skia_use_expat, used by SVG XML)  ║
+# ║      out/<cfg>/libpng.a               (skia_use_libpng_decode/encode)    ║
+# ║      out/<cfg>/libjpeg.a              (skia_use_libjpeg_turbo_*)         ║
+# ║      out/<cfg>/libwebp.a              (skia_use_libwebp_*)               ║
+# ║      out/<cfg>/libz.a                 (skia_use_zlib)                    ║
+# ║      out/<cfg>/libwuffs.a             (skia_use_wuffs)                   ║
+# ║      out/<cfg>/libspirv_cross.a       (Vulkan shader cross-compile)      ║
+# ║      out/<cfg>/libfreetype2.a         (skia_use_freetype, vendored)      ║
+# ║      out/<cfg>/libharfbuzz.a          (skia_use_harfbuzz, vendored)      ║
+# ║      out/<cfg>/libicu.a               (skia_use_icu, vendored)           ║
+# ║                                                                          ║
+# ║  Downstream linker flags expected by AureliaKit on Linux:                ║
+# ║      -lpthread -ldl -lm -lfontconfig                                     ║
+# ║                                                                          ║
+# ║  Until the packaging step picks up libsvg.a + libskshaper.a + libskunicode.a║
+# ║  the consumer CMakeLists.txt compiles the SVG/skshaper sources in-tree.  ║
+# ║  Once the next prebuilt drop ships those libs, that workaround can be    ║
+# ║  removed and AureliaKit_GraphicInterface can simply link against them.   ║
+# ╚══════════════════════════════════════════════════════════════════════════╝
+
+# --- Compiler & Toolchain ---
+is_clang = true
+use_lld  = true
+cc       = "clang"
+cxx      = "clang++"
+
+# --- Build ---
+is_debug = false
+is_official_build = true
+is_component_build = false                # static libs (.a), not .so
+skia_enable_optimize_size = false
+# -fPIC is required because consumer links these archives into a SHARED .so.
+extra_cflags = [
+  "-march=native",
+  "-fPIC",
+  "-fvisibility=hidden",
+  "-fvisibility-inlines-hidden"
+]
+
+extra_cflags_cc = [
+  "-march=native",
+  "-fno-rtti"
+]
+
+# --- Backends ---
+# Linux desktop: GL + Vulkan. No DirectWrite, no D3D.
+skia_enable_gpu     = true
+skia_use_gl         = true
+skia_use_vulkan     = true
+skia_use_direct3d   = false
+skia_use_directwrite = false
+skia_use_metal      = false
+
+# --- Fonts ---
+# freetype + fontconfig provide font enumeration and rasterisation on Linux.
+skia_use_freetype   = true
+skia_use_fontconfig = true
+
+# --- Modules ---
+# These each produce a separate .a that must be packaged into the zip.
+skia_enable_svg        = true             # → libsvg.a
+skia_enable_skshaper   = true             # → libskshaper.a
+skia_enable_skunicode  = true             # → libskunicode.a (needed by svg text)
+skia_enable_skottie    = true             # → libskottie.a
+
+# --- Text shaping / unicode dependencies ---
+# harfbuzz + icu give SVG <text> proper shaping & bidi; both are vendored.
+skia_use_harfbuzz   = true
+skia_use_icu        = true
+skia_use_bidi       = false               # set true if RTL SVG text is needed
+skia_use_sfntly     = false
+
+# --- Disabled features ---
+skia_enable_pdf = false
+
+# --- Third-party (vendored, not system) ---
+# Mirror the Windows drop: ship pinned/vendored copies so consumers never need
+# distro packages (no surprise glibc/icu/freetype version skew).
+skia_use_expat                  = true    # required by SVG XML parser
+skia_use_system_freetype2       = false
+skia_use_system_harfbuzz        = false
+skia_use_system_libjpeg_turbo   = false
+skia_use_system_libpng          = false
+skia_use_system_libwebp         = false
+skia_use_system_zlib            = false
+skia_use_system_icu             = false
+skia_use_system_expat           = false

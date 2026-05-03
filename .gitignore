@@ -19,3 +19,5 @@ src/gui/Theme.hpp
 
 .codereview
 __cmake_systeminformation
+
+.app

@@ -26,3 +26,9 @@
 [submodule "external/webp"]
 	path = external/webp
 	url = https://github.com/jacklicn/libwebp
+[submodule "external/yaml-cpp"]
+	path = external/yaml-cpp
+	url = https://github.com/jbeder/yaml-cpp
+[submodule "external/libcss"]
+	path = external/libcss
+	url = https://github.com/arizkami/libcss-win

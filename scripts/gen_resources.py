@@ -3,7 +3,7 @@ import sys
 import xml.etree.ElementTree as ET
 
 
-def generate_resources(xml_path, header_path, source_path):
+def generate_resources(xml_path, header_path, source_path, init_fn="InitBinaryResources"):
     tree = ET.parse(xml_path)
     root = tree.getroot()
     base_dir = os.path.dirname(xml_path)
@@ -12,7 +12,7 @@ def generate_resources(xml_path, header_path, source_path):
     with open(header_path, "w") as f:
         f.write("#pragma once\n\n")
         f.write("namespace AureliaUI {\n")
-        f.write("    void InitBinaryResources();\n")
+        f.write(f"    void {init_fn}();\n")
         f.write("} // namespace AureliaUI\n")
 
     # Generate Source
@@ -40,7 +40,7 @@ def generate_resources(xml_path, header_path, source_path):
             f.write("};\n")
             resources.append((rel_path, var_name, len(content)))
 
-        f.write("\nvoid InitBinaryResources() {\n")
+        f.write(f"\nvoid {init_fn}() {{\n")
         f.write("    static bool initialized = false;\n")
         f.write("    if (initialized) return;\n")
         f.write("    initialized = true;\n\n")
@@ -51,11 +51,13 @@ def generate_resources(xml_path, header_path, source_path):
             )
         f.write("}\n\n")
 
-        # Add auto-initialization helper
-        f.write("struct BinaryResourceInitializer {\n")
-        f.write("    BinaryResourceInitializer() { InitBinaryResources(); }\n")
-        f.write("};\n\n")
-        f.write("static BinaryResourceInitializer g_binaryResourceInitializer;\n\n")
+        # Only the main kit uses static init (linked into Foundation). Per-app
+        # bundles call their init from WinMain to avoid duplicate symbols.
+        if init_fn == "InitBinaryResources":
+            f.write("struct BinaryResourceInitializer {\n")
+            f.write(f"    BinaryResourceInitializer() {{ {init_fn}(); }}\n")
+            f.write("};\n\n")
+            f.write("static BinaryResourceInitializer g_binaryResourceInitializer;\n\n")
 
         f.write("} // namespace AureliaUI\n")
 
@@ -63,7 +65,9 @@ def generate_resources(xml_path, header_path, source_path):
 if __name__ == "__main__":
     if len(sys.argv) < 4:
         print(
-            "Usage: python gen_resources.py <resources.xml> <output.hpp> <output.cpp>"
+            "Usage: python gen_resources.py <resources.xml> <output.hpp> <output.cpp> "
+            "[InitFunctionName]"
         )
         sys.exit(1)
-    generate_resources(sys.argv[1], sys.argv[2], sys.argv[3])
+    init_name = sys.argv[4] if len(sys.argv) >= 5 else "InitBinaryResources"
+    generate_resources(sys.argv[1], sys.argv[2], sys.argv[3], init_name)

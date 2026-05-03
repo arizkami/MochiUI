@@ -543,7 +543,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     ThemeSwitcher::getInstance().setTheme(ThemeType::Dark);
 
-    Window window("AureliaPlayer", 320, 630);
+    Window window("AureliaPlayer", 400, 750);
     gWindow = &window;
 
     window.setDarkMode(true);

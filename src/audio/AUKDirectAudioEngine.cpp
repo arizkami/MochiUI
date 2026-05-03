@@ -3,6 +3,9 @@
 #include <RtAudio.h>
 #include <cmath>
 #include <algorithm>
+#include <atomic>
+#include <mutex>
+#include <numeric>
 
 namespace AureliaUI {
 namespace Audio {
@@ -306,6 +309,150 @@ void DAUx::setErrorCallback(std::function<void(const std::string&)> cb) {
     pImpl->errorCallback = std::move(cb);
 }
 std::string DAUx::getLastError() const { return pImpl->lastError; }
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  FFTAnalyzer
+// ══════════════════════════════════════════════════════════════════════════════
+class FFTAnalyzer::Impl {
+public:
+    const unsigned int fftSize;
+    const unsigned int binCount;
+
+    std::vector<float> ring;          // ring buffer (mono, fftSize samples)
+    size_t             writePos = 0;
+    bool               ringFull = false;
+
+    mutable std::mutex            mtx;
+    std::vector<float>            spectrum;  // magnitude in dBFS, binCount entries
+    std::atomic<float>            rmsDb{-96.f};
+    float                         smoothing = 0.8f;
+
+    explicit Impl(unsigned int sz)
+        : fftSize(std::max(8u, sz))
+        , binCount(fftSize / 2 + 1)
+        , ring(fftSize, 0.f)
+        , spectrum(binCount, -96.f)
+    {}
+
+    // Simple DFT — accurate but O(N²); suitable for fftSize <= 2048 at low call rate.
+    void computeSpectrum() {
+        std::vector<float> src(ring.size());
+        // Un-rotate ring buffer into a contiguous array
+        size_t half = ringFull ? fftSize : writePos;
+        for (size_t i = 0; i < half; ++i)
+            src[i] = ring[(writePos - half + i + fftSize) % fftSize];
+
+        // RMS
+        float sumSq = 0.f;
+        for (float s : src) sumSq += s * s;
+        float rms = std::sqrt(sumSq / static_cast<float>(src.size() ? src.size() : 1));
+        rmsDb.store((rms > 1e-10f) ? 20.f * std::log10(rms) : -96.f,
+                    std::memory_order_relaxed);
+
+        const float pi2 = 2.f * 3.14159265358979f;
+        const float norm = 1.f / static_cast<float>(fftSize);
+        for (unsigned int k = 0; k < binCount; ++k) {
+            float re = 0.f, im = 0.f;
+            for (unsigned int n = 0; n < fftSize; ++n) {
+                float ang = pi2 * k * n * norm;
+                float s   = (n < src.size()) ? src[n] : 0.f;
+                re += s * std::cos(ang);
+                im += s * std::sin(ang);
+            }
+            float mag = std::sqrt(re * re + im * im) * norm;
+            float db  = (mag > 1e-10f) ? 20.f * std::log10(mag) : -96.f;
+            // Exponential smoothing towards new value
+            float prev = spectrum[k];
+            spectrum[k] = smoothing * prev + (1.f - smoothing) * db;
+        }
+    }
+};
+
+FFTAnalyzer::FFTAnalyzer(unsigned int fftSize) : pImpl(new Impl(fftSize)) {}
+FFTAnalyzer::~FFTAnalyzer() { delete pImpl; }
+
+void FFTAnalyzer::pushSamples(const float* buffer, unsigned int frames, unsigned int channels) {
+    if (!buffer || frames == 0 || channels == 0) return;
+    for (unsigned int f = 0; f < frames; ++f) {
+        // Downmix to mono
+        float mono = 0.f;
+        for (unsigned int c = 0; c < channels; ++c)
+            mono += buffer[f * channels + c];
+        mono /= static_cast<float>(channels);
+
+        pImpl->ring[pImpl->writePos] = mono;
+        pImpl->writePos = (pImpl->writePos + 1) % pImpl->fftSize;
+        if (pImpl->writePos == 0) pImpl->ringFull = true;
+
+        // Trigger analysis once per full window
+        if (pImpl->writePos == 0 || (!pImpl->ringFull && pImpl->writePos == frames - 1)) {
+            std::lock_guard<std::mutex> lk(pImpl->mtx);
+            pImpl->smoothing = smoothing;
+            pImpl->computeSpectrum();
+        }
+    }
+}
+
+std::vector<float> FFTAnalyzer::getMagnitudeSpectrum() const {
+    std::lock_guard<std::mutex> lk(pImpl->mtx);
+    return pImpl->spectrum;
+}
+
+float FFTAnalyzer::getPeakMagnitude(float lowHz, float highHz, float sampleRate) const {
+    std::lock_guard<std::mutex> lk(pImpl->mtx);
+    if (sampleRate <= 0.f) return -96.f;
+    float nyquist = sampleRate * 0.5f;
+    float hzPerBin = nyquist / static_cast<float>(pImpl->binCount - 1);
+    unsigned int lo = static_cast<unsigned int>(std::max(0.f, lowHz  / hzPerBin));
+    unsigned int hi = static_cast<unsigned int>(std::min(static_cast<float>(pImpl->binCount - 1), highHz / hzPerBin));
+    float peak = -96.f;
+    for (unsigned int k = lo; k <= hi; ++k)
+        if (pImpl->spectrum[k] > peak) peak = pImpl->spectrum[k];
+    return peak;
+}
+
+float FFTAnalyzer::getRMSLevel() const {
+    return pImpl->rmsDb.load(std::memory_order_relaxed);
+}
+
+unsigned int FFTAnalyzer::getFFTSize()  const { return pImpl->fftSize;   }
+unsigned int FFTAnalyzer::getBinCount() const { return pImpl->binCount;  }
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  MidiSystem  (stub — wire up RtMidi when rtmidi is in the build)
+// ══════════════════════════════════════════════════════════════════════════════
+class MidiSystem::Impl {
+public:
+    std::function<void(const std::string&)> errorCb;
+};
+
+MidiSystem::MidiSystem()  : pImpl(new Impl()) {}
+MidiSystem::~MidiSystem() { delete pImpl; }
+
+MidiSystem& MidiSystem::getInstance() {
+    static MidiSystem instance;
+    return instance;
+}
+
+std::vector<MidiPort> MidiSystem::getInputPorts()  { return {}; }
+std::vector<MidiPort> MidiSystem::getOutputPorts() { return {}; }
+
+bool MidiSystem::openInputPort(unsigned int, MidiCallback)  { return false; }
+void MidiSystem::closeInputPort(unsigned int)  {}
+bool MidiSystem::isInputPortOpen(unsigned int) const { return false; }
+
+bool MidiSystem::openOutputPort(unsigned int)  { return false; }
+void MidiSystem::closeOutputPort(unsigned int) {}
+bool MidiSystem::isOutputPortOpen(unsigned int) const { return false; }
+
+void MidiSystem::sendNoteOn(unsigned int, uint8_t, uint8_t, uint8_t) {}
+void MidiSystem::sendNoteOff(unsigned int, uint8_t, uint8_t, uint8_t) {}
+void MidiSystem::sendControlChange(unsigned int, uint8_t, uint8_t, uint8_t) {}
+void MidiSystem::sendPitchBend(unsigned int, uint8_t, int16_t) {}
+void MidiSystem::sendRawMessage(unsigned int, const std::vector<uint8_t>&) {}
+void MidiSystem::setErrorCallback(std::function<void(const std::string&)> cb) {
+    pImpl->errorCb = std::move(cb);
+}
 
 } // namespace Audio
 } // namespace AureliaUI

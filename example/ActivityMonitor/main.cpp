@@ -10,6 +10,8 @@
 #include <memory>
 #include <chrono>
 #include <map>
+#include <algorithm>
+#include <functional>
 
 using namespace AureliaUI;
 
@@ -21,7 +23,7 @@ namespace Mac {
     static constexpr SkColor BottomBg   = SkColorSetRGB( 22,  22,  24);
     static constexpr SkColor Sep        = SkColorSetRGB( 54,  54,  58);
     static constexpr SkColor RowEven    = SkColorSetARGB( 14, 255, 255, 255);
-    static constexpr SkColor RowSel     = SkColorSetARGB( 55,  10, 132, 255);
+    static constexpr SkColor RowSel     = SkColorSetARGB(100,  10, 132, 255);
     static constexpr SkColor CardBg     = SkColorSetARGB( 55,  50,  50,  54);
     static constexpr SkColor SegBg      = SkColorSetARGB( 90,  50,  50,  54);
     static constexpr SkColor SegActive  = SkColorSetARGB(210,  62,  62,  68);
@@ -93,18 +95,32 @@ private:
 };
 
 // ─── Global UI state ──────────────────────────────────────────────────────────
-std::shared_ptr<GraphNode>  cpuHistGraph;
-std::shared_ptr<GraphNode>  memHistGraph;
-std::shared_ptr<FlexNode>   processListContainer;
-std::shared_ptr<TextNode>   cpuPctLabel;
-std::shared_ptr<TextNode>   userCpuLabel;
-std::shared_ptr<TextNode>   sysCpuLabel;
-std::shared_ptr<TextNode>   idleCpuLabel;
-std::shared_ptr<TextNode>   procCountLabel;
-std::shared_ptr<TextNode>   memUsedLabel;
+static HWND     g_hwnd        = nullptr;
+static std::string g_searchFilter;
+static int      g_sortCol     = 0;     // 0=CPU, 1=Mem, 2=Name, 3=PID, 4=Threads
+static bool     g_sortAsc     = false;
+static uint32_t g_selectedPid = 0;
+static int      g_activeTab   = 0;
+static float    g_bottomHeight = 168.0f;
+static bool     g_showIdleProcs = true;
+
+std::shared_ptr<GraphNode>   cpuHistGraph;
+std::shared_ptr<GraphNode>   memHistGraph;
+std::shared_ptr<FlexNode>    processListContainer;
+std::shared_ptr<TextNode>    cpuPctLabel;
+std::shared_ptr<TextNode>    userCpuLabel;
+std::shared_ptr<TextNode>    sysCpuLabel;
+std::shared_ptr<TextNode>    idleCpuLabel;
+std::shared_ptr<TextNode>    procCountLabel;
+std::shared_ptr<TextNode>    memUsedLabel;
 std::shared_ptr<ProgressBar> cpuBar;
 std::shared_ptr<ProgressBar> memBar;
-
+std::shared_ptr<BadgeNode>   g_cpuBadge;
+std::shared_ptr<ButtonNode>  g_killBtn;
+std::shared_ptr<FlexNode>    g_bottomPanel;
+std::shared_ptr<FlexNode>    g_cpuContent;
+std::shared_ptr<FlexNode>    g_memContent;
+std::function<void(int)>     g_switchTab;
 
 // ─── macOS segment tab button ─────────────────────────────────────────────────
 class MacSegTab : public FlexNode {
@@ -126,12 +142,9 @@ public:
 
     void draw(SkCanvas* canvas) override {
         SkPaint p; p.setAntiAlias(true);
-
         if (active) {
             p.setColor(Mac::SegActive);
             canvas->drawRoundRect(frame, 5.0f, 5.0f, p);
-
-            // Bottom accent bar
             p.setColor(Mac::Blue);
             float inset = 10.0f;
             canvas->drawRoundRect(
@@ -142,19 +155,17 @@ public:
             p.setColor(SkColorSetARGB(22, 255, 255, 255));
             canvas->drawRoundRect(frame, 5.0f, 5.0f, p);
         }
-
         SkFontMetrics fm{};
         FontManager::getInstance().getFontMetrics(12.0f, &fm);
         float tw = FontManager::getInstance().measureText(label, 12.0f);
         float tx = frame.centerX() - tw / 2.0f;
         float ty = frame.centerY() - (fm.fAscent + fm.fDescent) / 2.0f - 1.0f;
-
         p.setColor(active ? Mac::TextP : Mac::TextS);
         FontManager::getInstance().drawText(canvas, label, tx, ty, 12.0f, p);
     }
 };
 
-// ─── 1-px horizontal separator ───────────────────────────────────────────────
+// ─── Separators ───────────────────────────────────────────────────────────────
 class HSep : public FlexNode {
 public:
     HSep() {
@@ -164,7 +175,6 @@ public:
     }
 };
 
-// ─── 1-px vertical separator ─────────────────────────────────────────────────
 class VSep : public FlexNode {
 public:
     VSep() {
@@ -174,15 +184,23 @@ public:
     }
 };
 
-// ─── Column header cell ───────────────────────────────────────────────────────
+// ─── Column header cell with live sort indicator ──────────────────────────────
 class ColHeaderCell : public FlexNode {
 public:
     std::string text;
-    bool        sortActive = false;
+    int         colIndex;
 
-    ColHeaderCell(const std::string& t, bool sort = false) : text(t), sortActive(sort) {
+    ColHeaderCell(const std::string& t, int col) : text(t), colIndex(col) {
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
         enableHover = true;
+        onClick = [this]() {
+            if (g_sortCol == colIndex)
+                g_sortAsc = !g_sortAsc;
+            else {
+                g_sortCol = colIndex;
+                g_sortAsc = (colIndex == 2); // Name sorts ascending by default
+            }
+        };
     }
 
     Size measure(Size available) override {
@@ -191,28 +209,42 @@ public:
     }
 
     void draw(SkCanvas* canvas) override {
+        bool isSort = (g_sortCol == colIndex);
         if (isHovered) {
             SkPaint hp; hp.setAntiAlias(true);
             hp.setColor(SkColorSetARGB(18, 255, 255, 255));
             canvas->drawRect(frame, hp);
         }
-        std::string display = sortActive ? text + " \xe2\x96\xbe" : text;
+        // ▴ = U+25B4, ▾ = U+25BE
+        std::string display = text;
+        if (isSort) display += g_sortAsc ? " \xe2\x96\xb4" : " \xe2\x96\xbe";
+
         SkFontMetrics fm{};
         FontManager::getInstance().getFontMetrics(11.0f, &fm);
         float ty = frame.centerY() - (fm.fAscent + fm.fDescent) / 2.0f;
         SkPaint p; p.setAntiAlias(true);
-        p.setColor(sortActive ? Mac::TextP : Mac::TextS);
+        p.setColor(isSort ? Mac::TextP : Mac::TextS);
         FontManager::getInstance().drawText(canvas, display, frame.left() + 8.0f, ty, 11.0f, p);
     }
 };
 
-// ─── Process row ──────────────────────────────────────────────────────────────
+// ─── Process row with selection highlight ─────────────────────────────────────
 static FlexNode::Ptr MakeProcessRow(const ProcessInfo& info, int idx) {
     auto row = FlexNode::Row();
     row->style.setHeight(26.0f);
     row->style.setAlignItems(YGAlignCenter);
-    if (idx % 2 == 1) row->style.backgroundColor = Mac::RowEven;
+
+    bool isSelected = (info.pid == g_selectedPid);
+    if (isSelected)
+        row->style.backgroundColor = Mac::RowSel;
+    else if (idx % 2 == 1)
+        row->style.backgroundColor = Mac::RowEven;
+
     row->enableHover = true;
+    uint32_t pid = info.pid;
+    row->onClick = [pid]() {
+        g_selectedPid = (g_selectedPid == pid) ? 0 : pid;
+    };
 
     auto cell = [](const std::string& txt, float w, bool flex, SkColor col, float fs = 12.5f) {
         auto t = std::make_shared<TextNode>();
@@ -261,7 +293,7 @@ static FlexNode::Ptr MakeStatRow(const std::string& lbl, SkColor dotColor,
     row->addChild(lNode);
 
     auto vNode = std::make_shared<TextNode>();
-    vNode->text = "—"; vNode->fontSize = 11.0f; vNode->color = Mac::TextP;
+    vNode->text = "\xe2\x80\x94"; vNode->fontSize = 11.0f; vNode->color = Mac::TextP;
     vNode->style.setFlex(1.0f);
     row->addChild(vNode);
     outValue = vNode;
@@ -272,30 +304,90 @@ static FlexNode::Ptr MakeStatRow(const std::string& lbl, SkColor dotColor,
 // ─── Timer – refresh process list + metrics ───────────────────────────────────
 void CALLBACK TimerProc(HWND hwnd, UINT, UINT_PTR, DWORD) {
     static ProcessProvider provider;
-    auto procs = provider.getProcesses();
-    std::sort(procs.begin(), procs.end(),
-        [](const ProcessInfo& a, const ProcessInfo& b) { return a.cpuUsage > b.cpuUsage; });
+    auto allProcs = provider.getProcesses();
 
+    // Compute total CPU from all processes before any filtering
     float totalCpu = 0.0f;
-    for (auto& p : procs) totalCpu += p.cpuUsage;
+    for (auto& p : allProcs) totalCpu += p.cpuUsage;
     totalCpu = std::min(totalCpu, 100.0f);
+
+    // Build display list (filtered + sorted copy)
+    auto procs = allProcs;
+
+    if (!g_searchFilter.empty()) {
+        std::string lo = g_searchFilter;
+        std::transform(lo.begin(), lo.end(), lo.begin(), ::tolower);
+        procs.erase(std::remove_if(procs.begin(), procs.end(), [&](const ProcessInfo& p) {
+            std::string n = p.name;
+            std::transform(n.begin(), n.end(), n.begin(), ::tolower);
+            return n.find(lo) == std::string::npos;
+        }), procs.end());
+    }
+
+    if (!g_showIdleProcs) {
+        procs.erase(std::remove_if(procs.begin(), procs.end(), [](const ProcessInfo& p) {
+            return p.cpuUsage < 0.01f && p.memoryUsage < 10ULL * 1024 * 1024;
+        }), procs.end());
+    }
+
+    std::sort(procs.begin(), procs.end(), [](const ProcessInfo& a, const ProcessInfo& b) {
+        switch (g_sortCol) {
+            case 1: return g_sortAsc ? a.memoryUsage < b.memoryUsage : a.memoryUsage > b.memoryUsage;
+            case 2: return g_sortAsc ? a.name < b.name : a.name > b.name;
+            case 3: return g_sortAsc ? a.pid < b.pid : a.pid > b.pid;
+            case 4: return g_sortAsc ? a.threads < b.threads : a.threads > b.threads;
+            default: return g_sortAsc ? a.cpuUsage < b.cpuUsage : a.cpuUsage > b.cpuUsage;
+        }
+    });
 
     if (processListContainer) {
         processListContainer->removeAllChildren();
-        const size_t n = std::min(procs.size(), (size_t)60);
+        const size_t n = std::min(procs.size(), (size_t)80);
         for (size_t i = 0; i < n; ++i)
             processListContainer->addChild(MakeProcessRow(procs[i], (int)i));
     }
 
-    if (cpuHistGraph)  cpuHistGraph->addValue(totalCpu / 100.0f);
-    if (cpuBar)        cpuBar->value = totalCpu / 100.0f;
+    if (cpuHistGraph) cpuHistGraph->addValue(totalCpu / 100.0f);
+    if (cpuBar)       cpuBar->value = totalCpu / 100.0f;
 
-    char buf[48];
-    if (cpuPctLabel)  { sprintf(buf, "%.0f%%",           totalCpu);          cpuPctLabel->text  = buf; }
-    if (userCpuLabel) { sprintf(buf, "%.1f%%",           totalCpu * 0.65f);  userCpuLabel->text = buf; }
-    if (sysCpuLabel)  { sprintf(buf, "%.1f%%",           totalCpu * 0.35f);  sysCpuLabel->text  = buf; }
-    if (idleCpuLabel) { sprintf(buf, "%.1f%%",           100.0f - totalCpu); idleCpuLabel->text = buf; }
-    if (procCountLabel){ sprintf(buf, "%d processes",    (int)procs.size()); procCountLabel->text = buf; }
+    // Update CPU status badge
+    if (g_cpuBadge) {
+        if (totalCpu > 80.0f) {
+            g_cpuBadge->text  = "HIGH";
+            g_cpuBadge->color = AUKColor(Mac::Red);
+        } else if (totalCpu > 50.0f) {
+            g_cpuBadge->text  = "BUSY";
+            g_cpuBadge->color = AUKColor(Mac::Orange);
+        } else {
+            g_cpuBadge->text  = "OK";
+            g_cpuBadge->color = AUKColor(Mac::Green);
+        }
+    }
+
+    // Update Kill button appearance based on selection
+    if (g_killBtn) {
+        g_killBtn->useThemeColors = false;
+        if (g_selectedPid != 0) {
+            g_killBtn->normalColor = AUKColor(Mac::Red).withAlpha(uint8_t(200));
+            g_killBtn->textColor   = AUKColor::white();
+        } else {
+            g_killBtn->normalColor = AUKColor::RGB(50, 50, 54);
+            g_killBtn->textColor   = AUKColor(Mac::TextT);
+        }
+    }
+
+    char buf[64];
+    if (cpuPctLabel)   { sprintf(buf, "%.0f%%",           totalCpu);          cpuPctLabel->text  = buf; }
+    if (userCpuLabel)  { sprintf(buf, "%.1f%%",           totalCpu * 0.65f);  userCpuLabel->text = buf; }
+    if (sysCpuLabel)   { sprintf(buf, "%.1f%%",           totalCpu * 0.35f);  sysCpuLabel->text  = buf; }
+    if (idleCpuLabel)  { sprintf(buf, "%.1f%%",           100.0f - totalCpu); idleCpuLabel->text = buf; }
+    if (procCountLabel) {
+        if (!g_searchFilter.empty() || !g_showIdleProcs)
+            sprintf(buf, "%d of %d", (int)procs.size(), (int)allProcs.size());
+        else
+            sprintf(buf, "%d processes", (int)allProcs.size());
+        procCountLabel->text = buf;
+    }
 
     MEMORYSTATUSEX mem; mem.dwLength = sizeof(mem); GlobalMemoryStatusEx(&mem);
     float ramFrac = (float)mem.dwMemoryLoad / 100.0f;
@@ -313,7 +405,6 @@ void CALLBACK TimerProc(HWND hwnd, UINT, UINT_PTR, DWORD) {
 
 // ─── Build UI ─────────────────────────────────────────────────────────────────
 static FlexNode::Ptr CreateUI() {
-    // Apply macOS palette to the global theme
     Theme::Background    = Mac::WinBg;
     Theme::Sidebar       = Mac::ToolbarBg;
     Theme::Accent        = Mac::Blue;
@@ -342,7 +433,7 @@ static FlexNode::Ptr CreateUI() {
     appTitle->style.setWidth(148.0f);
     toolbar->addChild(appTitle);
 
-    // Segment control container
+    // Segment control
     auto segBg = FlexNode::Row();
     segBg->style.setFlex(1.0f);
     segBg->style.setHeight(32.0f);
@@ -354,8 +445,6 @@ static FlexNode::Ptr CreateUI() {
 
     const std::vector<std::string> tabLabels = { "CPU", "Memory", "Energy", "Disk", "Network" };
     std::vector<std::shared_ptr<MacSegTab>> segTabs;
-
-    // Create all tabs first so onClick can capture the complete vector
     for (size_t i = 0; i < tabLabels.size(); ++i) {
         auto tab = std::make_shared<MacSegTab>(tabLabels[i], i == 0);
         tab->style.setFlex(1.0f);
@@ -364,13 +453,33 @@ static FlexNode::Ptr CreateUI() {
     }
     for (size_t i = 0; i < segTabs.size(); ++i) {
         auto thisTab = segTabs[i];
-        auto allTabs = segTabs; // copy shared_ptr vector — safe to capture by value
-        thisTab->onClick = [thisTab, allTabs]() {
+        auto allTabs = segTabs;
+        int  idx     = (int)i;
+        thisTab->onClick = [thisTab, allTabs, idx]() {
             for (auto& t : allTabs) t->active = false;
             thisTab->active = true;
+            if (g_switchTab) g_switchTab(idx);
         };
     }
     toolbar->addChild(segBg);
+
+    // Force Quit button — dims when nothing is selected
+    g_killBtn = std::make_shared<ButtonNode>();
+    g_killBtn->label = "Force Quit";
+    g_killBtn->fontSize = 11.5f;
+    g_killBtn->style.setHeight(28.0f);
+    g_killBtn->style.setWidth(92.0f);
+    g_killBtn->useThemeColors = false;
+    g_killBtn->normalColor    = AUKColor::RGB(50, 50, 54);
+    g_killBtn->textColor      = AUKColor(Mac::TextT);
+    g_killBtn->borderRadius   = 6.0f;
+    g_killBtn->onClick = []() {
+        if (g_selectedPid == 0) return;
+        HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, g_selectedPid);
+        if (h) { TerminateProcess(h, 1); CloseHandle(h); }
+        g_selectedPid = 0;
+    };
+    toolbar->addChild(g_killBtn);
 
     procCountLabel = std::make_shared<TextNode>();
     procCountLabel->text = " ";
@@ -382,6 +491,38 @@ static FlexNode::Ptr CreateUI() {
     root->addChild(toolbar);
     root->addChild(std::make_shared<HSep>());
 
+    // ── Filter bar ─────────────────────────────────────────────────────────────
+    auto filterBar = FlexNode::Row();
+    filterBar->style.setHeight(38.0f);
+    filterBar->style.setFlexShrink(0.0f);
+    filterBar->style.backgroundColor = Mac::ToolbarBg;
+    filterBar->style.setPadding(8.0f, 5.0f);
+    filterBar->style.setGap(10.0f);
+    filterBar->style.setAlignItems(YGAlignCenter);
+
+    auto search = std::make_shared<SearchInputNode>();
+    search->style.setFlex(1.0f);
+    search->style.setHeight(26.0f);
+    search->style.backgroundColor = Mac::CardBg;
+    search->style.borderRadius = 6.0f;
+    search->onChanged = [](const std::string& text) { g_searchFilter = text; };
+    filterBar->addChild(search);
+
+    // Show Idle switch — hides processes with near-zero CPU and low memory
+    auto idleSwitch = std::make_shared<SwitchNode>();
+    idleSwitch->label        = "Show Idle";
+    idleSwitch->isOn         = true;
+    idleSwitch->fontSize     = 11.0f;
+    idleSwitch->labelColor   = AUKColor(Mac::TextS);
+    idleSwitch->activeColor  = AUKColor(Mac::Blue);
+    idleSwitch->switchWidth  = 32.0f;
+    idleSwitch->switchHeight = 18.0f;
+    idleSwitch->onChanged    = [](bool on) { g_showIdleProcs = on; };
+    filterBar->addChild(idleSwitch);
+
+    root->addChild(filterBar);
+    root->addChild(std::make_shared<HSep>());
+
     // ── Column headers ─────────────────────────────────────────────────────────
     auto colHeader = FlexNode::Row();
     colHeader->style.setHeight(26.0f);
@@ -389,17 +530,17 @@ static FlexNode::Ptr CreateUI() {
     colHeader->style.backgroundColor = Mac::HeaderBg;
     colHeader->style.setAlignItems(YGAlignCenter);
 
-    auto addHdr = [&](const std::string& t, float w, bool flex, bool sort = false) {
-        auto c = std::make_shared<ColHeaderCell>(t, sort);
+    auto addHdr = [&](const std::string& t, float w, bool flex, int col) {
+        auto c = std::make_shared<ColHeaderCell>(t, col);
         if (flex) c->style.setFlex(1.0f);
         else      c->style.setWidth(w);
         colHeader->addChild(c);
     };
-    addHdr("Process Name", 0, true, true);
-    addHdr("% CPU",    68, false);
-    addHdr("Threads",  62, false);
-    addHdr("PID",      62, false);
-    addHdr("Memory",   82, false);
+    addHdr("Process Name", 0,  true,  2);
+    addHdr("% CPU",        68, false, 0);
+    addHdr("Threads",      62, false, 4);
+    addHdr("PID",          62, false, 3);
+    addHdr("Memory",       82, false, 1);
 
     root->addChild(colHeader);
     root->addChild(std::make_shared<HSep>());
@@ -411,121 +552,149 @@ static FlexNode::Ptr CreateUI() {
     scroll->setContent(processListContainer);
     root->addChild(scroll);
 
-    root->addChild(std::make_shared<HSep>());
+    // ── Splitter – drag to resize bottom panel ─────────────────────────────────
+    auto splitter = std::make_shared<SplitterNode>(SplitterNode::Orientation::Horizontal);
+    splitter->style.backgroundColor = AUKColor(Mac::Sep);
+    splitter->onDrag = [](float delta) {
+        g_bottomHeight = std::clamp(g_bottomHeight - delta, 80.0f, 350.0f);
+        if (g_bottomPanel) g_bottomPanel->style.setHeight(g_bottomHeight);
+        if (g_hwnd) InvalidateRect(g_hwnd, NULL, FALSE);
+    };
+    root->addChild(splitter);
 
-    // ── Bottom panel ───────────────────────────────────────────────────────────
-    auto bottom = FlexNode::Row();
-    bottom->style.setHeight(168.0f);
-    bottom->style.setFlexShrink(0.0f);
-    bottom->style.backgroundColor = Mac::BottomBg;
-    bottom->style.setPadding(14.0f, 12.0f);
-    bottom->style.setGap(14.0f);
-    bottom->style.setAlignItems(YGAlignStretch);
+    // ── Bottom panel (tab-switched content) ────────────────────────────────────
+    g_bottomPanel = FlexNode::Row();
+    g_bottomPanel->style.setHeight(g_bottomHeight);
+    g_bottomPanel->style.setFlexShrink(0.0f);
+    g_bottomPanel->style.backgroundColor = Mac::BottomBg;
 
-    // ── Left: CPU stats ──────────────────────────────────────
-    auto cpuStats = FlexNode::Column();
-    cpuStats->style.setWidth(172.0f);
-    cpuStats->style.setGap(5.0f);
+    // ── CPU tab content ───────────────────────────────────────────────────────
+    g_cpuContent = FlexNode::Row();
+    g_cpuContent->style.setFlex(1.0f);
+    g_cpuContent->style.setHeightFull();
+    g_cpuContent->style.setPadding(14.0f, 12.0f);
+    g_cpuContent->style.setGap(14.0f);
+    g_cpuContent->style.setAlignItems(YGAlignStretch);
 
-    auto cpuSectionLabel = std::make_shared<TextNode>();
-    cpuSectionLabel->text = "CPU USAGE";
-    cpuSectionLabel->fontSize = 10.0f;
-    cpuSectionLabel->color = Mac::TextT;
-    cpuStats->addChild(cpuSectionLabel);
+    {
+        auto cpuStats = FlexNode::Column();
+        cpuStats->style.setWidth(172.0f);
+        cpuStats->style.setGap(5.0f);
 
-    cpuPctLabel = std::make_shared<TextNode>();
-    cpuPctLabel->text = "0%";
-    cpuPctLabel->fontSize = 28.0f;
-    cpuPctLabel->color = Mac::TextP;
-    cpuStats->addChild(cpuPctLabel);
+        auto lbl = std::make_shared<TextNode>(); lbl->text = "CPU USAGE";
+        lbl->fontSize = 10.0f; lbl->color = Mac::TextT;
+        cpuStats->addChild(lbl);
 
-    cpuBar = std::make_shared<ProgressBar>();
-    cpuBar->style.setWidthFull();
-    cpuBar->style.setHeight(5.0f);
-    cpuBar->fillColor      = Mac::Green;
-    cpuBar->backgroundColor = Mac::CardBg;
-    cpuBar->borderRadius   = 2.5f;
-    cpuStats->addChild(cpuBar);
+        // Big percentage + status badge on the same row
+        auto pctRow = FlexNode::Row();
+        pctRow->style.setAlignItems(YGAlignCenter);
+        pctRow->style.setGap(8.0f);
 
-    auto cpuGap = FlexNode::Create();
-    cpuGap->style.setFlex(1.0f);
-    cpuStats->addChild(cpuGap);
+        cpuPctLabel = std::make_shared<TextNode>();
+        cpuPctLabel->text = "0%"; cpuPctLabel->fontSize = 28.0f; cpuPctLabel->color = Mac::TextP;
+        pctRow->addChild(cpuPctLabel);
 
-    cpuStats->addChild(MakeStatRow("User",   Mac::Blue,   userCpuLabel));
-    cpuStats->addChild(MakeStatRow("System", Mac::Orange, sysCpuLabel));
-    cpuStats->addChild(MakeStatRow("Idle",   Mac::TextT,  idleCpuLabel));
+        g_cpuBadge = std::make_shared<BadgeNode>("OK");
+        g_cpuBadge->color     = AUKColor(Mac::Green);
+        g_cpuBadge->textColor = AUKColor::white();
+        g_cpuBadge->fontSize  = 9.0f;
+        pctRow->addChild(g_cpuBadge);
+        cpuStats->addChild(pctRow);
 
-    bottom->addChild(cpuStats);
-    bottom->addChild(std::make_shared<VSep>());
+        cpuBar = std::make_shared<ProgressBar>();
+        cpuBar->style.setWidthFull(); cpuBar->style.setHeight(5.0f);
+        cpuBar->fillColor = Mac::Green; cpuBar->backgroundColor = Mac::CardBg; cpuBar->borderRadius = 2.5f;
+        cpuStats->addChild(cpuBar);
 
-    // ── Center: CPU history graph ─────────────────────────────
-    auto cpuGraphCol = FlexNode::Column();
-    cpuGraphCol->style.setFlex(1.0f);
-    cpuGraphCol->style.setGap(5.0f);
+        auto gap = FlexNode::Create(); gap->style.setFlex(1.0f);
+        cpuStats->addChild(gap);
+        cpuStats->addChild(MakeStatRow("User",   Mac::Blue,   userCpuLabel));
+        cpuStats->addChild(MakeStatRow("System", Mac::Orange, sysCpuLabel));
+        cpuStats->addChild(MakeStatRow("Idle",   Mac::TextT,  idleCpuLabel));
 
-    auto cpuGraphLabel = std::make_shared<TextNode>();
-    cpuGraphLabel->text = "CPU HISTORY";
-    cpuGraphLabel->fontSize = 10.0f;
-    cpuGraphLabel->color = Mac::TextT;
-    cpuGraphCol->addChild(cpuGraphLabel);
+        g_cpuContent->addChild(cpuStats);
+        g_cpuContent->addChild(std::make_shared<VSep>());
 
-    cpuHistGraph = std::make_shared<GraphNode>();
-    cpuHistGraph->style.setFlex(1.0f);
-    cpuHistGraph->style.setWidthFull();
-    cpuHistGraph->lineColor  = Mac::Green;
-    cpuHistGraph->fillColor  = AUKColor(Mac::Green).withAlpha(uint8_t(35));
-    cpuHistGraph->maxPoints  = 60;
-    cpuHistGraph->strokeWidth = 1.5f;
-    cpuHistGraph->showGrid   = true;
-    cpuGraphCol->addChild(cpuHistGraph);
+        auto graphCol = FlexNode::Column();
+        graphCol->style.setFlex(1.0f); graphCol->style.setGap(5.0f);
 
-    bottom->addChild(cpuGraphCol);
-    bottom->addChild(std::make_shared<VSep>());
+        auto glbl = std::make_shared<TextNode>(); glbl->text = "CPU HISTORY";
+        glbl->fontSize = 10.0f; glbl->color = Mac::TextT;
+        graphCol->addChild(glbl);
 
-    // ── Right: Memory stats + history ────────────────────────
-    auto memCol = FlexNode::Column();
-    memCol->style.setWidth(172.0f);
-    memCol->style.setGap(5.0f);
+        cpuHistGraph = std::make_shared<GraphNode>();
+        cpuHistGraph->style.setFlex(1.0f); cpuHistGraph->style.setWidthFull();
+        cpuHistGraph->lineColor = Mac::Green; cpuHistGraph->fillColor = AUKColor(Mac::Green).withAlpha(uint8_t(35));
+        cpuHistGraph->maxPoints = 60; cpuHistGraph->strokeWidth = 1.5f; cpuHistGraph->showGrid = true;
+        graphCol->addChild(cpuHistGraph);
 
-    auto memSectionLabel = std::make_shared<TextNode>();
-    memSectionLabel->text = "MEMORY";
-    memSectionLabel->fontSize = 10.0f;
-    memSectionLabel->color = Mac::TextT;
-    memCol->addChild(memSectionLabel);
+        g_cpuContent->addChild(graphCol);
+    }
 
-    memUsedLabel = std::make_shared<TextNode>();
-    memUsedLabel->text = "— GB";
-    memUsedLabel->fontSize = 15.0f;
-    memUsedLabel->color = Mac::TextP;
-    memCol->addChild(memUsedLabel);
+    // ── Memory tab content ────────────────────────────────────────────────────
+    g_memContent = FlexNode::Row();
+    g_memContent->style.setFlex(1.0f);
+    g_memContent->style.setHeightFull();
+    g_memContent->style.setPadding(14.0f, 12.0f);
+    g_memContent->style.setGap(14.0f);
+    g_memContent->style.setAlignItems(YGAlignStretch);
 
-    memBar = std::make_shared<ProgressBar>();
-    memBar->style.setWidthFull();
-    memBar->style.setHeight(5.0f);
-    memBar->fillColor       = Mac::Orange;
-    memBar->backgroundColor = Mac::CardBg;
-    memBar->borderRadius    = 2.5f;
-    memCol->addChild(memBar);
+    {
+        auto memStats = FlexNode::Column();
+        memStats->style.setWidth(172.0f);
+        memStats->style.setGap(5.0f);
 
-    auto memGraphLabel = std::make_shared<TextNode>();
-    memGraphLabel->text = "MEMORY PRESSURE";
-    memGraphLabel->fontSize = 10.0f;
-    memGraphLabel->color = Mac::TextT;
-    memGraphLabel->style.setMargin(0.0f);
-    memCol->addChild(memGraphLabel);
+        auto lbl = std::make_shared<TextNode>(); lbl->text = "MEMORY";
+        lbl->fontSize = 10.0f; lbl->color = Mac::TextT;
+        memStats->addChild(lbl);
 
-    memHistGraph = std::make_shared<GraphNode>();
-    memHistGraph->style.setFlex(1.0f);
-    memHistGraph->style.setWidthFull();
-    memHistGraph->lineColor  = Mac::Orange;
-    memHistGraph->fillColor  = AUKColor(Mac::Orange).withAlpha(uint8_t(35));
-    memHistGraph->maxPoints  = 60;
-    memHistGraph->strokeWidth = 1.5f;
-    memHistGraph->showGrid   = true;
-    memCol->addChild(memHistGraph);
+        memUsedLabel = std::make_shared<TextNode>();
+        memUsedLabel->text = "\xe2\x80\x94 GB"; memUsedLabel->fontSize = 15.0f; memUsedLabel->color = Mac::TextP;
+        memStats->addChild(memUsedLabel);
 
-    bottom->addChild(memCol);
-    root->addChild(bottom);
+        memBar = std::make_shared<ProgressBar>();
+        memBar->style.setWidthFull(); memBar->style.setHeight(5.0f);
+        memBar->fillColor = Mac::Orange; memBar->backgroundColor = Mac::CardBg; memBar->borderRadius = 2.5f;
+        memStats->addChild(memBar);
+
+        auto gap = FlexNode::Create(); gap->style.setFlex(1.0f);
+        memStats->addChild(gap);
+
+        std::shared_ptr<TextNode> appMem, wired, compressed;
+        memStats->addChild(MakeStatRow("App",        Mac::Blue,   appMem));
+        memStats->addChild(MakeStatRow("Wired",      Mac::Orange, wired));
+        memStats->addChild(MakeStatRow("Compressed", Mac::TextT,  compressed));
+
+        g_memContent->addChild(memStats);
+        g_memContent->addChild(std::make_shared<VSep>());
+
+        auto graphCol = FlexNode::Column();
+        graphCol->style.setFlex(1.0f); graphCol->style.setGap(5.0f);
+
+        auto glbl = std::make_shared<TextNode>(); glbl->text = "MEMORY PRESSURE";
+        glbl->fontSize = 10.0f; glbl->color = Mac::TextT;
+        graphCol->addChild(glbl);
+
+        memHistGraph = std::make_shared<GraphNode>();
+        memHistGraph->style.setFlex(1.0f); memHistGraph->style.setWidthFull();
+        memHistGraph->lineColor = Mac::Orange; memHistGraph->fillColor = AUKColor(Mac::Orange).withAlpha(uint8_t(35));
+        memHistGraph->maxPoints = 60; memHistGraph->strokeWidth = 1.5f; memHistGraph->showGrid = true;
+        graphCol->addChild(memHistGraph);
+
+        g_memContent->addChild(graphCol);
+    }
+
+    // ── Wire tab switching ─────────────────────────────────────────────────────
+    g_switchTab = [](int idx) {
+        g_activeTab = idx;
+        g_bottomPanel->removeAllChildren();
+        if (idx == 0)      g_bottomPanel->addChild(g_cpuContent);
+        else if (idx == 1) g_bottomPanel->addChild(g_memContent);
+        if (g_hwnd) InvalidateRect(g_hwnd, NULL, FALSE);
+    };
+
+    g_bottomPanel->addChild(g_cpuContent); // default: CPU tab
+    root->addChild(g_bottomPanel);
 
     return root;
 }
@@ -537,7 +706,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     window.enableMica(true);
     window.setDarkMode(true);
     window.setRoot(CreateUI());
-    SetTimer((HWND)window.getNativeHandle(), 1, 1000, TimerProc);
+    g_hwnd = (HWND)window.getNativeHandle();
+    SetTimer(g_hwnd, 1, 1000, TimerProc);
     window.run();
     return 0;
 }

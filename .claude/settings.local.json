@@ -7,7 +7,11 @@
       "Bash(Select-Object FullName)",
       "Bash(xargs wc *)",
       "Bash(cmake --build . --target BorderlessPlayer)",
-      "Bash(cmd.exe /c \"build.cmd\")"
+      "Bash(cmd.exe /c \"build.cmd\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\" -Force)",
+      "Bash(Select-Object Name, PSIsContainer)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\\\\src\" -Recurse -Directory | ForEach-Object { Write-Output $_.FullName } | Sort-Object)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\\\\include\" -Recurse -Directory | ForEach-Object { Write-Output $_.FullName } | Sort-Object)"
     ]
   }
 }

@@ -237,6 +237,9 @@ public:
     bool isPressed = false;
     bool isFocused = false;
     bool enableHover = false;
+    // Color drawn on top of the background when isHovered && enableHover.
+    // Override per-node for theme-aware hover tints.
+    AUKColor hoverOverlayColor = AUKColor::RGB(255, 255, 255, 40);
     std::function<void()> onClick;
 
     float getLayoutPadding(YGEdge edge) const { return YGNodeLayoutGetPadding(ygNode, edge); }
@@ -378,7 +381,7 @@ public:
         if (enableHover && isHovered) {
             SkPaint hoverPaint;
             hoverPaint.setAntiAlias(true);
-            hoverPaint.setColor(AUKColor::RGB(255, 255, 255, 40)); // Generic light overlay
+            hoverPaint.setColor(hoverOverlayColor);
             if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, hoverPaint);
             else canvas->drawRect(frame, hoverPaint);
         }

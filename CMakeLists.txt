@@ -56,6 +56,7 @@ include_directories(
     external/prebuilt/skia/include
     external/yoga
     external/rtaudio
+    external/nlohmann-json
 )
 
 set(SKIA_LIB_DIR ${SKIA_DIR}/lib)

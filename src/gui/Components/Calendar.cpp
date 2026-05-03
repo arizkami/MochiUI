@@ -167,11 +167,14 @@ void Calendar::updateGrid() {
         if (isSelected) {
             dayNode->style.backgroundColor = Theme::Accent;
             dayNode->color = SK_ColorWHITE;
+            dayNode->hoverOverlayColor = AUKColor::RGB(255, 255, 255, 50);
         } else if (isToday) {
             dayNode->color = Theme::Accent;
-            dayNode->style.backgroundColor = SkColorSetA(Theme::Accent, 40);
+            dayNode->style.backgroundColor = SkColorSetA(Theme::Accent, 30);
+            dayNode->hoverOverlayColor = SkColorSetA(Theme::Accent, 50);
         } else {
             dayNode->color = Theme::TextPrimary;
+            dayNode->hoverOverlayColor = Theme::HoverOverlay;
         }
 
         dayNode->onClick = [this, d]() {
@@ -196,6 +199,15 @@ void Calendar::updateGrid() {
 
 void Calendar::draw(SkCanvas* canvas) {
     drawSelf(canvas);
+
+    // Subtle container border
+    SkPaint bp;
+    bp.setAntiAlias(true);
+    bp.setStyle(SkPaint::kStroke_Style);
+    bp.setColor(Theme::Border);
+    bp.setStrokeWidth(1.0f);
+    canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, bp);
+
     drawChildren(canvas);
 }
 

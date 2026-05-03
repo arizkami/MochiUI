@@ -155,5 +155,99 @@ private:
     Impl* pImpl;
 };
 
+// ── MIDI ──────────────────────────────────────────────────────────────────────
+
+enum class MidiEventType {
+    NoteOff, NoteOn, PolyPressure,
+    ControlChange, ProgramChange,
+    ChannelPressure, PitchBend, SysEx,
+};
+
+struct MidiEvent {
+    MidiEventType type;
+    uint8_t  channel;     // 0-15
+    uint8_t  note;        // NoteOn/Off/PolyPressure: MIDI note 0-127
+    uint8_t  velocity;    // NoteOn/Off: velocity 0-127
+    uint8_t  controller;  // ControlChange: controller number
+    uint8_t  value;       // ControlChange/ProgramChange: 0-127
+    int16_t  pitchBend;   // PitchBend: -8192 … +8191
+    std::vector<uint8_t> sysExData;
+    double   timestamp;   // seconds since port was opened
+};
+
+using MidiCallback = std::function<void(const MidiEvent&)>;
+
+struct MidiPort {
+    unsigned int id;
+    std::string  name;
+    bool         isVirtual = false;
+};
+
+// MIDI input / output manager (singleton; wraps RtMidi).
+class DAUX_API MidiSystem {
+public:
+    static MidiSystem& getInstance();
+
+    // ── Port enumeration ──────────────────────────────────────────────────────
+    std::vector<MidiPort> getInputPorts();
+    std::vector<MidiPort> getOutputPorts();
+
+    // ── Input ─────────────────────────────────────────────────────────────────
+    bool openInputPort(unsigned int portId, MidiCallback callback);
+    void closeInputPort(unsigned int portId);
+    bool isInputPortOpen(unsigned int portId) const;
+
+    // ── Output ────────────────────────────────────────────────────────────────
+    bool openOutputPort(unsigned int portId);
+    void closeOutputPort(unsigned int portId);
+    bool isOutputPortOpen(unsigned int portId) const;
+
+    void sendNoteOn(unsigned int portId, uint8_t channel, uint8_t note, uint8_t velocity);
+    void sendNoteOff(unsigned int portId, uint8_t channel, uint8_t note, uint8_t velocity = 0);
+    void sendControlChange(unsigned int portId, uint8_t channel, uint8_t controller, uint8_t value);
+    void sendPitchBend(unsigned int portId, uint8_t channel, int16_t bend);
+    void sendRawMessage(unsigned int portId, const std::vector<uint8_t>& message);
+
+    void setErrorCallback(std::function<void(const std::string&)> cb);
+
+private:
+    MidiSystem();
+    ~MidiSystem();
+    class Impl;
+    Impl* pImpl;
+};
+
+// ── FFT Analysis ──────────────────────────────────────────────────────────────
+// Thread-safe: pushSamples is called from the audio thread; getters are safe
+// to call from any thread (they return a snapshot copy).
+class DAUX_API FFTAnalyzer {
+public:
+    explicit FFTAnalyzer(unsigned int fftSize = 2048);
+    ~FFTAnalyzer();
+
+    // Push interleaved float PCM samples (channels summed to mono internally).
+    void pushSamples(const float* buffer, unsigned int frames, unsigned int channels);
+
+    // Latest magnitude spectrum: fftSize/2+1 bins, magnitude in dBFS.
+    // Bin 0 = DC, last bin = Nyquist.
+    std::vector<float> getMagnitudeSpectrum() const;
+
+    // Peak magnitude in [lowHz, highHz] band, in dBFS.
+    float getPeakMagnitude(float lowHz, float highHz, float sampleRate) const;
+
+    // Smoothed RMS of the latest analysis block, in dBFS.
+    float getRMSLevel() const;
+
+    unsigned int getFFTSize() const;
+    unsigned int getBinCount() const;  // fftSize / 2 + 1
+
+    // Smoothing coefficient applied per-update (0 = no smoothing, 1 = frozen).
+    float smoothing = 0.8f;
+
+private:
+    class Impl;
+    Impl* pImpl;
+};
+
 } // namespace Audio
 } // namespace AureliaUI

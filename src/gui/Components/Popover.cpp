@@ -1,17 +1,19 @@
 #include <gui/Components/Popover.hpp>
+#include <algorithm>
 
 namespace AureliaUI {
 
-Popover::Popover(FlexNode::Ptr content, SkRect anchorRect) : content(content), anchor(anchorRect) {
+Popover::Popover(FlexNode::Ptr content, SkRect anchorRect, SkRect screenBounds)
+    : content(content), anchor(anchorRect), screenBounds(screenBounds)
+{
     style.setPositionType(YGPositionTypeAbsolute);
     style.setWidthAuto();
     style.setHeightAuto();
 
-    // Position below the anchor in window coordinates
+    // Default: open below the anchor
     style.setPosition(YGEdgeLeft, anchor.left());
-    style.setPosition(YGEdgeTop, anchor.bottom() + 4.0f);
+    style.setPosition(YGEdgeTop, anchor.bottom() + 6.0f);
 
-    // Background and shadow (via border/bg)
     style.backgroundColor = Theme::Card;
     style.borderRadius = 8.0f;
     style.setPadding(4.0f);
@@ -20,37 +22,56 @@ Popover::Popover(FlexNode::Ptr content, SkRect anchorRect) : content(content), a
 }
 
 void Popover::calculateLayout(SkRect availableSpace) {
-    // Popovers are positioned in absolute window coordinates,
-    // so we reset the parent-provided offset to 0,0.
     syncSubtreeStyles();
     YGNodeCalculateLayout(getYGNode(), YGUndefined, YGUndefined, YGDirectionLTR);
 
-    // We use the absolute positions set in style.setPosition directly
-    float left = YGNodeLayoutGetLeft(getYGNode());
-    float top = YGNodeLayoutGetTop(getYGNode());
-    float width = YGNodeLayoutGetWidth(getYGNode());
+    float left   = YGNodeLayoutGetLeft(getYGNode());
+    float top    = YGNodeLayoutGetTop(getYGNode());
+    float width  = YGNodeLayoutGetWidth(getYGNode());
     float height = YGNodeLayoutGetHeight(getYGNode());
     frame = SkRect::MakeXYWH(left, top, width, height);
 
+    clampToScreen();
+
     for (auto& child : children) {
-        child->applyYogaLayout(left, top);
+        child->applyYogaLayout(frame.left(), frame.top());
     }
     clearLayoutDirtyRecursive();
 }
 
-void Popover::draw(SkCanvas* canvas) {
-    // Draw a shadow/dim background for the whole screen?
-    // No, just the popover for now.
+void Popover::clampToScreen() {
+    // Only clamp when caller supplied valid screen bounds
+    if (screenBounds.isEmpty()) return;
 
-    // Border/Shadow effect
+    float newLeft = frame.left();
+    float newTop  = frame.top();
+
+    // Flip above anchor if popover would go below screen
+    if (frame.bottom() > screenBounds.bottom()) {
+        newTop = anchor.top() - frame.height() - 6.0f;
+    }
+    // Shift left if right edge overflows
+    if (newLeft + frame.width() > screenBounds.right()) {
+        newLeft = screenBounds.right() - frame.width();
+    }
+    // Clamp to left / top screen edges
+    newLeft = std::max(screenBounds.left(), newLeft);
+    newTop  = std::max(screenBounds.top(), newTop);
+
+    frame.offsetTo(newLeft, newTop);
+}
+
+void Popover::draw(SkCanvas* canvas) {
+    // Drop shadow (offset so it appears beneath the popover)
     SkPaint shadowPaint;
     shadowPaint.setColor(Theme::Shadow);
-    shadowPaint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, 4.0f));
-    canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, shadowPaint);
+    shadowPaint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, 8.0f));
+    SkRect shadowFrame = frame.makeOffset(0.0f, 4.0f);
+    canvas->drawRoundRect(shadowFrame, style.borderRadius, style.borderRadius, shadowPaint);
 
     drawSelf(canvas);
 
-    // Draw border
+    // Border
     SkPaint borderPaint;
     borderPaint.setAntiAlias(true);
     borderPaint.setStyle(SkPaint::kStroke_Style);

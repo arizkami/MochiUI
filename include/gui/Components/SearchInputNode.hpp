@@ -6,11 +6,20 @@ namespace AureliaUI {
 
 class SearchInputNode : public FlexNode {
 public:
+    std::function<void(const std::string&)> onChanged;
+
+    const std::string& getText() const { return input->text; }
+    void setText(const std::string& t) {
+        input->text = t;
+        syncClearButton(!t.empty());
+    }
+
     SearchInputNode() {
         style.setHeight(Theme::ControlHeight);
         style.setAlignItems(YGAlignCenter);
         style.setFlexDirection(YGFlexDirectionRow);
         style.backgroundColor = Theme::Card;
+        style.borderRadius = Theme::BorderRadius;
         style.setPadding(8, 0);
         style.setGap(8);
 
@@ -26,6 +35,10 @@ public:
         input->style.backgroundColor = AUKColor::transparent();
         input->style.setPadding(0);
         input->placeholder = "Search...";
+        input->onChanged = [this](const std::string& text) {
+            syncClearButton(!text.empty());
+            if (onChanged) onChanged(text);
+        };
         addChild(input);
 
         clearBtn = std::make_shared<IconNode>();
@@ -34,13 +47,28 @@ public:
         clearBtn->style.setHeight(14);
         clearBtn->color = Theme::TextSecondary;
         clearBtn->enableHover = true;
-        clearBtn->onClick = [this]() { input->text = ""; };
-        // addChild(clearBtn); // only show when text not empty?
+        clearBtn->onClick = [this]() {
+            input->text.clear();
+            syncClearButton(false);
+            if (onChanged) onChanged("");
+        };
+        // clearBtn is added/removed dynamically via syncClearButton
     }
 
 private:
     std::shared_ptr<TextInput> input;
-    std::shared_ptr<IconNode> clearBtn;
+    std::shared_ptr<IconNode>  clearBtn;
+    bool clearBtnAdded = false;
+
+    void syncClearButton(bool show) {
+        if (show && !clearBtnAdded) {
+            addChild(clearBtn);
+            clearBtnAdded = true;
+        } else if (!show && clearBtnAdded) {
+            removeChild(clearBtn);
+            clearBtnAdded = false;
+        }
+    }
 };
 
 } // namespace AureliaUI

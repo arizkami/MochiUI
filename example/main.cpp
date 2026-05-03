@@ -465,6 +465,159 @@ static FlexNode::Ptr CreateDataTab() {
     return page;
 }
 
+// ── Tab: Dropdown ─────────────────────────────────────────────────────────────
+
+static FlexNode::Ptr CreateDropdownTab() {
+    auto page = FlexNode::Column();
+    page->style.setPadding(20);
+    page->style.setGap(16);
+
+    // ── Combo boxes ───────────────────────────────────────────────────────────
+    {
+        auto col = FlexNode::Column();
+        col->style.setGap(12);
+
+        auto mkCombo = [](std::vector<std::string> items, int sel,
+                          const std::string& placeholder = "Select…") {
+            auto c = std::make_shared<ComboBox>();
+            c->items         = std::move(items);
+            c->selectedIndex = sel;
+            c->placeholder   = placeholder;
+            return c;
+        };
+
+        col->addChild(SectionLabel("Theme"));
+        col->addChild(mkCombo({"Dark", "Light", "MD3 Dark", "MD3 Light",
+                                "Minimal", "WinUI Dark", "WinUI Light", "System"}, 0));
+
+        col->addChild(SectionLabel("Font Size"));
+        col->addChild(mkCombo({"8", "10", "11", "12", "14", "16", "18",
+                                "20", "24", "32", "48", "64"}, 4, "Font size…"));
+
+        col->addChild(SectionLabel("Priority"));
+        auto prio = mkCombo({"Low", "Medium", "High", "Critical"}, 1);
+        prio->onSelectionChanged = [](int i) { /* handle priority change */ };
+        col->addChild(prio);
+
+        col->addChild(SectionLabel("Sample Rate"));
+        col->addChild(mkCombo({"22050 Hz", "44100 Hz", "48000 Hz",
+                                "88200 Hz", "96000 Hz", "192000 Hz"}, 2));
+
+        page->addChild(Card(col, "Combo Box / Dropdown"));
+    }
+
+    // ── Multi-select ──────────────────────────────────────────────────────────
+    {
+        auto ms = std::make_shared<MultiSelectNode>();
+        ms->items = {"Reverb", "Delay", "Chorus", "Distortion",
+                     "EQ", "Compressor", "Limiter", "Gate"};
+        ms->selectedIndices = {0, 4};
+        page->addChild(Card(ms, "Multi-Select"));
+    }
+
+    // ── Tag input ─────────────────────────────────────────────────────────────
+    {
+        auto tags = std::make_shared<TagInputNode>();
+        tags->addTag("C++");
+        tags->addTag("Skia");
+        tags->addTag("Audio");
+        page->addChild(Card(tags, "Tag Input"));
+    }
+
+    return page;
+}
+
+// ── Tab: Command ──────────────────────────────────────────────────────────────
+
+static FlexNode::Ptr CreateCommandTab() {
+    auto page = FlexNode::Column();
+    page->style.setPadding(20);
+    page->style.setGap(16);
+
+    // ── Command palette ───────────────────────────────────────────────────────
+    {
+        auto col = FlexNode::Column();
+        col->style.setGap(6);
+
+        auto search = std::make_shared<SearchInputNode>();
+        col->addChild(search);
+
+        struct Cmd { const char* name; const char* shortcut; const char* group; };
+        static constexpr Cmd kCmds[] = {
+            { "New Project",        "Ctrl+N",       "File"   },
+            { "Open File…",         "Ctrl+O",       "File"   },
+            { "Save",               "Ctrl+S",       "File"   },
+            { "Save As…",           "Ctrl+Shift+S", "File"   },
+            { "Undo",               "Ctrl+Z",       "Edit"   },
+            { "Redo",               "Ctrl+Y",       "Edit"   },
+            { "Find",               "Ctrl+F",       "Edit"   },
+            { "Toggle Sidebar",     "Ctrl+B",       "View"   },
+            { "Full Screen",        "F11",          "View"   },
+            { "Command Palette",    "Ctrl+P",       "Tools"  },
+            { "Settings",           "Ctrl+,",       "Tools"  },
+            { "Audio Device Setup", "Ctrl+Alt+A",   "Audio"  },
+            { "MIDI Connections",   "Ctrl+Alt+M",   "Audio"  },
+        };
+
+        auto mkRow = [](const Cmd& cmd) {
+            auto row = FlexNode::Row();
+            row->style.setHeight(38);
+            row->style.setPadding(12, 0);
+            row->style.setGap(10);
+            row->style.setAlignItems(YGAlignCenter);
+            row->style.borderRadius = 6;
+            row->enableHover = true;
+
+            auto grpDot = std::make_shared<FlexNode>();
+            grpDot->style.setWidth(6);
+            grpDot->style.setHeight(6);
+            grpDot->style.borderRadius = 3;
+            grpDot->style.backgroundColor = Theme::Accent;
+            row->addChild(grpDot);
+
+            auto name = std::make_shared<TextNode>(cmd.name);
+            name->fontSize = Theme::FontNormal;
+            name->color    = Theme::TextPrimary;
+            name->style.setFlex(1.0f);
+            row->addChild(name);
+
+            auto grpLbl = std::make_shared<TextNode>(cmd.group);
+            grpLbl->fontSize = Theme::FontSmall;
+            grpLbl->color    = Theme::TextSecondary;
+            row->addChild(grpLbl);
+
+            auto kbdBadge = std::make_shared<BadgeNode>(cmd.shortcut);
+            kbdBadge->color     = Theme::Card;
+            kbdBadge->textColor = Theme::TextSecondary;
+            row->addChild(kbdBadge);
+
+            return row;
+        };
+
+        for (auto& cmd : kCmds)
+            col->addChild(mkRow(cmd));
+
+        page->addChild(Card(col, "Command Palette"));
+    }
+
+    // ── Breadcrumbs ───────────────────────────────────────────────────────────
+    {
+        auto bc = std::make_shared<BreadcrumbsNode>();
+        bc->setPath({"Projects", "My DAW", "Session 01", "Tracks"});
+        page->addChild(Card(bc, "Breadcrumbs"));
+    }
+
+    // ── Step indicator ────────────────────────────────────────────────────────
+    {
+        auto step = std::make_shared<StepIndicator>(
+            std::vector<std::string>{"Setup", "Configure", "Export", "Done"});
+        step->setCurrentStep(1);
+        page->addChild(Card(step, "Step Indicator"));
+    }
+
+    return page;
+}
+
 // ── Root layout ───────────────────────────────────────────────────────────────
 
 static FlexNode::Ptr CreateGallery() {
@@ -561,6 +714,8 @@ static FlexNode::Ptr CreateGallery() {
     tabs->addTab("Visualizers", Scrollable(CreateVisualizersTab()));
     tabs->addTab("Palette",     Scrollable(CreatePaletteTab()));
     tabs->addTab("Data",        Scrollable(CreateDataTab()));
+    tabs->addTab("Dropdown",    Scrollable(CreateDropdownTab()));
+    tabs->addTab("Command",     Scrollable(CreateCommandTab()));
 
     body->addChild(tabs);
     root->addChild(body);

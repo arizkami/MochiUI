@@ -512,49 +512,53 @@ void Win32Window::onPaint() {
 
     bool needsMoreRedraw = overlayRoot->needsRedraw();
 
-    // Use VSync (1, 0) for normal use, (0, 0) for high refresh if needed
-    // But (1, 0) is usually safer for UI.
-    swapChain->Present(1, 0);
+    // Present without VSync so the UI thread is never blocked waiting for
+    // vblank (~16 ms). Frame pacing is handled by the MsgWaitForMultipleObjects
+    // call in run(). DXGI_PRESENT_ALLOW_TEARING is not requested here so the
+    // driver may still sync internally when the GPU is ahead.
+    swapChain->Present(0, 0);
 
-    // Wait for the frame to finish to avoid piling up frames,
-    // but only if we are not trying to push maximum framerate.
-    // For UI, waiting is usually okay to prevent 100% CPU/GPU usage.
+    // Signal the fence for this frame and wait only if the GPU is more than
+    // one frame behind (prevents overwriting a buffer still in flight).
     const uint64_t fenceVal = fenceValue;
     commandQueue->Signal(fence.Get(), fenceVal);
     fenceValue++;
-    if (fence->GetCompletedValue() < fenceVal) {
-        fence->SetEventOnCompletion(fenceVal, fenceEvent);
-        WaitForSingleObject(fenceEvent, INFINITE);
+    if (fence->GetCompletedValue() < fenceVal - 1) {
+        fence->SetEventOnCompletion(fenceVal - 1, fenceEvent);
+        WaitForSingleObject(fenceEvent, 8); // max 8 ms — never block the UI thread long
     }
 
     ValidateRect(hwnd, NULL);
 }
 
 void Win32Window::run() {
-    // SW_SHOWNORMAL triggers the OS open animation for both windowed and
-    // aero-borderless (WS_CAPTION is present in both, so DWM animates them).
     ShowWindow(hwnd, SW_SHOWNORMAL);
     UpdateWindow(hwnd);
 
-    // Initial layout
     RECT rect;
     GetClientRect(hwnd, &rect);
     onSize(rect.right - rect.left, rect.bottom - rect.top);
 
     MSG msg = {};
-    while (msg.message != WM_QUIT) {
-        if (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+    while (true) {
+        // Drain ALL pending messages before rendering so rapid click sequences
+        // are fully processed without being interleaved with GPU fence waits.
+        bool hadMessage = false;
+        while (PeekMessageW(&msg, NULL, 0, 0, PM_REMOVE)) {
+            if (msg.message == WM_QUIT) return;
             TranslateMessage(&msg);
             DispatchMessageW(&msg);
-        } else {
-            // Idle time - check if we need to redraw for animations
-            if (overlayRoot && overlayRoot->needsRedraw()) {
-                InvalidateRect(hwnd, NULL, FALSE);
-                // Allow a small sleep to not max out a single core if just animating
-                // MsgWaitForMultipleObjects could be used for better power efficiency.
-            } else {
-                WaitMessage(); // Wait for next message if no animation
-            }
+            hadMessage = true;
+        }
+
+        // Idle: pace animation redraws or sleep until the next input event.
+        if (overlayRoot && overlayRoot->needsRedraw()) {
+            // Use MsgWaitForMultipleObjects so input always wakes us instantly
+            // even during animation; ~120fps cap (8ms) prevents busy-spinning.
+            MsgWaitForMultipleObjects(0, nullptr, FALSE, 8, QS_ALLINPUT);
+            InvalidateRect(hwnd, NULL, FALSE);
+        } else if (!hadMessage) {
+            WaitMessage();
         }
     }
 }

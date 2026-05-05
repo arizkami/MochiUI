@@ -1,0 +1,21 @@
+{
+  "name": "reactui",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "bundle": "bun build index.ts --outfile bundle.js --format=esm --target=bun"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/react": "^19.2.14",
+    "@types/react-reconciler": "^0.33.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "react": "^19.2.5",
+    "react-reconciler": "^0.33.0"
+  }
+}

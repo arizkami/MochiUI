@@ -41,17 +41,17 @@ Size DSLNode::measure(Size /*available*/) {
     }
 
     float w = std::max(0.0f, ink.width());
-    float h = std::max(0.0f, ink.height());
-    if (!(h > 0.5f)) {
-        SkFontMetrics m{};
-        if (fontBold) {
-            SkFont font = FontManager::getInstance().createFont(fontFamily, fontSize, SkFontStyle::Bold());
-            font.getMetrics(&m);
-        } else {
-            FontManager::getInstance().getFontMetrics(fontSize, &m, fontFamily);
-        }
-        h = std::abs(m.fAscent) + std::abs(m.fDescent);
+    // Match `TextNode::measure`: use full line metrics for height so Yoga cross-axis
+    // alignment agrees with where we draw the baseline. Ink bounds are tighter than
+    // the em box and produced visibly high content in flex rows (e.g. navbar brand).
+    SkFontMetrics m{};
+    if (fontBold) {
+        SkFont font = FontManager::getInstance().createFont(fontFamily, fontSize, SkFontStyle::Bold());
+        font.getMetrics(&m);
+    } else {
+        FontManager::getInstance().getFontMetrics(fontSize, &m, fontFamily);
     }
+    float h = std::abs(m.fAscent) + std::abs(m.fDescent);
     if (!(w > 0.5f)) {
         w = FontManager::getInstance().measureText(text, fontSize, nullptr, fontFamily);
     }
@@ -125,20 +125,16 @@ void DSLNode::draw(SkCanvas* canvas) {
         else if (textAlign == TextAlign::Right)
             x = frame.right() - padR - tw;
 
-        const float midY = frame.centerY();
-        float baseline = midY;
-        if (ink.height() > 0.5f)
-            baseline = midY - (ink.top() + ink.bottom()) * 0.5f;
-        else {
-            SkFontMetrics m{};
-            if (fontBold) {
-                SkFont font = FontManager::getInstance().createFont(fontFamily, fontSize, SkFontStyle::Bold());
-                font.getMetrics(&m);
-            } else {
-                FontManager::getInstance().getFontMetrics(fontSize, &m, fontFamily);
-            }
-            baseline = midY - (m.fAscent + m.fDescent) * 0.5f;
+        // Same vertical centering as `TextNode::draw` (baseline from font metrics,
+        // not glyph ink), so fixed-size boxes and flex alignItems:center look correct.
+        SkFontMetrics m{};
+        if (fontBold) {
+            SkFont font = FontManager::getInstance().createFont(fontFamily, fontSize, SkFontStyle::Bold());
+            font.getMetrics(&m);
+        } else {
+            FontManager::getInstance().getFontMetrics(fontSize, &m, fontFamily);
         }
+        const float baseline = frame.centerY() - (m.fAscent + m.fDescent) * 0.5f;
 
         if (letterSpacing <= 0) {
             if (fontBold) {

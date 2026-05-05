@@ -12,7 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 if(MSVC)
   string(REPLACE "/MD"  "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
   string(REPLACE "/MDd" "" CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
-  add_compile_options(/arch:AVX2 /wd4244 /wd4267)
+  # V8 checks __cplusplus on MSVC; ensure it reflects -std:c++20.
+  add_compile_options(/arch:AVX2 /wd4244 /wd4267 /Zc:__cplusplus)
 elseif(UNIX AND NOT APPLE)
   # Skia's prebuilt was built with -fPIC -fvisibility=hidden -mavx2; mirror.
   add_compile_options(-mavx2 -fPIC -fvisibility=hidden -fvisibility-inlines-hidden)
@@ -48,6 +49,52 @@ if(NOT EXISTS ${SKIA_SENTINEL})
   message(STATUS "Skia binaries installed successfully!")
 else()
   message(STATUS "Skia binaries found at ${SKIA_DIR}")
+endif()
+
+# ── V8 prebuilt (Windows x64 monolith) ────────────────────────────────────────
+set(V8_ROOT "")
+if(WIN32)
+  set(V8_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/v8)
+  set(V8_ARCHIVE ${CMAKE_CURRENT_SOURCE_DIR}/external/v8-windows_x64.zip)
+  set(V8_URL "https://github.com/arizkami/Aurelia/releases/download/2026.04/v8-windows_x64.zip")
+  set(V8_SENTINEL ${V8_DIR}/lib/v8_monolith.lib)
+
+  # If a previous configure extracted the zip into `external/prebuilt/{bin,include,lib,...}`
+  # instead of `external/prebuilt/v8/...`, repair the layout once.
+  if(NOT EXISTS "${V8_DIR}/include/v8.h" AND
+     NOT EXISTS "${V8_DIR}/lib/v8_monolith.lib" AND
+     EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/include/v8.h" AND
+     EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/v8/lib/v8_monolith.lib")
+    message(WARNING "V8 was extracted into external/prebuilt/. Moving into external/prebuilt/v8/ ...")
+    file(MAKE_DIRECTORY "${V8_DIR}")
+    foreach(_d bin include lib src third_party)
+      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/${_d}")
+        file(RENAME
+          "${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/${_d}"
+          "${V8_DIR}/${_d}")
+      endif()
+    endforeach()
+  endif()
+
+  if(NOT EXISTS "${V8_DIR}/include/v8.h" OR NOT EXISTS "${V8_DIR}/lib/v8_monolith.lib")
+    message(STATUS "V8 prebuilt not found at ${V8_DIR}. Downloading from ${V8_URL}...")
+    file(DOWNLOAD ${V8_URL} ${V8_ARCHIVE} SHOW_PROGRESS STATUS V8_DOWNLOAD_STATUS)
+    list(GET V8_DOWNLOAD_STATUS 0 V8_STATUS_CODE)
+    if(NOT V8_STATUS_CODE EQUAL 0)
+      message(FATAL_ERROR "Failed to download V8 from ${V8_URL}")
+    endif()
+    message(STATUS "Extracting V8 archive into ${V8_DIR} ...")
+    file(MAKE_DIRECTORY "${V8_DIR}")
+    file(ARCHIVE_EXTRACT INPUT ${V8_ARCHIVE} DESTINATION "${V8_DIR}")
+    file(REMOVE ${V8_ARCHIVE})
+  endif()
+
+  set(V8_ROOT "${V8_DIR}")
+  message(STATUS "V8 root: ${V8_ROOT}")
+
+  add_library(AureliaV8 INTERFACE)
+  target_include_directories(AureliaV8 INTERFACE "${V8_ROOT}/include")
+  target_link_libraries(AureliaV8 INTERFACE "${V8_ROOT}/lib/v8_monolith.lib")
 endif()
 
 include_directories(
@@ -359,6 +406,50 @@ target_link_libraries(AureliaKit_DSL
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
+#  AureliaKit.JavaScriptEngine  —  V8 embed + native bindings
+# ══════════════════════════════════════════════════════════════════════════════
+set(JAVASCRIPT_ENGINE_SOURCES
+    src/javascript/JavaScriptEngine.cpp
+)
+
+add_library(AureliaKit_JavaScriptEngine SHARED ${JAVASCRIPT_ENGINE_SOURCES})
+set_target_properties(AureliaKit_JavaScriptEngine PROPERTIES
+    OUTPUT_NAME "AureliaKit.JavaScriptEngine"
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
+target_compile_definitions(AureliaKit_JavaScriptEngine
+    PUBLIC  ${MOCHIKIT_DEFINITIONS}
+    PRIVATE AUKJS_BUILD_SHARED
+)
+target_link_libraries(AureliaKit_JavaScriptEngine
+    PUBLIC  AureliaKit_GraphicComponent
+    PRIVATE AureliaV8
+            dbghelp.lib
+            winmm.lib
+)
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  Aurelia.React  —  JS reconciler bridge
+# ══════════════════════════════════════════════════════════════════════════════
+set(AURELIA_REACT_SOURCES
+    src/react/AureliaReact.cpp
+)
+
+add_library(Aurelia_React SHARED ${AURELIA_REACT_SOURCES})
+set_target_properties(Aurelia_React PROPERTIES
+    OUTPUT_NAME "Aurelia.React"
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
+target_compile_definitions(Aurelia_React
+    PUBLIC  ${MOCHIKIT_DEFINITIONS}
+    PRIVATE AUR_BUILD_SHARED
+)
+target_link_libraries(Aurelia_React
+    PUBLIC AureliaKit_GraphicComponent
+           AureliaKit_JavaScriptEngine
+)
+
+# ══════════════════════════════════════════════════════════════════════════════
 #  AureliaKit.DirectAudioEngine  —  WASAPI / DirectSound audio (Windows-only)
 # ══════════════════════════════════════════════════════════════════════════════
 if(WIN32)
@@ -405,3 +496,6 @@ if(WIN32)
   add_subdirectory(example/Borderless)
   add_subdirectory(example/DSLDemo)
 endif()
+
+# ── Frameworks / modules ─────────────────────────────────────────────────────
+add_subdirectory(framework/MikoUI)

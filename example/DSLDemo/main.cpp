@@ -4,33 +4,12 @@
 #include <AUKDSL.hpp>
 
 #include <windows.h>
-#include <filesystem>
-#include <fstream>
 #include <string>
 
 using namespace AureliaUI;
 
-// Locate `ui/navbar.yml` relative to the executable. CMake stages the demo's
-// `ui/` folder next to the binary as a post-build step, so this resolves at
-// runtime regardless of where the user launches it from.
-static std::string ResolveNavbarPath() {
-    namespace fs = std::filesystem;
-
-    char exePath[MAX_PATH] = {};
-    GetModuleFileNameA(nullptr, exePath, MAX_PATH);
-    fs::path exeDir = fs::path(exePath).parent_path();
-
-    const fs::path candidates[] = {
-        exeDir / "ui" / "navbar.yml",
-        exeDir / "DSLDemo" / "ui" / "navbar.yml",
-        exeDir.parent_path() / "example" / "DSLDemo" / "ui" / "navbar.yml",
-        fs::current_path() / "example" / "DSLDemo" / "ui" / "navbar.yml",
-    };
-    for (const auto& p : candidates) {
-        if (fs::exists(p)) return p.string();
-    }
-    return (exeDir / "ui" / "navbar.yml").string();
-}
+#include <core/ResourceManager.hpp>
+#include <DSLDemoResources.hpp>
 
 // Wrap the YAML-driven navbar inside a full-page chrome that mirrors the
 // dark colour scheme requested by the YAML so the tree has a sensible
@@ -41,24 +20,20 @@ static FlexNode::Ptr BuildRoot() {
     root->style.setWidthFull();
     root->style.setHeightFull();
 
-    const std::string yamlPath = ResolveNavbarPath();
-    if (auto navbar = DSL::loadFromFile(yamlPath)) {
-        root->addChild(navbar);
+    InitDSLDemoResources();
+    const std::string ui = ResourceManager::getInstance().getResourceString("res://ui/container.yml");
+    if (!ui.empty()) {
+        if (auto tree = DSL::loadFromString(ui)) {
+            root->addChild(tree);
+            return root;
+        }
     } else {
-        auto err = std::make_shared<TextNode>(
-            "Failed to load DSL document: " + yamlPath);
-        err->color    = AUKColor::Hex("#ff6b6b");
+        auto err = std::make_shared<TextNode>("Failed to load res://ui/container.yml");
+        err->color = AUKColor::Hex("#ff6b6b");
         err->fontSize = 14.0f;
         err->style.setPadding(16);
         root->addChild(err);
     }
-
-    auto body = std::make_shared<TextNode>(
-        "  Navbar above is built entirely from `ui/navbar.yml` via AUKDSL.");
-    body->color    = AUKColor::Hex("#9ca3af");
-    body->fontSize = 13.0f;
-    body->style.setPadding(16);
-    root->addChild(body);
 
     return root;
 }

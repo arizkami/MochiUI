@@ -3,7 +3,31 @@ set(DSL_DEMO_SOURCES
     ../app.rc
 )
 
+# ── DSLDemo resource bundle (res://ui/*.xml) ─────────────────────────────────
+set(DSLDEMO_RESOURCES_XML        ${CMAKE_CURRENT_SOURCE_DIR}/resource.xml)
+set(DSLDEMO_GENERATED_RES_H      ${CMAKE_CURRENT_BINARY_DIR}/generated/DSLDemoResources.hpp)
+set(DSLDEMO_GENERATED_RES_CPP    ${CMAKE_CURRENT_BINARY_DIR}/generated/DSLDemoResources.cpp)
+
+add_custom_command(
+    OUTPUT ${DSLDEMO_GENERATED_RES_H} ${DSLDEMO_GENERATED_RES_CPP}
+    COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/gen_resources.py
+            ${DSLDEMO_RESOURCES_XML} ${DSLDEMO_GENERATED_RES_H} ${DSLDEMO_GENERATED_RES_CPP}
+            InitDSLDemoResources
+    DEPENDS ${DSLDEMO_RESOURCES_XML}
+            ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/gen_resources.py
+            ${CMAKE_CURRENT_SOURCE_DIR}/ui/navbar.yml
+            ${CMAKE_CURRENT_SOURCE_DIR}/ui/container.yml
+    COMMENT "Generating DSLDemo binary resources from ${DSLDEMO_RESOURCES_XML}"
+)
+
+list(APPEND DSL_DEMO_SOURCES ${DSLDEMO_GENERATED_RES_CPP})
+
 add_executable(DSLDemo WIN32 ${DSL_DEMO_SOURCES})
+
+target_include_directories(DSLDemo PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}/generated
+)
 
 target_link_libraries(DSLDemo PRIVATE
     AureliaKit_GraphicComponent

@@ -1,0 +1,28 @@
+{/* AureliaUI docs — MDX flavor for static site generators (Docusaurus, Nextra, etc.) */}
+
+export const meta = {
+  title: 'AureliaUI Documentation',
+  description: 'C++ desktop UI with Skia, Yoga, optional AUKDSL and V8/React bridge.',
+};
+
+# AureliaUI
+
+AureliaUI is a **C++ desktop UI toolkit** for Windows (Linux backend planned) using **Skia** for drawing and **Yoga** for flex layout.
+
+## Doc sets
+
+This folder contains **MDX** variants of selected guides (JSX-capable). Plain Markdown equivalents live one level up:
+
+- [Introduction](../Introduction.md)
+- [Getting Started](../GettingStarted.md)
+- [API index](../API.md)
+
+### Features covered in MDX
+
+- [AUKDSL](./auk-dsl.mdx) — YAML/CSS declarative UI
+- [JavaScript & React bridge](./javascript-react.mdx) — `AureliaKit.JavaScriptEngine`, `Aurelia.React`
+- [MikoUI](./mikoui.mdx) — minimal app helper
+
+### Build & automation
+
+- [Build and CI](../BuildAndCI.md) — `build.ps1`, prebuilts, GitHub Actions

@@ -91,3 +91,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     return 0;
 }
 ```
+
+## Next steps
+
+- **Declarative UI**: define screens in YAML with [AUKDSL](AUKDSL.md) (`example/DSLDemo`).
+- **Embedded assets**: pack UI text with `res://` — [Resources](Resources.md).
+- **Scripted UI (Windows)**: V8 + optional React reconciler — [JavaScript and React](JavaScriptAndReact.md) and [MikoUI](MikoUI.md).
+- **Build from CI or clean machine**: [Build and CI](BuildAndCI.md).

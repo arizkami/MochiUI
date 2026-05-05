@@ -1,0 +1,42 @@
+{/* AUKDSL — MDX */}
+
+export const meta = {
+  title: 'AUKDSL',
+  description: 'YAML/CSS declarative UI loader for AureliaUI.',
+};
+
+# AUKDSL
+
+AUKDSL parses YAML into a `FlexNode` tree via `AureliaUI::DSL::loadFromFile` / `loadFromString`.
+
+## Quick example
+
+```yaml
+root:
+  type: div
+  props:
+    style:
+      display: "flex"
+      flexDirection: "column"
+      padding: "16"
+  children:
+    - type: span
+      props:
+        style: { color: "#e2e8f0" }
+        text: "Hello from DSL"
+```
+
+```cpp
+#include <AUKDSL.hpp>
+auto root = AureliaUI::DSL::loadFromFile("ui/screen.yml");
+window.setRoot(root);
+```
+
+## Style as CSS string
+
+`props.style` can be a **string** of CSS declarations; libcss parses it into the same internal fields as the YAML map.
+
+## See also
+
+- Full reference: [AUKDSL.md](../AUKDSL.md)
+- Layout: [Layout.md](../Layout.md)

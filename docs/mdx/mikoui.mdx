@@ -1,0 +1,21 @@
+{/* MikoUI — MDX */}
+
+export const meta = {
+  title: 'MikoUI',
+  description: 'Minimal header-only helper for Win32Window + JS + React mount.',
+};
+
+# MikoUI
+
+Include `framework/MikoUI/include/MikoUI.hpp` and link the `MikoUI` CMake INTERFACE target.
+
+```cpp
+#include <MikoUI.hpp>
+
+int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
+  AureliaUI::MikoUI::AppConfig cfg;
+  return AureliaUI::MikoUI::Run(cfg, yourBundleSource, "app.js");
+}
+```
+
+Full notes: [MikoUI.md](../MikoUI.md)

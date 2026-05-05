@@ -1,0 +1,27 @@
+{/* JavaScript + React bridge — MDX */}
+
+export const meta = {
+  title: 'JavaScript & Aurelia.React',
+  description: 'V8 embed, global AureliaUI bindings, RenderReactApp entry point.',
+};
+
+# JavaScript & Aurelia.React
+
+## DLLs
+
+- `AureliaKit.JavaScriptEngine.dll` — V8 + `JavaScriptEngine` + native `globalThis.AureliaUI`
+- `Aurelia.React.dll` — `RenderReactApp(engine, script, filename)`
+
+## Minimal imperative script
+
+```js
+const root = AureliaUI.createNode("column");
+AureliaUI.setStyle(root, "backgroundColor", "#0b0f14");
+AureliaUI.setRoot(root);
+```
+
+## React reconciler
+
+The TypeScript package in `modules/reactui` uses **react-reconciler** to call the same native methods. Build a bundle (e.g. `bun run bundle`) and pass the string to `RenderReactApp`.
+
+Details: [JavaScriptAndReact.md](../JavaScriptAndReact.md)

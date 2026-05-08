@@ -11,7 +11,14 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\" -Force)",
       "Bash(Select-Object Name, PSIsContainer)",
       "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\\\\src\" -Recurse -Directory | ForEach-Object { Write-Output $_.FullName } | Sort-Object)",
-      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\\\\include\" -Recurse -Directory | ForEach-Object { Write-Output $_.FullName } | Sort-Object)"
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\\\\include\" -Recurse -Directory | ForEach-Object { Write-Output $_.FullName } | Sort-Object)",
+      "Bash(bun --version)",
+      "Bash(New-Item -ItemType Directory -Force \"C:\\\\Users\\\\sysadmin\\\\Documents\\\\Daw2\\\\example\\\\ReactUI\")",
+      "Bash(Out-Null)",
+      "Bash(bun run *)",
+      "Bash(python scripts/gen_resources.py example/ReactUI/resource.xml /tmp/test.hpp /tmp/test.cpp InitReactUIResources)",
+      "Read(//tmp/**)",
+      "PowerShell(Get-Command *)"
     ]
   }
 }

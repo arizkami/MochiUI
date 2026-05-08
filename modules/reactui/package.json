@@ -4,7 +4,8 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "bundle": "bun build index.ts --outfile bundle.js --format=esm --target=bun"
+    "bundle": "bun build index.ts --outfile bundle.js --format=esm --target=bun",
+    "bundle:demo": "bun build App.tsx --outfile ../../example/ReactUI/bundle.js --format=iife --target=node --minify-whitespace"
   },
   "devDependencies": {
     "@types/bun": "latest",

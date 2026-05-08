@@ -95,6 +95,24 @@ if(WIN32)
   add_library(AureliaV8 INTERFACE)
   target_include_directories(AureliaV8 INTERFACE "${V8_ROOT}/include")
   target_link_libraries(AureliaV8 INTERFACE "${V8_ROOT}/lib/v8_monolith.lib")
+  # The prebuilt v8_monolith was compiled with pointer compression + sandbox
+  # enabled.  Every embedder TU that includes V8 headers must see the same
+  # flags or the runtime config-mismatch check fires a fatal SIGTRAP.
+  target_compile_definitions(AureliaV8 INTERFACE
+      V8_COMPRESS_POINTERS
+      V8_COMPRESS_POINTERS_IN_SHARED_CAGE
+  )
+
+  # Copy V8 runtime DLLs and ICU data file to the binary dir so every
+  # executable can find them without a manual PATH adjustment.
+  file(GLOB V8_RUNTIME_FILES
+      "${V8_DIR}/bin/*.dll"
+      "${V8_DIR}/bin/*.dat"
+  )
+  if(V8_RUNTIME_FILES)
+    file(COPY ${V8_RUNTIME_FILES} DESTINATION "${CMAKE_BINARY_DIR}")
+    message(STATUS "V8 runtime files staged to ${CMAKE_BINARY_DIR}")
+  endif()
 endif()
 
 include_directories(
@@ -495,6 +513,7 @@ if(WIN32)
   add_subdirectory(example/Mixer)
   add_subdirectory(example/Borderless)
   add_subdirectory(example/DSLDemo)
+  add_subdirectory(example/ReactUI)
 endif()
 
 # ── Frameworks / modules ─────────────────────────────────────────────────────

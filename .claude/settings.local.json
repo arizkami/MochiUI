@@ -18,7 +18,8 @@
       "Bash(bun run *)",
       "Bash(python scripts/gen_resources.py example/ReactUI/resource.xml /tmp/test.hpp /tmp/test.cpp InitReactUIResources)",
       "Read(//tmp/**)",
-      "PowerShell(Get-Command *)"
+      "PowerShell(Get-Command *)",
+      "Bash(powershell -File build.ps1)"
     ]
   }
 }

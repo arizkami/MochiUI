@@ -16,8 +16,8 @@ public:
     bool vertical = false;
     std::function<void(float)> onValueChange;
 
-    AUKColor trackColor = Theme::Card;
-    AUKColor fillColor = Theme::Accent;
+    AUKColor trackColor = AUKColor::RGB(200, 200, 200);   // light gray track
+    AUKColor fillColor  = AUKColor::RGB(0, 120, 215);     // blue fill
     AUKColor thumbColor = AUKColor::white();
 
     float trackHeight = 4.0f;

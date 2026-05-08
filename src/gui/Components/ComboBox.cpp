@@ -107,7 +107,7 @@ void ComboBox::openDropdown() {
     dropdownOverlay->dropdownRect = getDropdownRect();
     dropdownOverlay->items = &items;
     // Use Theme::Sidebar as dropdown background — always fully opaque
-    dropdownOverlay->backgroundColor = Theme::Sidebar;
+    dropdownOverlay->backgroundColor = backgroundColor;
     dropdownOverlay->borderColor = borderColor;
     dropdownOverlay->textColor = textColor;
     dropdownOverlay->accentColor = accentColor;
@@ -168,7 +168,7 @@ void ComboBox::draw(SkCanvas* canvas) {
     arrowPaint.setAntiAlias(true);
     arrowPaint.setStyle(SkPaint::kStroke_Style);
     arrowPaint.setStrokeWidth(1.5f);
-    arrowPaint.setColor(Theme::TextSecondary);
+    arrowPaint.setColor(AUKColor::RGB(100, 100, 100));
 
     float arrowSize = 4.0f;
     float arrowCenterX = frame.right() - 15.0f;

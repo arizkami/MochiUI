@@ -242,9 +242,12 @@ public:
     bool isPressed = false;
     bool isFocused = false;
     bool enableHover = false;
-    // Color drawn on top of the background when isHovered && enableHover.
-    // Override per-node for theme-aware hover tints.
     AUKColor hoverOverlayColor = AUKColor::RGB(255, 255, 255, 40);
+
+    // Uniform border drawn around the node frame (independent of per-edge DSL borders).
+    // borderWidth = 0 means no border (default).
+    AUKColor borderColor;   // defaults to transparent — no border
+    float    borderWidth = 0.0f;
     std::function<void()> onClick;
 
     float getLayoutPadding(YGEdge edge) const { return YGNodeLayoutGetPadding(ygNode, edge); }
@@ -375,20 +378,33 @@ public:
     }
 
     virtual void drawSelf(SkCanvas* canvas) {
+        float r = style.borderRadius;
+
         if (SkColorGetA(style.backgroundColor) > 0) {
             SkPaint paint;
             paint.setAntiAlias(true);
             paint.setColor(style.backgroundColor);
-            if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, paint);
-            else canvas->drawRect(frame, paint);
+            if (r > 0) canvas->drawRoundRect(frame, r, r, paint);
+            else       canvas->drawRect(frame, paint);
         }
 
         if (enableHover && isHovered) {
             SkPaint hoverPaint;
             hoverPaint.setAntiAlias(true);
             hoverPaint.setColor(hoverOverlayColor);
-            if (style.borderRadius > 0) canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, hoverPaint);
-            else canvas->drawRect(frame, hoverPaint);
+            if (r > 0) canvas->drawRoundRect(frame, r, r, hoverPaint);
+            else       canvas->drawRect(frame, hoverPaint);
+        }
+
+        if (borderWidth > 0.0f && borderColor.a() > 0) {
+            SkPaint bp;
+            bp.setAntiAlias(true);
+            bp.setColor(borderColor);
+            bp.setStyle(SkPaint::kStroke_Style);
+            bp.setStrokeWidth(borderWidth);
+            SkRect inset = frame.makeInset(borderWidth * 0.5f, borderWidth * 0.5f);
+            if (r > 0) canvas->drawRoundRect(inset, r, r, bp);
+            else       canvas->drawRect(inset, bp);
         }
     }
 

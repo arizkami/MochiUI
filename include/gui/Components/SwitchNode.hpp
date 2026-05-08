@@ -16,10 +16,10 @@ public:
 
     std::string label;
     bool isOn = false;
-    AUKColor activeColor = Theme::Accent;
-    AUKColor inactiveColor = AUKColor::RGB(150, 150, 150);
-    AUKColor thumbColor = AUKColor::white();
-    AUKColor labelColor = Theme::TextPrimary;
+    AUKColor activeColor   = AUKColor::RGB(0, 120, 215);     // blue when on
+    AUKColor inactiveColor = AUKColor::RGB(204, 204, 204);   // light gray when off
+    AUKColor thumbColor    = AUKColor::white();
+    AUKColor labelColor    = AUKColor::black();
 
     float fontSize = 14.0f;
     float switchWidth = 40.0f;

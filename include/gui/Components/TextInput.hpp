@@ -20,11 +20,11 @@ public:
     std::function<void(const std::string&)> onChanged;
     std::function<void()> onEnter;
 
-    AUKColor backgroundColor = Theme::Card;
-    AUKColor borderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
-    AUKColor focusColor = Theme::Accent;
-    AUKColor textColor = Theme::TextPrimary;
-    AUKColor placeholderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(120));
+    AUKColor backgroundColor  = AUKColor::white();
+    AUKColor borderColor      = AUKColor::RGB(169, 169, 169);   // 1px solid gray border
+    AUKColor focusColor       = AUKColor::RGB(0, 120, 215);     // blue focus ring
+    AUKColor textColor        = AUKColor::black();
+    AUKColor placeholderColor = AUKColor::RGB(128, 128, 128);
 
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;

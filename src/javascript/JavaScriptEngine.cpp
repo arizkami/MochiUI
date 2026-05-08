@@ -245,7 +245,28 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
     if (key == "overflow")     { node.style.overflowHidden = (val == "hidden"); return true; }
 
     if (key == "backgroundColor") {
-        node.style.backgroundColor = AUKColor::Hex(val.c_str());
+        AUKColor c = AUKColor::parse(val);
+        node.style.backgroundColor = c;
+        // Also push to component-specific background fields so explicit colors override defaults
+        if (auto* btn = dynamic_cast<ButtonNode*>(&node)) {
+            btn->normalColor = c;
+            btn->useThemeColors = false;
+        }
+        if (auto* ti = dynamic_cast<TextInput*>(&node)) ti->backgroundColor = c;
+        return true;
+    }
+    if (key == "borderColor") {
+        AUKColor c = AUKColor::parse(val);
+        node.borderColor = c;   // base FlexNode — draws for any container
+        if (auto* btn = dynamic_cast<ButtonNode*>(&node)) btn->borderColor = c;
+        if (auto* ti  = dynamic_cast<TextInput*>(&node))  ti->borderColor  = c;
+        return true;
+    }
+    if (key == "borderWidth") {
+        if (pf(f)) {
+            node.borderWidth = f;
+            if (auto* btn = dynamic_cast<ButtonNode*>(&node)) btn->borderWidth = f;
+        }
         return true;
     }
     if (key == "display") {
@@ -281,9 +302,12 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
     if (key == "right")  { if (pf(f)) node.style.setPosition(YGEdgeRight,  f); return true; }
     if (key == "bottom") { if (pf(f)) node.style.setPosition(YGEdgeBottom, f); return true; }
 
-    // Text-specific style properties — dispatch if node is a TextNode
+    // Text / button colour
     if (key == "color") {
-        if (auto* t = dynamic_cast<TextNode*>(&node)) t->color = AUKColor::Hex(val.c_str());
+        AUKColor c = AUKColor::parse(val);
+        if (auto* t   = dynamic_cast<TextNode*>(&node))   t->color = c;
+        if (auto* btn = dynamic_cast<ButtonNode*>(&node)) { btn->textColor = c; btn->useThemeColors = false; }
+        if (auto* ti  = dynamic_cast<TextInput*>(&node))  ti->textColor = c;
         return true;
     }
     if (key == "fontSize") {
@@ -355,7 +379,7 @@ static void ApiSetProp(const v8::FunctionCallbackInfo<v8::Value>& args) {
         if      (key == "text")       tn->text = val;
         else if (key == "fontSize")   { if (sscanf(val.c_str(), "%f", &f) == 1) tn->fontSize = f; }
         else if (key == "fontWeight") tn->fontBold = (val == "bold" || val == "700");
-        else if (key == "color")      tn->color = AUKColor::Hex(val.c_str());
+        else if (key == "color")      tn->color = AUKColor::parse(val);
         else if (key == "textAlign") {
             if      (val == "center") tn->textAlign = TextAlign::Center;
             else if (val == "right")  tn->textAlign = TextAlign::Right;

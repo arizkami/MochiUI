@@ -12,18 +12,19 @@ public:
         YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
         enableHover = true;
     }
-    std::string label = "Button";
-    AUKColor textColor = Theme::TextPrimary;
-    AUKColor normalColor = Theme::Card;
+    std::string label    = "Button";
+    AUKColor textColor   = AUKColor::black();
+    AUKColor normalColor = AUKColor::RGB(235, 235, 235);  // browser button gray
+    AUKColor hoverColor  = AUKColor::RGB(210, 210, 210);
+    AUKColor pressedColor= AUKColor::RGB(188, 188, 188);
+    AUKColor borderColor = AUKColor::RGB(168, 168, 168);  // 1px border like browser
+    float borderWidth    = 1.0f;
+    float borderRadius   = 3.0f;
+    float fontSize       = 14.0f;
+    bool  labelBold      = false;
 
-    // If true, will use Theme::* colors dynamically in draw()
-    bool useThemeColors = true;
-
-    AUKColor hoverColor = AUKColor::RGB(60, 60, 60);
-    AUKColor pressedColor = AUKColor::RGB(40, 40, 40);
-    float borderRadius = -1.0f; // -1 to use Theme::BorderRadius
-    float fontSize = 14.0f;
-    bool labelBold = false;
+    // When true, overrides the fields above with active Theme colors.
+    bool useThemeColors  = false;
 
     Size measure(Size available) override {
         SkRect bounds = SkRect::MakeEmpty();
@@ -33,22 +34,26 @@ public:
         } else {
             FontManager::getInstance().measureText(label, fontSize, &bounds);
         }
-        float w = bounds.width() + 30.0f;
-        float h = bounds.height() + 16.0f;
+        float w = bounds.width() + 16.0f;   // ~8px each side
+        float h = bounds.height() + 8.0f;   // ~4px each side
 
-        if (style.widthMode == SizingMode::Fixed) w = style.width;
+        if (style.widthMode  == SizingMode::Fixed) w = style.width;
         if (style.heightMode == SizingMode::Fixed) h = style.height;
 
         return { w, h };
     }
 
     void draw(SkCanvas* canvas) override {
-        AUKColor bg = normalColor;
+        AUKColor bg      = normalColor;
         AUKColor textCol = textColor;
+        AUKColor border  = borderColor;
+        float r = borderRadius;
 
         if (useThemeColors) {
-            bg = Theme::Card;
+            bg      = Theme::Card;
             textCol = Theme::TextPrimary;
+            border  = AUKColor(Theme::Border);
+            r       = Theme::BorderRadius;
         }
 
         if (isPressed) {
@@ -57,13 +62,24 @@ public:
             bg = useThemeColors ? AUKColor(Theme::Accent).withAlpha(uint8_t(100)) : hoverColor;
         }
 
-        float r = (borderRadius < 0) ? Theme::BorderRadius : borderRadius;
-
+        // background
         SkPaint bgPaint;
         bgPaint.setAntiAlias(true);
         bgPaint.setColor(bg);
         canvas->drawRoundRect(frame, r, r, bgPaint);
 
+        // border
+        if (borderWidth > 0.0f && border.a() > 0) {
+            SkPaint borderPaint;
+            borderPaint.setAntiAlias(true);
+            borderPaint.setColor(border);
+            borderPaint.setStyle(SkPaint::kStroke_Style);
+            borderPaint.setStrokeWidth(borderWidth);
+            SkRect inset = frame.makeInset(borderWidth * 0.5f, borderWidth * 0.5f);
+            canvas->drawRoundRect(inset, r, r, borderPaint);
+        }
+
+        // label
         SkPaint textPaint;
         textPaint.setAntiAlias(true);
         textPaint.setColor(textCol);

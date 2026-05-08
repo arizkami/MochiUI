@@ -15,11 +15,11 @@ public:
 
     SkRect dropdownRect = SkRect::MakeEmpty();
     const std::vector<std::string>* items = nullptr;
-    AUKColor backgroundColor = Theme::Sidebar; // solid; must be opaque
-    AUKColor borderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
-    AUKColor textColor = Theme::TextPrimary;
-    AUKColor accentColor = Theme::Accent;
-    float fontSize = Theme::FontNormal;
+    AUKColor backgroundColor = AUKColor::white();       // solid; must be opaque
+    AUKColor borderColor     = AUKColor::RGB(169, 169, 169);
+    AUKColor textColor       = AUKColor::black();
+    AUKColor accentColor     = AUKColor::RGB(0, 120, 215);
+    float fontSize   = Theme::FontNormal;
     float itemHeight = Theme::ControlHeight;
     int hoveredItemIndex = -1;
     std::function<void(int)> onPick; // idx >= 0 = selection, -1 = dismiss
@@ -48,10 +48,10 @@ public:
 
     void addItem(const std::string& item) { items.push_back(item); }
 
-    AUKColor backgroundColor = Theme::Card;
-    AUKColor borderColor = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
-    AUKColor textColor = Theme::TextPrimary;
-    AUKColor accentColor = Theme::Accent;
+    AUKColor backgroundColor = AUKColor::white();
+    AUKColor borderColor     = AUKColor::RGB(169, 169, 169);
+    AUKColor textColor       = AUKColor::black();
+    AUKColor accentColor     = AUKColor::RGB(0, 120, 215);
     float fontSize = Theme::FontNormal;
 
     void draw(SkCanvas* canvas) override;

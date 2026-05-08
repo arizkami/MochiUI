@@ -18,7 +18,7 @@ public:
     }
     std::string text;
     std::string fontFamily = FontManager::DEFAULT_FONT;
-    AUKColor color = Theme::TextPrimary;
+    AUKColor color = AUKColor::black();
     float fontSize = 16.0f;
     TextAlign textAlign = TextAlign::Left;
     // Uses Segoe UI bold (SkFontStyle::Bold) when true; otherwise shaped default path.

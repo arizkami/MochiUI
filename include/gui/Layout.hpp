@@ -38,10 +38,12 @@ public:
     void setMinWidthPercent(float p) { minWidth = -1e9f; minWidthPercent = p; }
     void setMinHeightPercent(float p) { minHeight = -1e9f; minHeightPercent = p; }
 
-    void setFlex(float f) { flex = f; }
-    void setFlexGrow(float f) { flex = f; }
+    // flex shorthand: React Native semantics (flexGrow:f, flexShrink:1, flexBasis:0)
+    void setFlex(float f) { flex = f; flexIsShorthand = true; }
+    // individual axes: do NOT reset flexBasis
+    void setFlexGrow(float f)   { flexGrow_ = f; flexIsShorthand = false; }
     void setFlexShrink(float f) { flexShrink = f; }
-    void setFlexBasis(float f) { flexBasis = f; }
+    void setFlexBasis(float f)  { flexBasis = f; flexIsShorthand = false; }
 
     void setPadding(float p) { paddingLeft = paddingTop = paddingRight = paddingBottom = p; }
     void setPadding(float h, float v) { paddingLeft = paddingRight = h; paddingTop = paddingBottom = v; }
@@ -96,21 +98,26 @@ public:
             YGNodeStyleSetHeightAuto(node);
         }
 
-        YGNodeStyleSetFlexGrow(node, flex);
-        YGNodeStyleSetFlexShrink(node, flexShrink);
+        // flex: shorthand uses Yoga's combined setter (basis=0, RN semantics).
+        // Individual flexGrow/flexShrink/flexBasis use separate setters.
+        if (flexIsShorthand) {
+            YGNodeStyleSetFlex(node, flex);
+        } else {
+            YGNodeStyleSetFlexGrow(node, flexGrow_);
+            YGNodeStyleSetFlexShrink(node, flexShrink);
+            if (flexBasis < 0) YGNodeStyleSetFlexBasisAuto(node);
+            else               YGNodeStyleSetFlexBasis(node, flexBasis);
+        }
 
-        if (flexBasis < 0) YGNodeStyleSetFlexBasisAuto(node);
-        else YGNodeStyleSetFlexBasis(node, flexBasis);
+        YGNodeStyleSetPadding(node, YGEdgeLeft,   paddingLeft);
+        YGNodeStyleSetPadding(node, YGEdgeTop,    paddingTop);
+        YGNodeStyleSetPadding(node, YGEdgeRight,  paddingRight);
+        YGNodeStyleSetPadding(node, YGEdgeBottom, paddingBottom);
 
-        YGNodeStyleSetPadding(node, YGEdgeLeft, paddingLeft != 0 ? paddingLeft : padding);
-        YGNodeStyleSetPadding(node, YGEdgeTop, paddingTop != 0 ? paddingTop : padding);
-        YGNodeStyleSetPadding(node, YGEdgeRight, paddingRight != 0 ? paddingRight : padding);
-        YGNodeStyleSetPadding(node, YGEdgeBottom, paddingBottom != 0 ? paddingBottom : padding);
-
-        YGNodeStyleSetMargin(node, YGEdgeLeft, marginLeft != 0 ? marginLeft : margin);
-        YGNodeStyleSetMargin(node, YGEdgeTop, marginTop != 0 ? marginTop : margin);
-        YGNodeStyleSetMargin(node, YGEdgeRight, marginRight != 0 ? marginRight : margin);
-        YGNodeStyleSetMargin(node, YGEdgeBottom, marginBottom != 0 ? marginBottom : margin);
+        YGNodeStyleSetMargin(node, YGEdgeLeft,   marginLeft);
+        YGNodeStyleSetMargin(node, YGEdgeTop,    marginTop);
+        YGNodeStyleSetMargin(node, YGEdgeRight,  marginRight);
+        YGNodeStyleSetMargin(node, YGEdgeBottom, marginBottom);
 
         YGNodeStyleSetGap(node, YGGutterAll, gap);
 
@@ -132,13 +139,11 @@ public:
             if (bottom != -1e9f) YGNodeStyleSetPosition(node, YGEdgeBottom, bottom);
         }
 
-        if (minWidth != -1e9f) YGNodeStyleSetMinWidth(node, minWidth);
+        if (minWidth != -1e9f)       YGNodeStyleSetMinWidth(node, minWidth);
         else if (minWidthPercent != 0) YGNodeStyleSetMinWidthPercent(node, minWidthPercent);
-        else if (widthMode == SizingMode::Fixed) YGNodeStyleSetMinWidth(node, width);
 
-        if (minHeight != -1e9f) YGNodeStyleSetMinHeight(node, minHeight);
+        if (minHeight != -1e9f)       YGNodeStyleSetMinHeight(node, minHeight);
         else if (minHeightPercent != 0) YGNodeStyleSetMinHeightPercent(node, minHeightPercent);
-        else if (heightMode == SizingMode::Fixed) YGNodeStyleSetMinHeight(node, height);
     }
 
     float width = 0;
@@ -151,12 +156,12 @@ public:
     float minWidthPercent = 0;
     float minHeightPercent = 0;
 
-    float flex = 0;
+    float flex = 0;          // shorthand value (used when flexIsShorthand)
+    float flexGrow_ = 0;     // individual flexGrow (used when !flexIsShorthand)
+    bool  flexIsShorthand = false;
     float flexShrink = 1.0f;
     float flexBasis = -1.0f; // -1 for Auto
 
-    float padding = 0;
-    float margin = 0;
     float gap = 0;
 
     float paddingLeft = 0;

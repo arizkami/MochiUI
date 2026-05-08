@@ -632,11 +632,13 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 }
             }
             return 0;
+        case WM_LBUTTONDBLCLK: // fall-through: treat double-click as a regular press
         case WM_LBUTTONDOWN:
             if (win && effectiveRoot) {
                 using namespace events;
                 PointerButton btns = pointerButtonsFromKeyState() | PointerButton::Primary;
                 PointerEvent e = pointerEventFromClient(lp, btns, PointerButton::Primary, true);
+                if (msg == WM_LBUTTONDBLCLK) e.clickCount = 2;
                 if (dispatchPointerPrimaryDown(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }

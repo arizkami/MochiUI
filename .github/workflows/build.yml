@@ -164,7 +164,6 @@ jobs:
             include/SPHXJavaScriptEngine.hpp
             include/SphereReact.hpp
             include/SphereVUE.hpp
-            include/AureleaVUE.hpp
             include/audio/Streaming.hpp
             include/core/**
             include/gui/**

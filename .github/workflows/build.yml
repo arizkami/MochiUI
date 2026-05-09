@@ -29,6 +29,15 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install JS modules (workspace)
+        working-directory: modules
+        run: bun install
+
       # ── Skia prebuilt cache ───────────────────────────────────────────────────
       # Cache the downloaded+extracted Skia binaries so we don't re-download
       # on every run. Cache key is tied to CMakeLists.txt (URL lives there).
@@ -47,10 +56,6 @@ jobs:
         with:
           path: external/prebuilt/v8
           key: v8-${{ hashFiles('CMakeLists.txt') }}
-
-      # ── Code generation ───────────────────────────────────────────────────────
-      - name: Generate theme header
-        run: python scripts/gen_theme.py
 
       # ── CMake configure ───────────────────────────────────────────────────────
       # Prebuilt downloads (Skia/V8 if cache miss) happen via CMake file(DOWNLOAD …).
@@ -75,11 +80,37 @@ jobs:
       - name: Build SphereKit.JavaScriptEngine
         run: cmake --build build --target SphereKit_JavaScriptEngine --config Release -j
 
+      # ── Build: JS wrapper libraries ────────────────────────────────────────────
+      - name: Build @spherekit/react (npm package + types)
+        working-directory: modules/reactui
+        run: bun run build
+
+      - name: Build @spherekit/vue (npm package + types)
+        working-directory: modules/vueui
+        run: bun run build
+
+      - name: Bundle @spherekit/react (C++ embed)
+        working-directory: modules/reactui
+        run: bun run bundle
+
+      - name: Bundle @spherekit/vue (C++ embed)
+        working-directory: modules/vueui
+        run: bun run bundle
+
       - name: Build Sphere.React
         run: cmake --build build --target Sphere_React --config Release -j
 
       - name: Build SphereKit.Vue
         run: cmake --build build --target Sphere_Vue --config Release -j
+
+      # ── Build: JS frontends ────────────────────────────────────────────────────
+      - name: Bundle ReactUI demo
+        working-directory: modules/reactui
+        run: bun run bundle:demo
+
+      - name: Bundle VueUI demo
+        working-directory: modules/vueui
+        run: bun run bundle:demo
 
       # ── Build: examples ─────────────────────────────────────────────────────────
       - name: Build SphereExample

@@ -29,3 +29,39 @@ export type {
   ImageProps,
   FlatListProps,
 } from "./payload/types";
+
+import { mount } from "./core/mount";
+import { StyleSheet } from "./wrapper/stylesheet";
+import {
+  View,
+  Text,
+  Button,
+  TouchableOpacity,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  TextInput,
+  Switch,
+  Slider,
+  Image,
+  FlatList,
+} from "./wrapper/components";
+
+const Sphere = {
+  mount,
+  StyleSheet,
+  View,
+  Text,
+  Button,
+  TouchableOpacity,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  TextInput,
+  Switch,
+  Slider,
+  Image,
+  FlatList,
+};
+
+export default Sphere;

@@ -1,0 +1,8 @@
+{
+  "name": "sphereengine-modules",
+  "private": true,
+  "workspaces": [
+    "reactui",
+    "vueui"
+  ]
+}

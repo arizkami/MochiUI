@@ -1,9 +1,22 @@
 {
-  "name": "reactui",
-  "module": "src/index.ts",
+  "name": "@spherekit/react",
+  "version": "2026.05",
   "type": "module",
   "private": true,
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
+    "build": "bun build src/index.ts --outfile dist/index.js --format=esm && tsc -p tsconfig.build.json",
     "bundle": "bun build src/index.ts --outfile bundle.js --format=esm --target=bun",
     "bundle:demo": "bun build examples/App.tsx --outfile ../../example/ReactUI/bundle.js --format=iife --target=node --minify-whitespace"
   },

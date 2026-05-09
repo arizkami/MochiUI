@@ -7,6 +7,20 @@ title: Introduction
 
 **SphereEngine** is a modern, Windows-first C++ UI and audio framework for building high-performance native desktop applications. It combines GPU-accelerated 2D rendering, a flex layout engine, a JavaScript runtime, and a full-featured audio engine into one cohesive SDK.
 
+## Getting started
+
+After cloning, initialize/sync the repo submodules:
+
+```powershell
+.\scripts\submodules-init-sync.ps1
+```
+
+If you want to **skip Skia** (large checkout):
+
+```powershell
+.\scripts\submodules-init-sync.ps1 -SkipSkia
+```
+
 ## Architecture
 
 ```

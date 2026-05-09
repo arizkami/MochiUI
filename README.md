@@ -194,6 +194,34 @@ flowchart TB
 
 Recommended: **Visual Studio 2022** or newer (MSVC x64), **CMake**, **Ninja**, **Python 3**.
 
+## Submodules (first-time setup)
+
+This repo uses git submodules for several third-party dependencies (under `external/`).
+
+- **PowerShell (recommended on Windows)**:
+
+```powershell
+.\scripts\submodules-init-sync.ps1
+```
+
+- **CMD**:
+
+```bat
+scripts\submodules-init-sync.cmd
+```
+
+- **Bash**:
+
+```bash
+./scripts/submodules-init-sync.sh
+```
+
+If you want to **skip Skia** (large checkout), use:
+
+- `.\scripts\submodules-init-sync.ps1 -SkipSkia`
+- `scripts\submodules-init-sync.cmd --skip-skia`
+- `./scripts/submodules-init-sync.sh --skip-skia`
+
 Build from the repo root:
 
 ```powershell

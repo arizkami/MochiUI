@@ -24,6 +24,7 @@ struct UiRegistry {
     std::unordered_map<uint32_t, FlexNode::Ptr> nodes;
     std::unordered_map<uint32_t, uint32_t>      contentProxy; // scrollId → inner content id
     FlexNode::Ptr                               pendingRoot;
+    std::string                                 debugLog;
 
     uint32_t store(FlexNode::Ptr node) {
         const uint32_t id = nextId++;
@@ -77,6 +78,59 @@ static uint32_t toUint32(v8::Isolate* isolate, v8::Local<v8::Value> v, bool& ok)
     if (d < 0 || d > static_cast<double>(0xFFFFFFFFu)) return 0;
     ok = true;
     return static_cast<uint32_t>(d);
+}
+
+static void appendDebugLog(v8::Isolate* iso, std::string_view line) {
+    UiRegistry* reg = regFor(iso);
+    if (!reg || line.empty()) {
+        return;
+    }
+    reg->debugLog.append(line.data(), line.size());
+    if (reg->debugLog.size() > 32768) {
+        reg->debugLog.erase(0, reg->debugLog.size() - 32768);
+    }
+}
+
+static std::string formatException(v8::Isolate* isolate,
+                                   v8::Local<v8::Context> ctx,
+                                   v8::TryCatch& tc) {
+    std::string error;
+    v8::String::Utf8Value exception(isolate, tc.Exception());
+    if (exception.length() > 0) {
+        error.assign(*exception, exception.length());
+    }
+
+    v8::Local<v8::Message> message = tc.Message();
+    if (!message.IsEmpty()) {
+        std::string script = toUtf8(isolate, message->GetScriptOrigin().ResourceName()->ToString(ctx).ToLocalChecked());
+        const int line = message->GetLineNumber(ctx).FromMaybe(0);
+        const int start = message->GetStartColumn(ctx).FromMaybe(0) + 1;
+        std::string formatted;
+        if (!script.empty()) {
+            formatted += script;
+        }
+        if (line > 0) {
+            if (!formatted.empty()) formatted += ':';
+            formatted += std::to_string(line);
+            formatted += ':';
+            formatted += std::to_string(start);
+        }
+        if (!error.empty()) {
+            if (!formatted.empty()) formatted += ' ';
+            formatted += error;
+        }
+        v8::Local<v8::Value> stackValue;
+        if (tc.StackTrace(ctx).ToLocal(&stackValue) && stackValue->IsString()) {
+            std::string stack = toUtf8(isolate, stackValue.As<v8::String>());
+            if (!stack.empty() && stack != error) {
+                formatted += "\n";
+                formatted += stack;
+            }
+        }
+        return formatted.empty() ? error : formatted;
+    }
+
+    return error;
 }
 
 static void Throw(v8::Isolate* isolate, const char* msg) {
@@ -614,6 +668,7 @@ static void ApiConsoleLog(const v8::FunctionCallbackInfo<v8::Value>& args) {
         if (s.length() > 0) msg.append(*s, s.length());
     }
     msg += '\n';
+    appendDebugLog(iso, msg);
 #if defined(_WIN32)
     OutputDebugStringA(msg.c_str());
 #else
@@ -732,6 +787,9 @@ bool JavaScriptEngine::eval(std::string_view source, std::string_view filename) 
     if (!impl_->isolate) {
         if (!init()) { lastError_ = "JavaScriptEngine::init failed"; return false; }
     }
+    if (impl_->registry) {
+        impl_->registry->debugLog.clear();
+    }
 
     v8::Isolate* const     isolate = impl_->isolate;
     v8::Isolate::Scope     is(isolate);
@@ -750,17 +808,28 @@ bool JavaScriptEngine::eval(std::string_view source, std::string_view filename) 
     v8::ScriptOrigin origin(name);
     v8::Local<v8::Script> script;
     if (!v8::Script::Compile(ctx, src, &origin).ToLocal(&script)) {
-        v8::String::Utf8Value err(isolate, tc.Exception());
-        lastError_.assign(*err, err.length());
+        lastError_ = formatException(isolate, ctx, tc);
+        appendDebugLog(isolate, "[compile] ");
+        appendDebugLog(isolate, lastError_);
+        appendDebugLog(isolate, "\n");
         return false;
     }
     v8::Local<v8::Value> result;
     if (!script->Run(ctx).ToLocal(&result)) {
-        v8::String::Utf8Value err(isolate, tc.Exception());
-        lastError_.assign(*err, err.length());
+        lastError_ = formatException(isolate, ctx, tc);
+        appendDebugLog(isolate, "[runtime] ");
+        appendDebugLog(isolate, lastError_);
+        appendDebugLog(isolate, "\n");
         return false;
     }
     return true;
+}
+
+std::string JavaScriptEngine::debugLog() const {
+    if (!impl_ || !impl_->registry) {
+        return {};
+    }
+    return impl_->registry->debugLog;
 }
 
 void JavaScriptEngine::installSphereUIGlobal() {
@@ -819,6 +888,147 @@ FlexNode::Ptr JavaScriptEngine::takePendingRoot() {
     FlexNode::Ptr r = std::move(impl_->registry->pendingRoot);
     impl_->registry->pendingRoot.reset();
     return r;
+}
+
+namespace {
+
+static FlexNode::Ptr MakeErrorLabel(const std::string& text, SPHXColor color, float size, bool bold = false) {
+    auto label = std::make_shared<TextNode>(text);
+    label->color = color;
+    label->fontSize = size;
+    label->fontBold = bold;
+    return label;
+}
+
+static FlexNode::Ptr MakeErrorCard(const std::string& title, FlexNode::Ptr content) {
+    auto card = FlexNode::Column();
+    card->style.backgroundColor = Theme::Card;
+    card->style.borderColor = Theme::Border;
+    card->style.borderWidth = 1.0f;
+    card->style.borderRadius = Theme::BorderRadius;
+    card->style.setPadding(18);
+    card->style.setGap(12);
+
+    card->addChild(MakeErrorLabel(title, Theme::TextPrimary, Theme::FontNormal, true));
+    card->addChild(std::make_shared<SeparatorNode>());
+    if (content) {
+        card->addChild(content);
+    }
+    return card;
+}
+
+} // namespace
+
+FlexNode::Ptr MakeJSErrorScreen(const std::string& framework,
+                                const std::string& heading,
+                                const std::string& detail,
+                                const std::string& hint,
+                                const std::string& v8Log) {
+    auto root = FlexNode::Column();
+    root->style.backgroundColor = Theme::Background;
+    root->style.setWidthFull();
+    root->style.setHeightFull();
+
+    auto shell = FlexNode::Column();
+    shell->style.setFlex(1.0f);
+    shell->style.setPadding(24);
+    shell->style.setGap(18);
+    root->addChild(shell);
+
+    auto header = FlexNode::Row();
+    header->style.setAlignItems(YGAlignCenter);
+    header->style.setGap(10);
+
+    auto title = MakeErrorLabel("SphereKit JavaScript Error Screen", Theme::TextPrimary, 24.0f, true);
+    title->style.setFlex(1.0f);
+    header->addChild(title);
+
+    auto badge = std::make_shared<BadgeNode>(framework);
+    badge->nodeStyle.background = Theme::Accent;
+    badge->nodeStyle.foreground = SPHXColor::white();
+    header->addChild(badge);
+
+    auto nativeBadge = std::make_shared<BadgeNode>("Native C++ UI");
+    nativeBadge->nodeStyle.background = Theme::Card;
+    nativeBadge->nodeStyle.foreground = Theme::TextSecondary;
+    header->addChild(nativeBadge);
+
+    shell->addChild(header);
+    shell->addChild(MakeErrorLabel(
+        "This fallback screen is rendered entirely with native C++ nodes so JS startup failures stay visible.",
+        Theme::TextSecondary,
+        Theme::FontNormal));
+
+    auto body = FlexNode::Row();
+    body->style.setFlex(1.0f);
+    body->style.setGap(18);
+    body->style.setFlexWrap(YGWrapWrap);
+    shell->addChild(body);
+
+    auto summaryCol = FlexNode::Column();
+    summaryCol->style.setGap(10);
+    summaryCol->style.setFlexGrow(1.0f);
+    summaryCol->style.setFlexShrink(1.0f);
+    summaryCol->style.setFlexBasis(320.0f);
+    summaryCol->addChild(MakeErrorLabel(heading, SPHXColor::Hex("#ff6b6b"), 18.0f, true));
+    summaryCol->addChild(MakeErrorLabel("How this screen is built in C++:", Theme::TextPrimary, Theme::FontNormal, true));
+    summaryCol->addChild(MakeErrorLabel("1. Create container nodes with FlexNode::Column() / Row().", Theme::TextSecondary, Theme::FontNormal));
+    summaryCol->addChild(MakeErrorLabel("2. Add text, badges, separators, and scroll containers as children.", Theme::TextSecondary, Theme::FontNormal));
+    summaryCol->addChild(MakeErrorLabel("3. Style nodes with padding, gap, colors, borders, and flex settings.", Theme::TextSecondary, Theme::FontNormal));
+    summaryCol->addChild(MakeErrorLabel("4. Pass the root node to Win32Window::setRoot(...).", Theme::TextSecondary, Theme::FontNormal));
+    body->addChild(MakeErrorCard("Overview", summaryCol));
+
+    auto detailCol = FlexNode::Column();
+    detailCol->style.setGap(10);
+    detailCol->style.setFlexGrow(2.0f);
+    detailCol->style.setFlexShrink(1.0f);
+    detailCol->style.setFlexBasis(520.0f);
+    detailCol->addChild(MakeErrorLabel(hint, Theme::TextSecondary, Theme::FontNormal));
+
+    auto detailScroll = std::make_shared<ScrollAreaNode>();
+    detailScroll->style.setHeight(260);
+    detailScroll->style.borderRadius = Theme::BorderRadius;
+    detailScroll->style.backgroundColor = SPHXColor::Hex("#0f1621");
+
+    auto detailContent = FlexNode::Column();
+    detailContent->style.setPadding(14);
+    detailContent->style.setGap(8);
+    detailContent->addChild(MakeErrorLabel("Runtime detail", Theme::TextPrimary, Theme::FontNormal, true));
+    detailContent->addChild(MakeErrorLabel(
+        detail.empty() ? "No additional error detail was provided by the JavaScript engine." : detail,
+        SPHXColor::Hex("#d8e1ee"),
+        Theme::FontNormal));
+    detailScroll->setContent(detailContent);
+    detailCol->addChild(detailScroll);
+    body->addChild(MakeErrorCard("Detail", detailCol));
+
+    if (!v8Log.empty()) {
+        auto logCol = FlexNode::Column();
+        logCol->style.setGap(10);
+        logCol->style.setFlexGrow(2.0f);
+        logCol->style.setFlexShrink(1.0f);
+        logCol->style.setFlexBasis(520.0f);
+        logCol->addChild(MakeErrorLabel(
+            "Captured from the embedded V8 console/error pipeline.",
+            Theme::TextSecondary,
+            Theme::FontNormal));
+
+        auto logScroll = std::make_shared<ScrollAreaNode>();
+        logScroll->style.setHeight(220);
+        logScroll->style.borderRadius = Theme::BorderRadius;
+        logScroll->style.backgroundColor = SPHXColor::Hex("#0b111a");
+
+        auto logContent = FlexNode::Column();
+        logContent->style.setPadding(14);
+        logContent->style.setGap(8);
+        logContent->addChild(MakeErrorLabel("V8 JavaScript Log", Theme::TextPrimary, Theme::FontNormal, true));
+        logContent->addChild(MakeErrorLabel(v8Log, SPHXColor::Hex("#b9dcff"), Theme::FontNormal));
+        logScroll->setContent(logContent);
+        logCol->addChild(logScroll);
+        body->addChild(MakeErrorCard("V8 Log", logCol));
+    }
+
+    return root;
 }
 
 } // namespace SphereUI

@@ -33,6 +33,7 @@ public:
     bool eval(std::string_view source, std::string_view filename = "<eval>");
 
     const std::string& lastError() const { return lastError_; }
+    std::string debugLog() const;
 
     /** Install `globalThis.SphereUI` native helpers for JS UI bridges. */
     void installSphereUIGlobal();
@@ -48,5 +49,11 @@ private:
     std::unique_ptr<Impl> impl_;
     std::string lastError_;
 };
+
+SPHXJS_API FlexNode::Ptr MakeJSErrorScreen(const std::string& framework,
+                                           const std::string& heading,
+                                           const std::string& detail,
+                                           const std::string& hint,
+                                           const std::string& v8Log = {});
 
 } // namespace SphereUI

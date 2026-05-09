@@ -9,30 +9,6 @@
 
 using namespace SphereUI;
 
-static FlexNode::Ptr MakeErrorRoot(const std::string& heading, const std::string& detail) {
-    auto root = FlexNode::Column();
-    root->style.backgroundColor = SPHXColor::Hex("#0d0d11");
-    root->style.setWidthFull();
-    root->style.setHeightFull();
-    root->style.setPadding(32);
-    root->style.setGap(10);
-
-    auto h = std::make_shared<TextNode>(heading);
-    h->color = SPHXColor::Hex("#ff6b6b");
-    h->fontSize = 18.0f;
-    h->fontBold = true;
-    root->addChild(h);
-
-    if (!detail.empty()) {
-        auto d = std::make_shared<TextNode>(detail);
-        d->color = SPHXColor::Hex("#c0c0d0");
-        d->fontSize = 13.0f;
-        root->addChild(d);
-    }
-
-    return root;
-}
-
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     Application::getInstance().init();
 
@@ -45,9 +21,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         Win32Window window("VueUI Demo - Error", 800, 400);
         window.setDarkMode(true);
         window.enableMica(true);
-        window.setRoot(MakeErrorRoot(
+        window.setRoot(MakeJSErrorScreen(
+            "Vue",
             "Resource not found: res://bundle.js",
-            "Run `bun run bundle:demo` in modules/vueui/ to build the JS bundle from example/App.vue,\n"
+            "The embedded JavaScript bundle could not be loaded from the resource pack.",
+            "Run `bun run bundle:demo` in modules/vueui/ to build the JS bundle from example/App.vue, "
             "then rebuild the CMake target so gen_resources.py embeds it."));
         window.run();
         return 1;
@@ -63,7 +41,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         Win32Window window("VueUI Demo - JS Error", 900, 500);
         window.setDarkMode(true);
         window.enableMica(true);
-        window.setRoot(MakeErrorRoot("JavaScript evaluation failed", err));
+        window.setRoot(MakeJSErrorScreen(
+            "Vue",
+            "JavaScript evaluation failed",
+            err,
+            "The bundle loaded, but the JS engine returned an evaluation error before a root node was produced.",
+            engine.debugLog()));
         window.run();
         return 1;
     }

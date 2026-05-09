@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <gui/Components/TextNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class StepIndicator : public FlexNode {
 public:
@@ -35,7 +35,7 @@ public:
 
             auto num = std::make_shared<TextNode>(std::to_string(i + 1));
             num->fontSize = 12;
-            num->color = (i <= currentStep) ? AUKColor::white() : AUKColor(Theme::TextSecondary);
+            num->color = (i <= currentStep) ? SPHXColor::white() : SPHXColor(Theme::TextSecondary);
             circle->addChild(num);
 
             addChild(circle);
@@ -47,4 +47,4 @@ private:
     size_t currentStep = 0;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

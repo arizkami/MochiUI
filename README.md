@@ -1,8 +1,8 @@
-# AureliaKit — Work in Progress
+# SphereKit — Work in Progress
 
 > This project is currently under active development and is not yet stable.
 
-![AureliaKit UI preview](./assets/preview.png)
+![SphereKit UI preview](./assets/preview.png)
 
 ---
 
@@ -16,10 +16,9 @@ flowchart BT
     skia["Skia\n(D3D12 GPU backend)"]
     yoga["Yoga\n(flex layout engine)"]
     v8["V8 monolith\n(JavaScript runtime)"]
-    yaml["yaml-cpp + css\n(DSL parsers)"]
   end
 
-  subgraph core [AureliaKit.Foundation  ·  DLL]
+  subgraph core [SphereKit.Foundation  ·  DLL]
     direction TB
     foundA["FlexNode · LayoutStyle · OverlayNode"]
     foundB["Win32Window · Application · ResourceManager"]
@@ -27,26 +26,22 @@ flowchart BT
     foundD["Event structs · Win32Input · FlexRootDispatch"]
   end
 
-  subgraph gi [AureliaKit.GraphicInterface  ·  DLL]
-    giA["AureliaWidget · MenuBar · AureliaUI ns"]
+  subgraph gi [SphereKit.GraphicInterface  ·  DLL]
+    giA["SphereWidget · MenuBar · SphereUI ns"]
   end
 
-  subgraph gc [AureliaKit.GraphicComponent  ·  DLL]
+  subgraph gc [SphereKit.GraphicComponent  ·  DLL]
     gcA["TextNode · ButtonNode · TextInput · SliderNode"]
     gcB["SwitchNode · ScrollAreaNode · CheckboxNode · …"]
   end
 
-  subgraph dsl [AureliaKit.DSL  ·  DLL]
-    dslA["DSL loader · LibCssStyle · YAML → FlexNode"]
-  end
-
-  subgraph jse [AureliaKit.JavaScriptEngine  ·  DLL]
+  subgraph jse [SphereKit.JavaScriptEngine  ·  DLL]
     jseA["V8 isolate · context · UiRegistry"]
-    jseB["globalThis.AureliaUI native bridge"]
+    jseB["globalThis.SphereUI native bridge"]
   end
 
-  subgraph react [Aurelia.React  ·  DLL]
-    reactA["RenderReactApp · takePendingRoot"]
+  subgraph jsui [Sphere.React / SphereKit.Vue  ·  DLL]
+    reactA["RenderReactApp / RenderVueApp\n· takePendingRoot"]
   end
 
   subgraph fw [framework/MikoUI  ·  header-only]
@@ -57,38 +52,30 @@ flowchart BT
   yoga  --> core
   core  --> gi
   gi    --> gc
-  gc    --> dsl
   gc    --> jse
   v8    --> jse
-  yaml  --> dsl
-  jse   --> react
-  gc    --> react
-  react --> fw
+  jse   --> jsui
+  gc    --> jsui
+  jsui  --> fw
   gi    --> fw
 ```
 
 ---
 
-### Three UI authoring paths
+### Two supported UI authoring paths
 
 ```mermaid
 flowchart TB
-  subgraph path1 [Path 1 · C++ direct]
+  subgraph path1 [Path 1 · Native C++ UI Node]
     cpp["Build FlexNode tree\nin C++"]
   end
 
-  subgraph path2 [Path 2 · Declarative DSL]
-    yml["YAML / CSS string\n(file or res://)"]
-    dslParse["AureliaKit.DSL\nDSL parser"]
-    yml --> dslParse
-  end
-
-  subgraph path3 [Path 3 · React / TypeScript]
-    tsx["React components\n(.tsx — modules/reactui/)"]
+  subgraph path2 [Path 2 · React Native Like / Vue]
+    tsx["React or Vue components\n(.tsx/.vue — modules/reactui or modules/vueui/)"]
     bun["bun build → bundle.js\n(IIFE, node target)"]
-    genRes["gen_resources.py\n→ ReactUIResources.hpp"]
-    jsBridge["JavaScriptEngine\ninstallAureliaUIGlobal\neval bundle"]
-    auBridge["globalThis.AureliaUI\ncreateNode · appendChild\nsetStyle · setCallback · setRoot"]
+    genRes["gen_resources.py\n→ ReactUIResources.hpp / VueUIResources.hpp"]
+    jsBridge["JavaScriptEngine\ninstallSphereUIGlobal\neval bundle"]
+    auBridge["globalThis.SphereUI\ncreateNode · appendChild\nsetStyle · setCallback · setRoot"]
     registry["UiRegistry\nNodeId ↔ FlexNode::Ptr"]
     tsx --> bun --> genRes --> jsBridge
     jsBridge --> auBridge --> registry
@@ -104,10 +91,9 @@ flowchart TB
   end
 
   cpp       --> root
-  dslParse  --> root
   registry  --> root
   root      --> win
-  path3     -.->|"via MikoUI::Run"| miko
+  path2     -.->|"via MikoUI::Run"| miko
   miko      --> win
 ```
 
@@ -158,18 +144,20 @@ flowchart LR
 
 ---
 
-### React / TypeScript bridge detail
+### JavaScript UI bridge detail
 
 ```mermaid
 flowchart TB
-  subgraph ts [TypeScript — modules/reactui/]
-    app["App.tsx\nReact 19 components"]
-    idx["index.ts\nreact-reconciler 0.33 host config\ncreateInstance · appendChild\nprepareUpdate · commitUpdate\nupdateContainerSync + flushSyncWork"]
+  subgraph ts [TypeScript — modules/reactui/ + modules/vueui/]
+    app["examples/App.tsx / example/App.vue\nReact 19 or Vue 3 components"]
+    idx["src/index.ts\npublic entrypoint"]
+    internals["src/core + src/payload + src/wrapper\nreconciler/renderer · payload types · wrappers"]
+    idx --> internals
     app --> idx
   end
 
   subgraph v8side [V8 isolate — C++]
-    glob["globalThis.AureliaUI object\n8 native functions"]
+    glob["globalThis.SphereUI object\n8 native functions"]
     reg["UiRegistry\nnextId · nodes map\ncontentProxy (scroll transparent reroute)"]
     pend["pendingRoot → takePendingRoot()"]
     glob --> reg --> pend
@@ -186,12 +174,10 @@ flowchart TB
   idx  -- "setCallback(id,event,fn)" --> glob
   idx  -- "setRoot(id)" --> glob
   glob --> ntypes
-  pend --> RenderReactApp["RenderReactApp()\nreturns FlexNode::Ptr root"]
+  pend --> RenderReactApp["RenderReactApp() / RenderVueApp()\nreturns FlexNode::Ptr root"]
 ```
 
-**Scripted UI**: JavaScript runs in **V8** inside `AureliaKit.JavaScriptEngine`. The engine installs `globalThis.AureliaUI` before `eval`-ing the bundle. **`Aurelia.React`** wraps this in `RenderReactApp` which evaluates the bundle synchronously and returns the root `FlexNode`. The TypeScript reconciler host lives in `modules/reactui/index.ts` and uses `updateContainerSync` + `flushSyncWork` (reconciler 0.33 / React 19) for a single-pass synchronous render.
-
-**Declarative UI**: **AUKDSL** accepts `YAML` or CSS-like strings, loaded from disk or `res://` URIs (embedded resources generated by `gen_resources.py`). It parses into a `FlexNode` sub-tree attached directly under the caller's container.
+**Scripted UI**: JavaScript runs in **V8** inside `SphereKit.JavaScriptEngine`. The engine installs `globalThis.SphereUI` before `eval`-ing the bundle. **`Sphere.React`** and **`SphereKit.Vue`** wrap this in `RenderReactApp` / `RenderVueApp`, which evaluate the bundle synchronously and return the root `FlexNode`. The TypeScript hosts now live under `modules/reactui/src/` and `modules/vueui/src/`, with demo entrypoints at `modules/reactui/examples/App.tsx` and `modules/vueui/example/App.vue`.
 
 ---
 
@@ -214,7 +200,7 @@ Build from the repo root:
 .\build.ps1
 ```
 
-The script sources MSVC via `vcvars64`, regenerates theme headers, configures Ninja + Release if needed, and builds.
+The script sources MSVC via `vcvars64`, configures Ninja + Release if needed, and builds.
 
 Prebuilts (Skia, optional V8) are downloaded or expected under `external/prebuilt/` — see [docs/BuildAndCI.md](docs/BuildAndCI.md).
 

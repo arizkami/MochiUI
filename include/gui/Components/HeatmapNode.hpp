@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class HeatmapNode : public FlexNode {
 public:
@@ -18,7 +18,7 @@ public:
                 auto cell = FlexNode::Create();
                 cell->style.setWidth(15);
                 cell->style.setHeight(15);
-                cell->style.backgroundColor = AUKColor::RGB(230, 230, 230);
+                cell->style.backgroundColor = SPHXColor::RGB(230, 230, 230);
                 rowNode->addChild(cell);
             }
             addChild(rowNode);
@@ -35,4 +35,4 @@ private:
     int rows, cols;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

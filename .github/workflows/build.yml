@@ -1,4 +1,4 @@
-name: Build AureliaUI
+name: Build SphereUI
 
 on:
   push:
@@ -60,30 +60,30 @@ jobs:
           -DCMAKE_BUILD_TYPE=Release
 
       # ── Build: libraries ───────────────────────────────────────────────────────
-      - name: Build AureliaKit.Foundation
-        run: cmake --build build --target AureliaKit_Foundation --config Release -j
+      - name: Build SphereKit.Foundation
+        run: cmake --build build --target SphereKit_Foundation --config Release -j
 
-      - name: Build AureliaKit.GraphicInterface
-        run: cmake --build build --target AureliaKit_GraphicInterface --config Release -j
+      - name: Build SphereKit.GraphicInterface
+        run: cmake --build build --target SphereKit_GraphicInterface --config Release -j
 
-      - name: Build AureliaKit.GraphicComponent
-        run: cmake --build build --target AureliaKit_GraphicComponent --config Release -j
+      - name: Build SphereKit.GraphicComponent
+        run: cmake --build build --target SphereKit_GraphicComponent --config Release -j
 
-      - name: Build AureliaKit.DirectAudioEngine
-        run: cmake --build build --target AureliaKit_DirectAudioEngine --config Release -j
+      - name: Build SphereKit.DirectAudioEngine
+        run: cmake --build build --target SphereKit_DirectAudioEngine --config Release -j
 
-      - name: Build AureliaKit.JavaScriptEngine
-        run: cmake --build build --target AureliaKit_JavaScriptEngine --config Release -j
+      - name: Build SphereKit.JavaScriptEngine
+        run: cmake --build build --target SphereKit_JavaScriptEngine --config Release -j
 
-      - name: Build Aurelia.React
-        run: cmake --build build --target Aurelia_React --config Release -j
+      - name: Build Sphere.React
+        run: cmake --build build --target Sphere_React --config Release -j
 
-      - name: Build AureliaKit.DSL
-        run: cmake --build build --target AureliaKit_DSL --config Release -j
+      - name: Build SphereKit.Vue
+        run: cmake --build build --target Sphere_Vue --config Release -j
 
       # ── Build: examples ─────────────────────────────────────────────────────────
-      - name: Build AureliaExample
-        run: cmake --build build --target AureliaExample --config Release -j
+      - name: Build SphereExample
+        run: cmake --build build --target SphereExample --config Release -j
 
       - name: Build ActivityMonitor
         run: cmake --build build --target ActivityMonitor --config Release -j
@@ -94,45 +94,48 @@ jobs:
       - name: Build BorderlessPlayer
         run: cmake --build build --target BorderlessPlayer --config Release -j
 
-      - name: Build DSLDemo
-        run: cmake --build build --target DSLDemo --config Release -j
+      - name: Build ReactUIDemo
+        run: cmake --build build --target ReactUIDemo --config Release -j
+
+      - name: Build VueUIDemo
+        run: cmake --build build --target VueUIDemo --config Release -j
 
       # ── Artifacts: SDK (libs + public headers) ───────────────────────────────────
-      - name: Upload AureliaKit SDK
+      - name: Upload SphereKit SDK
         uses: actions/upload-artifact@v4
         with:
-          name: AureliaKit-SDK
+          name: SphereKit-SDK
           path: |
-            build/AureliaKit.Foundation.dll
-            build/AureliaKit.Foundation.lib
-            build/AureliaKit.GraphicInterface.dll
-            build/AureliaKit.GraphicInterface.lib
-            build/AureliaKit.GraphicComponent.dll
-            build/AureliaKit.GraphicComponent.lib
-            build/AureliaKit.DirectAudioEngine.dll
-            build/AureliaKit.DirectAudioEngine.lib
-            build/AureliaKit.JavaScriptEngine.dll
-            build/AureliaKit.JavaScriptEngine.lib
-            build/Aurelia.React.dll
-            build/Aurelia.React.lib
-            build/AureliaKit.DSL.dll
-            build/AureliaKit.DSL.lib
-            include/AUKApplication.hpp
-            include/AUKColor.hpp
-            include/AUKDirectAudioEngine.hpp
-            include/AUKFoundation.hpp
-            include/AUKGraphicComponents.hpp
-            include/AUKGraphicInterface.hpp
-            include/AUKIWidget.hpp
-            include/AUKImage.hpp
-            include/AUKPainter.hpp
-            include/AUKSvg.hpp
-            include/AUKJavaScriptEngine.hpp
-            include/AUKDSL.hpp
-            include/AureliaReact.hpp
+            build/SphereKit.Foundation.dll
+            build/SphereKit.Foundation.lib
+            build/SphereKit.GraphicInterface.dll
+            build/SphereKit.GraphicInterface.lib
+            build/SphereKit.GraphicComponent.dll
+            build/SphereKit.GraphicComponent.lib
+            build/SphereKit.DirectAudioEngine.dll
+            build/SphereKit.DirectAudioEngine.lib
+            build/SphereKit.JavaScriptEngine.dll
+            build/SphereKit.JavaScriptEngine.lib
+            build/Sphere.React.dll
+            build/Sphere.React.lib
+            build/SphereKit.Vue.dll
+            build/SphereKit.Vue.lib
+            include/SPHXApplication.hpp
+            include/SPHXColor.hpp
+            include/SPHXDirectAudioEngine.hpp
+            include/SPHXFoundation.hpp
+            include/SPHXGraphicComponents.hpp
+            include/SPHXGraphicInterface.hpp
+            include/SPHXIWidget.hpp
+            include/SPHXImage.hpp
+            include/SPHXPainter.hpp
+            include/SPHXSvg.hpp
+            include/SPHXJavaScriptEngine.hpp
+            include/SphereReact.hpp
+            include/SphereVUE.hpp
+            include/AureleaVUE.hpp
             include/audio/Streaming.hpp
             include/core/**
-            include/dsl/**
             include/gui/**
             include/platform/**
             include/utils/**
@@ -143,13 +146,14 @@ jobs:
       - name: Upload examples
         uses: actions/upload-artifact@v4
         with:
-          name: AureliaKit-Examples
+          name: SphereKit-Examples
           path: |
-            build/AureliaExample.exe
+            build/SphereExample.exe
             build/ActivityMonitor.exe
             build/MixerConsole.exe
             build/BorderlessPlayer.exe
-            build/DSLDemo.exe
+            build/ReactUIDemo.exe
+            build/VueUIDemo.exe
           retention-days: 30
 
       # ── Artifacts: failure logs ───────────────────────────────────────────────

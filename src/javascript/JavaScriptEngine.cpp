@@ -1,8 +1,9 @@
-#include <AUKJavaScriptEngine.hpp>
+#include <SPHXJavaScriptEngine.hpp>
 
 #include <libplatform/libplatform.h>
 #include <v8.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cstring>
 #include <memory>
@@ -12,7 +13,7 @@
 #include <windows.h>   // OutputDebugStringA
 #endif
 
-namespace AureliaUI {
+namespace SphereUI {
 
 namespace {
 
@@ -39,6 +40,15 @@ struct UiRegistry {
     FlexNode::Ptr get(uint32_t id) const {
         auto it = nodes.find(id);
         return it == nodes.end() ? nullptr : it->second;
+    }
+    FlexNode::Ptr findByYogaNode(YGNodeRef node) const {
+        if (!node) return nullptr;
+        for (const auto& [_, candidate] : nodes) {
+            if (candidate && candidate->getYGNode() == node) {
+                return candidate;
+            }
+        }
+        return nullptr;
     }
     uint32_t resolveProxy(uint32_t id) const {
         auto it = contentProxy.find(id);
@@ -80,7 +90,7 @@ static void ApiCreateNode(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     v8::HandleScope hs(isolate);
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     if (args.Length() < 1 || !args[0]->IsString()) {
         Throw(isolate, "createNode(type: string)");
         return;
@@ -126,6 +136,7 @@ static void ApiCreateNode(const v8::FunctionCallbackInfo<v8::Value>& args) {
     else if (type == "TextInput")                      { node = std::make_shared<TextInput>(); }
     else if (type == "Switch")                         { node = std::make_shared<SwitchNode>(); }
     else if (type == "Slider")                         { node = std::make_shared<SliderNode>(); }
+    else if (type == "Knob")                           { node = std::make_shared<KnobNode>(); }
     else if (type == "Image")                          { node = FlexNode::Create(); }
     else                                               { node = FlexNode::Create(); }
 
@@ -137,7 +148,7 @@ static void ApiCreateNode(const v8::FunctionCallbackInfo<v8::Value>& args) {
 static void ApiAppendChild(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     bool ok = false;
     uint32_t pid = toUint32(isolate, args[0], ok);
     if (!ok) { Throw(isolate, "appendChild(parentId, childId)"); return; }
@@ -148,13 +159,37 @@ static void ApiAppendChild(const v8::FunctionCallbackInfo<v8::Value>& args) {
     FlexNode::Ptr parent = reg->get(pid);
     FlexNode::Ptr child  = reg->get(cid);
     if (!parent || !child) { Throw(isolate, "appendChild: invalid handle"); return; }
+    if (parent.get() == child.get()) {
+        return;
+    }
+    YGNodeRef const owner = YGNodeGetOwner(child->getYGNode());
+    if (owner == parent->getYGNode()) {
+        return;
+    }
+    if (child->parent == parent.get()) {
+        return;
+    }
+    if (owner) {
+        if (FlexNode::Ptr actualOwner = reg->findByYogaNode(owner)) {
+            if (actualOwner.get() != parent.get()) {
+                actualOwner->removeChild(child);
+                // removeChild is a no-op when child is not in actualOwner->children;
+                // ensure Yoga is cleaned up regardless so addChild doesn't crash.
+                if (YGNodeGetOwner(child->getYGNode())) {
+                    YGNodeRemoveChild(owner, child->getYGNode());
+                }
+            }
+        } else {
+            YGNodeRemoveChild(owner, child->getYGNode());
+        }
+    }
     parent->addChild(child);
 }
 
 static void ApiRemoveChild(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     bool ok = false;
     uint32_t pid = toUint32(isolate, args[0], ok);
     if (!ok) { Throw(isolate, "removeChild(parentId, childId)"); return; }
@@ -173,7 +208,7 @@ static void ApiRemoveChild(const v8::FunctionCallbackInfo<v8::Value>& args) {
 static void ApiSetText(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     bool ok = false;
     const uint32_t id = toUint32(isolate, args[0], ok);
     if (!ok || args.Length() < 2 || !args[1]->IsString()) {
@@ -220,16 +255,16 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
     if (key == "paddingBottom")    { if (pf(f)) node.style.paddingBottom = f;    return true; }
     if (key == "paddingLeft")      { if (pf(f)) node.style.paddingLeft   = f;    return true; }
     if (key == "paddingRight")     { if (pf(f)) node.style.paddingRight  = f;    return true; }
-    if (key == "paddingHorizontal"){ if (pf(f)) { node.style.paddingLeft = node.style.paddingRight = f; } return true; }
-    if (key == "paddingVertical")  { if (pf(f)) { node.style.paddingTop  = node.style.paddingBottom = f; } return true; }
+    if (key == "paddingHorizontal"){ if (pf(f)) node.style.setPaddingHorizontal(f); return true; }
+    if (key == "paddingVertical")  { if (pf(f)) node.style.setPaddingVertical(f);   return true; }
 
     if (key == "margin")           { if (pf(f)) node.style.setMargin(f);         return true; }
     if (key == "marginTop")        { if (pf(f)) node.style.marginTop    = f;     return true; }
     if (key == "marginBottom")     { if (pf(f)) node.style.marginBottom = f;     return true; }
     if (key == "marginLeft")       { if (pf(f)) node.style.marginLeft   = f;     return true; }
     if (key == "marginRight")      { if (pf(f)) node.style.marginRight  = f;     return true; }
-    if (key == "marginHorizontal") { if (pf(f)) { node.style.marginLeft = node.style.marginRight = f; } return true; }
-    if (key == "marginVertical")   { if (pf(f)) { node.style.marginTop  = node.style.marginBottom = f; } return true; }
+    if (key == "marginHorizontal") { if (pf(f)) node.style.setMarginHorizontal(f); return true; }
+    if (key == "marginVertical")   { if (pf(f)) node.style.setMarginVertical(f);   return true; }
 
     if (key == "flex")       { if (pf(f)) node.style.setFlex(f);       return true; }
     if (key == "flexGrow")   { if (pf(f)) node.style.setFlexGrow(f);   return true; }
@@ -245,7 +280,7 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
     if (key == "overflow")     { node.style.overflowHidden = (val == "hidden"); return true; }
 
     if (key == "backgroundColor") {
-        AUKColor c = AUKColor::parse(val);
+        SPHXColor c = SPHXColor::parse(val);
         node.style.backgroundColor = c;
         // Also push to component-specific background fields so explicit colors override defaults
         if (auto* btn = dynamic_cast<ButtonNode*>(&node)) {
@@ -256,15 +291,15 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
         return true;
     }
     if (key == "borderColor") {
-        AUKColor c = AUKColor::parse(val);
-        node.borderColor = c;   // base FlexNode — draws for any container
+        SPHXColor c = SPHXColor::parse(val);
+        node.style.borderColor = c;
         if (auto* btn = dynamic_cast<ButtonNode*>(&node)) btn->borderColor = c;
         if (auto* ti  = dynamic_cast<TextInput*>(&node))  ti->borderColor  = c;
         return true;
     }
     if (key == "borderWidth") {
         if (pf(f)) {
-            node.borderWidth = f;
+            node.style.borderWidth = f;
             if (auto* btn = dynamic_cast<ButtonNode*>(&node)) btn->borderWidth = f;
         }
         return true;
@@ -304,7 +339,7 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
 
     // Text / button colour
     if (key == "color") {
-        AUKColor c = AUKColor::parse(val);
+        SPHXColor c = SPHXColor::parse(val);
         if (auto* t   = dynamic_cast<TextNode*>(&node))   t->color = c;
         if (auto* btn = dynamic_cast<ButtonNode*>(&node)) { btn->textColor = c; btn->useThemeColors = false; }
         if (auto* ti  = dynamic_cast<TextInput*>(&node))  ti->textColor = c;
@@ -331,13 +366,48 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
         }
         return true;
     }
+
+    if (auto* kn = dynamic_cast<KnobNode*>(&node)) {
+        if      (key == "knobBodyColor")  { kn->visualStyle.knobBodyColor  = SPHXColor::parse(val); return true; }
+        else if (key == "knobRingColor")  { kn->visualStyle.knobRingColor  = SPHXColor::parse(val); return true; }
+        else if (key == "arcTrackColor") { kn->visualStyle.arcTrackColor  = SPHXColor::parse(val); return true; }
+        else if (key == "arcFillColor")  { kn->visualStyle.arcFillColor   = SPHXColor::parse(val); return true; }
+        else if (key == "indicatorColor"){ kn->visualStyle.indicatorColor = SPHXColor::parse(val); return true; }
+        else if (key == "glowColor")     { kn->visualStyle.glowColor      = SPHXColor::parse(val); return true; }
+        else if (key == "knobShadowColor"){ kn->visualStyle.shadowColor    = SPHXColor::parse(val); return true; }
+        else if (key == "valueLabelColor"){ kn->valueLabelColor            = SPHXColor::parse(val); return true; }
+        else if (key == "knobSize")      { if (pf(f)) kn->visualStyle.knobSize = f; return true; }
+        else if (key == "arcWidth")       { if (pf(f)) kn->visualStyle.arcWidth  = f; return true; }
+    }
+    if (auto* sl = dynamic_cast<SliderNode*>(&node)) {
+        if      (key == "trackColor")       { sl->visualStyle.trackColor       = SPHXColor::parse(val); return true; }
+        else if (key == "fillColor")       { sl->visualStyle.fillColor        = SPHXColor::parse(val); return true; }
+        else if (key == "thumbColor")      { sl->visualStyle.thumbColor       = SPHXColor::parse(val); return true; }
+        else if (key == "thumbBorderColor"){ sl->visualStyle.thumbBorderColor = SPHXColor::parse(val); return true; }
+        else if (key == "sliderShadowColor"){ sl->visualStyle.shadowColor     = SPHXColor::parse(val); return true; }
+        else if (key == "trackHeight")     { if (pf(f)) sl->visualStyle.trackHeight     = f; return true; }
+        else if (key == "thumbRadius")     { if (pf(f)) sl->visualStyle.thumbRadius     = f; return true; }
+        else if (key == "thumbBorderWidth"){ if (pf(f)) sl->visualStyle.thumbBorderWidth = f; return true; }
+    }
+    if (auto* sw = dynamic_cast<SwitchNode*>(&node)) {
+        if      (key == "switchActiveColor")   { sw->visualStyle.activeColor   = SPHXColor::parse(val); return true; }
+        else if (key == "switchInactiveColor") { sw->visualStyle.inactiveColor = SPHXColor::parse(val); return true; }
+        else if (key == "switchThumbColor")    { sw->visualStyle.thumbColor    = SPHXColor::parse(val); return true; }
+        else if (key == "switchLabelColor")    { sw->visualStyle.labelColor    = SPHXColor::parse(val); return true; }
+        else if (key == "switchBorderColor")   { sw->visualStyle.borderColor   = SPHXColor::parse(val); return true; }
+        else if (key == "switchShadowColor")   { sw->visualStyle.shadowColor   = SPHXColor::parse(val); return true; }
+        else if (key == "switchWidth")        { if (pf(f)) sw->visualStyle.switchWidth = f; return true; }
+        else if (key == "switchHeight")       { if (pf(f)) sw->visualStyle.switchHeight = f; return true; }
+        else if (key == "thumbInset")        { if (pf(f)) sw->visualStyle.thumbInset    = f; return true; }
+        else if (key == "switchBorderWidth")   { if (pf(f)) sw->visualStyle.borderWidth   = f; return true; }
+    }
     return false;
 }
 
 static void ApiSetStyle(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     bool ok = false;
     const uint32_t id = toUint32(isolate, args[0], ok);
     if (!ok || args.Length() < 3 || !args[1]->IsString() || !args[2]->IsString()) {
@@ -357,7 +427,7 @@ static void ApiSetStyle(const v8::FunctionCallbackInfo<v8::Value>& args) {
 static void ApiSetProp(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     bool ok = false;
     const uint32_t id = toUint32(isolate, args[0], ok);
     if (!ok || args.Length() < 3 || !args[1]->IsString() || !args[2]->IsString()) {
@@ -379,11 +449,22 @@ static void ApiSetProp(const v8::FunctionCallbackInfo<v8::Value>& args) {
         if      (key == "text")       tn->text = val;
         else if (key == "fontSize")   { if (sscanf(val.c_str(), "%f", &f) == 1) tn->fontSize = f; }
         else if (key == "fontWeight") tn->fontBold = (val == "bold" || val == "700");
-        else if (key == "color")      tn->color = AUKColor::parse(val);
+        else if (key == "color")      tn->color = SPHXColor::parse(val);
         else if (key == "textAlign") {
             if      (val == "center") tn->textAlign = TextAlign::Center;
             else if (val == "right")  tn->textAlign = TextAlign::Right;
             else                      tn->textAlign = TextAlign::Left;
+        }
+    } else if (auto* kn = dynamic_cast<KnobNode*>(node.get())) {
+        if      (key == "value")                          { if (sscanf(val.c_str(), "%f", &f) == 1) kn->value = f; }
+        else if (key == "minimumValue" || key == "minValue") { if (sscanf(val.c_str(), "%f", &f) == 1) kn->minValue = f; }
+        else if (key == "maximumValue" || key == "maxValue") { if (sscanf(val.c_str(), "%f", &f) == 1) kn->maxValue = f; }
+        else if (key == "showValue")                      kn->showValue = (val == "true" || val == "1");
+        else if (key == "showValueAsPercent")            kn->showValueAsPercent = (val == "true" || val == "1");
+        else if (key == "valueDecimals") {
+            int d = 0;
+            if (sscanf(val.c_str(), "%d", &d) == 1)
+                kn->valueDecimals = std::clamp(d, 0, 6);
         }
     } else if (auto* sl = dynamic_cast<SliderNode*>(node.get())) {
         if      (key == "value")                              { if (sscanf(val.c_str(), "%f", &f) == 1) sl->value    = f; }
@@ -408,7 +489,7 @@ static void ApiSetProp(const v8::FunctionCallbackInfo<v8::Value>& args) {
 static void ApiSetCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     bool ok = false;
     const uint32_t id = toUint32(isolate, args[0], ok);
     if (!ok || args.Length() < 3 || !args[1]->IsString() || !args[2]->IsFunction()) {
@@ -440,7 +521,17 @@ static void ApiSetCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
             (void)lfn->Call(lctx, v8::Undefined(isolate), 0, nullptr);
         };
     } else if (event == "onValueChange" || event == "onChanged") {
-        if (auto* sl = dynamic_cast<SliderNode*>(node.get())) {
+        if (auto* kn = dynamic_cast<KnobNode*>(node.get())) {
+            kn->onValueChange = [isolate, ctxG, cbG](float val) {
+                v8::Isolate::Scope iso(isolate);
+                v8::HandleScope    hs(isolate);
+                v8::Local<v8::Context>  lctx = ctxG->Get(isolate);
+                v8::Context::Scope cs(lctx);
+                v8::Local<v8::Function> lfn  = cbG->Get(isolate);
+                v8::Local<v8::Value>    arg  = v8::Number::New(isolate, val);
+                (void)lfn->Call(lctx, v8::Undefined(isolate), 1, &arg);
+            };
+        } else if (auto* sl = dynamic_cast<SliderNode*>(node.get())) {
             sl->onValueChange = [isolate, ctxG, cbG](float val) {
                 v8::Isolate::Scope iso(isolate);
                 v8::HandleScope    hs(isolate);
@@ -496,7 +587,7 @@ static void ApiSetCallback(const v8::FunctionCallbackInfo<v8::Value>& args) {
 static void ApiSetRoot(const v8::FunctionCallbackInfo<v8::Value>& args) {
     v8::Isolate* const isolate = args.GetIsolate();
     UiRegistry* reg = regFor(isolate);
-    if (!reg) { Throw(isolate, "AureliaUI: no registry"); return; }
+    if (!reg) { Throw(isolate, "SphereUI: no registry"); return; }
     bool ok = false;
     const uint32_t id = toUint32(isolate, args[0], ok);
     if (!ok) { Throw(isolate, "setRoot(id)"); return; }
@@ -539,7 +630,7 @@ static void ApiPerformanceNow(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 // ── Build API object ──────────────────────────────────────────────────────────
 
-static v8::Local<v8::Object> makeAureliaUIApi(v8::Isolate* isolate) {
+static v8::Local<v8::Object> makeSphereUIApi(v8::Isolate* isolate) {
     v8::EscapableHandleScope hs(isolate);
     v8::Local<v8::Context>   ctx = isolate->GetCurrentContext();
     v8::Local<v8::Object>    api = v8::Object::New(isolate);
@@ -672,7 +763,7 @@ bool JavaScriptEngine::eval(std::string_view source, std::string_view filename) 
     return true;
 }
 
-void JavaScriptEngine::installAureliaUIGlobal() {
+void JavaScriptEngine::installSphereUIGlobal() {
     if (!impl_->isolate) init();
     v8::Isolate* const     isolate = impl_->isolate;
     v8::Isolate::Scope     is(isolate);
@@ -691,8 +782,8 @@ void JavaScriptEngine::installAureliaUIGlobal() {
         (void)global->Set(ctx, str(name), val);
     };
 
-    // ── AureliaUI native bridge ───────────────────────────────────────────────
-    setG("AureliaUI", makeAureliaUIApi(isolate));
+    // ── SphereUI native bridge ───────────────────────────────────────────────
+    setG("SphereUI", makeSphereUIApi(isolate));
 
     // ── console polyfill (output → debugger / stderr) ─────────────────────────
     {
@@ -719,6 +810,10 @@ void JavaScriptEngine::installAureliaUIGlobal() {
     impl_->installedUi = true;
 }
 
+void JavaScriptEngine::installSphereVueGlobal() {
+    installSphereUIGlobal();
+}
+
 FlexNode::Ptr JavaScriptEngine::takePendingRoot() {
     if (!impl_->registry) return nullptr;
     FlexNode::Ptr r = std::move(impl_->registry->pendingRoot);
@@ -726,4 +821,4 @@ FlexNode::Ptr JavaScriptEngine::takePendingRoot() {
     return r;
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

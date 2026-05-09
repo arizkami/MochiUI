@@ -4,7 +4,7 @@
 #include <sstream>
 #include <regex>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 std::string IconNode::iconsDir = "External/lucide/icons";
 
@@ -165,4 +165,4 @@ void IconNode::draw(SkCanvas* canvas) {
     drawChildren(canvas);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 set(CMAKE_POLICY_DEFAULT_CMP0091 NEW)
 
-project(Aurelia)
+project(Sphere)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,14 +24,14 @@ set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
 
 if(WIN32)
   set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
-  set(SKIA_URL      "https://github.com/arizkami/Aurelia/releases/download/2026.05/skia-prebuilt-binary.zip")
+  set(SKIA_URL      "https://github.com/arizkami/Sphere/releases/download/2026.05/skia-prebuilt-binary.zip")
   set(SKIA_SENTINEL ${SKIA_DIR}/lib/skia.lib)
 elseif(UNIX AND NOT APPLE)
   set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-linux.tar.gz)
-  set(SKIA_URL      "https://github.com/arizkami/Aurelia/releases/download/2026.05/skia-prebuilt-linux.tar.gz")
+  set(SKIA_URL      "https://github.com/arizkami/Sphere/releases/download/2026.05/skia-prebuilt-linux.tar.gz")
   set(SKIA_SENTINEL ${SKIA_DIR}/lib/libskia.a)
 else()
-  message(FATAL_ERROR "Aurelia: unsupported platform '${CMAKE_SYSTEM_NAME}'. "
+  message(FATAL_ERROR "Sphere: unsupported platform '${CMAKE_SYSTEM_NAME}'. "
                         "Only Windows and Linux are wired up so far.")
 endif()
 
@@ -56,7 +56,7 @@ set(V8_ROOT "")
 if(WIN32)
   set(V8_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/v8)
   set(V8_ARCHIVE ${CMAKE_CURRENT_SOURCE_DIR}/external/v8-windows_x64.zip)
-  set(V8_URL "https://github.com/arizkami/Aurelia/releases/download/2026.04/v8-windows_x64.zip")
+  set(V8_URL "https://github.com/arizkami/Sphere/releases/download/2026.04/v8-windows_x64.zip")
   set(V8_SENTINEL ${V8_DIR}/lib/v8_monolith.lib)
 
   # If a previous configure extracted the zip into `external/prebuilt/{bin,include,lib,...}`
@@ -92,13 +92,13 @@ if(WIN32)
   set(V8_ROOT "${V8_DIR}")
   message(STATUS "V8 root: ${V8_ROOT}")
 
-  add_library(AureliaV8 INTERFACE)
-  target_include_directories(AureliaV8 INTERFACE "${V8_ROOT}/include")
-  target_link_libraries(AureliaV8 INTERFACE "${V8_ROOT}/lib/v8_monolith.lib")
+  add_library(SphereV8 INTERFACE)
+  target_include_directories(SphereV8 INTERFACE "${V8_ROOT}/include")
+  target_link_libraries(SphereV8 INTERFACE "${V8_ROOT}/lib/v8_monolith.lib")
   # The prebuilt v8_monolith was compiled with pointer compression + sandbox
   # enabled.  Every embedder TU that includes V8 headers must see the same
   # flags or the runtime config-mismatch check fires a fatal SIGTRAP.
-  target_compile_definitions(AureliaV8 INTERFACE
+  target_compile_definitions(SphereV8 INTERFACE
       V8_COMPRESS_POINTERS
       V8_COMPRESS_POINTERS_IN_SHARED_CAGE
   )
@@ -122,7 +122,6 @@ include_directories(
     external/yoga
     external/rtaudio
     external/nlohmann-json
-    external/yaml-cpp/include
 )
 
 set(SKIA_LIB_DIR ${SKIA_DIR}/lib)
@@ -151,14 +150,20 @@ set(YOGA_SOURCES
 )
 
 # ── Resource generation ───────────────────────────────────────────────────────
-find_package(Python3 REQUIRED)
+if (WIN32)
+    find_program(SPHX_PYTHON_CMD NAMES py py.exe python python.exe)
+endif()
+if (NOT SPHX_PYTHON_CMD)
+    find_package(Python3 REQUIRED COMPONENTS Interpreter)
+    set(SPHX_PYTHON_CMD ${Python3_EXECUTABLE})
+endif()
 set(RESOURCES_XML        ${CMAKE_CURRENT_SOURCE_DIR}/example/shared/resources/resrouces.xml)
 set(GENERATED_RESOURCES_H   ${CMAKE_CURRENT_BINARY_DIR}/generated/BinaryResources.hpp)
 set(GENERATED_RESOURCES_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/BinaryResources.cpp)
 
 add_custom_command(
     OUTPUT ${GENERATED_RESOURCES_H} ${GENERATED_RESOURCES_CPP}
-    COMMAND ${Python3_EXECUTABLE}
+    COMMAND ${SPHX_PYTHON_CMD}
             ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_resources.py
             ${RESOURCES_XML} ${GENERATED_RESOURCES_H} ${GENERATED_RESOURCES_CPP}
     DEPENDS ${RESOURCES_XML} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_resources.py
@@ -311,7 +316,7 @@ if(MSVC)
 endif()
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  AureliaKit.Foundation  —  core windowing, rendering, fonts, resources
+#  SphereKit.Foundation  —  core windowing, rendering, fonts, resources
 # ══════════════════════════════════════════════════════════════════════════════
 set(FOUNDATION_SOURCES
     ${YOGA_SOURCES}
@@ -328,38 +333,38 @@ if(WIN32)
 endif()
 # TODO(linux): add src/platform/linux/Window.cpp once an X11/Wayland backend exists.
 
-add_library(AureliaKit_Foundation SHARED ${FOUNDATION_SOURCES})
-set_target_properties(AureliaKit_Foundation PROPERTIES
-    OUTPUT_NAME "AureliaKit.Foundation"
+add_library(SphereKit_Foundation SHARED ${FOUNDATION_SOURCES})
+set_target_properties(SphereKit_Foundation PROPERTIES
+    OUTPUT_NAME "SphereKit.Foundation"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(AureliaKit_Foundation PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(AureliaKit_Foundation PUBLIC ${MOCHIKIT_LIBS})
+target_compile_definitions(SphereKit_Foundation PUBLIC ${MOCHIKIT_DEFINITIONS})
+target_link_libraries(SphereKit_Foundation PUBLIC ${MOCHIKIT_LIBS})
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  AureliaKit.GraphicInterface  —  widget, menu bar, overlay, AureliaUI layer
+#  SphereKit.GraphicInterface  —  widget, menu bar, overlay, SphereUI layer
 # ══════════════════════════════════════════════════════════════════════════════
 set(GRAPHIC_INTERFACE_SOURCES
-    src/core/AureliaWidget.cpp
-    src/gui/AureliaUI.cpp
+    src/core/SphereWidget.cpp
+    src/gui/SphereUI.cpp
     src/gui/MenuBar.cpp
-    src/gui/AUKImage.cpp
-    src/gui/AUKSvg.cpp
+    src/gui/SPHXImage.cpp
+    src/gui/SPHXSvg.cpp
 )
 
-add_library(AureliaKit_GraphicInterface SHARED ${GRAPHIC_INTERFACE_SOURCES})
-set_target_properties(AureliaKit_GraphicInterface PROPERTIES
-    OUTPUT_NAME "AureliaKit.GraphicInterface"
+add_library(SphereKit_GraphicInterface SHARED ${GRAPHIC_INTERFACE_SOURCES})
+set_target_properties(SphereKit_GraphicInterface PROPERTIES
+    OUTPUT_NAME "SphereKit.GraphicInterface"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(AureliaKit_GraphicInterface PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(AureliaKit_GraphicInterface
-    PUBLIC AureliaKit_Foundation
+target_compile_definitions(SphereKit_GraphicInterface PUBLIC ${MOCHIKIT_DEFINITIONS})
+target_link_libraries(SphereKit_GraphicInterface
+    PUBLIC SphereKit_Foundation
     PRIVATE skia_svg
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  AureliaKit.GraphicComponent  —  all UI components
+#  SphereKit.GraphicComponent  —  all UI components
 # ══════════════════════════════════════════════════════════════════════════════
 set(GRAPHIC_COMPONENT_SOURCES
     src/gui/Components/TextNode.cpp
@@ -382,111 +387,99 @@ set(GRAPHIC_COMPONENT_SOURCES
     src/gui/Components/RadioButtonNode.cpp
 )
 
-add_library(AureliaKit_GraphicComponent SHARED ${GRAPHIC_COMPONENT_SOURCES})
-set_target_properties(AureliaKit_GraphicComponent PROPERTIES
-    OUTPUT_NAME "AureliaKit.GraphicComponent"
+add_library(SphereKit_GraphicComponent SHARED ${GRAPHIC_COMPONENT_SOURCES})
+set_target_properties(SphereKit_GraphicComponent PROPERTIES
+    OUTPUT_NAME "SphereKit.GraphicComponent"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(AureliaKit_GraphicComponent PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(AureliaKit_GraphicComponent PUBLIC AureliaKit_GraphicInterface)
+target_compile_definitions(SphereKit_GraphicComponent PUBLIC ${MOCHIKIT_DEFINITIONS})
+target_link_libraries(SphereKit_GraphicComponent PUBLIC SphereKit_GraphicInterface)
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  AureliaKit.DSL  —  YAML/CSS-style declarative UI loader
-# ══════════════════════════════════════════════════════════════════════════════
-# yaml-cpp ships its own CMakeLists. Pull it in as a static library so the DSL
-# loader can be linked without forcing every consumer to build YAML support.
-set(YAML_CPP_BUILD_TESTS    OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_BUILD_TOOLS    OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_BUILD_CONTRIB  OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_INSTALL        OFF CACHE BOOL "" FORCE)
-set(YAML_CPP_FORMAT_SOURCE  OFF CACHE BOOL "" FORCE)
-set(YAML_BUILD_SHARED_LIBS  OFF CACHE BOOL "" FORCE)
-set(YAML_MSVC_SHARED_RT     OFF CACHE BOOL "" FORCE)
-add_subdirectory(external/yaml-cpp EXCLUDE_FROM_ALL)
-
-add_subdirectory(external/libcss EXCLUDE_FROM_ALL)
-
-set(DSL_SOURCES
-    src/dsl/DSL.cpp
-    src/dsl/LibCssStyle.cpp
-)
-
-add_library(AureliaKit_DSL SHARED ${DSL_SOURCES})
-set_target_properties(AureliaKit_DSL PROPERTIES
-    OUTPUT_NAME "AureliaKit.DSL"
-    WINDOWS_EXPORT_ALL_SYMBOLS ON
-)
-target_compile_definitions(AureliaKit_DSL PUBLIC ${MOCHIKIT_DEFINITIONS})
-target_link_libraries(AureliaKit_DSL
-    PUBLIC  AureliaKit_GraphicComponent
-    PRIVATE yaml-cpp::yaml-cpp
-            css
-)
-
-# ══════════════════════════════════════════════════════════════════════════════
-#  AureliaKit.JavaScriptEngine  —  V8 embed + native bindings
+#  SphereKit.JavaScriptEngine  —  V8 embed + native bindings
 # ══════════════════════════════════════════════════════════════════════════════
 set(JAVASCRIPT_ENGINE_SOURCES
     src/javascript/JavaScriptEngine.cpp
 )
 
-add_library(AureliaKit_JavaScriptEngine SHARED ${JAVASCRIPT_ENGINE_SOURCES})
-set_target_properties(AureliaKit_JavaScriptEngine PROPERTIES
-    OUTPUT_NAME "AureliaKit.JavaScriptEngine"
+add_library(SphereKit_JavaScriptEngine SHARED ${JAVASCRIPT_ENGINE_SOURCES})
+set_target_properties(SphereKit_JavaScriptEngine PROPERTIES
+    OUTPUT_NAME "SphereKit.JavaScriptEngine"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(AureliaKit_JavaScriptEngine
+target_compile_definitions(SphereKit_JavaScriptEngine
     PUBLIC  ${MOCHIKIT_DEFINITIONS}
-    PRIVATE AUKJS_BUILD_SHARED
+    PRIVATE SPHXJS_BUILD_SHARED
 )
-target_link_libraries(AureliaKit_JavaScriptEngine
-    PUBLIC  AureliaKit_GraphicComponent
-    PRIVATE AureliaV8
+target_link_libraries(SphereKit_JavaScriptEngine
+    PUBLIC  SphereKit_GraphicComponent
+    PRIVATE SphereV8
             dbghelp.lib
             winmm.lib
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  Aurelia.React  —  JS reconciler bridge
+#  Sphere.React  —  JS reconciler bridge
 # ══════════════════════════════════════════════════════════════════════════════
-set(AURELIA_REACT_SOURCES
-    src/react/AureliaReact.cpp
+set(Sphere_REACT_SOURCES
+    src/react/SphereReact.cpp
 )
 
-add_library(Aurelia_React SHARED ${AURELIA_REACT_SOURCES})
-set_target_properties(Aurelia_React PROPERTIES
-    OUTPUT_NAME "Aurelia.React"
+add_library(Sphere_React SHARED ${Sphere_REACT_SOURCES})
+set_target_properties(Sphere_React PROPERTIES
+    OUTPUT_NAME "Sphere.React"
     WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
-target_compile_definitions(Aurelia_React
+target_compile_definitions(Sphere_React
     PUBLIC  ${MOCHIKIT_DEFINITIONS}
     PRIVATE AUR_BUILD_SHARED
 )
-target_link_libraries(Aurelia_React
-    PUBLIC AureliaKit_GraphicComponent
-           AureliaKit_JavaScriptEngine
+target_link_libraries(Sphere_React
+    PUBLIC SphereKit_GraphicComponent
+           SphereKit_JavaScriptEngine
 )
 
 # ══════════════════════════════════════════════════════════════════════════════
-#  AureliaKit.DirectAudioEngine  —  WASAPI / DirectSound audio (Windows-only)
+#  SphereKit.Vue  —  JS renderer bridge
+# ══════════════════════════════════════════════════════════════════════════════
+set(Sphere_VUE_SOURCES
+    src/vue/SphereVUE.cpp
+)
+
+add_library(Sphere_Vue SHARED ${Sphere_VUE_SOURCES})
+set_target_properties(Sphere_Vue PROPERTIES
+    OUTPUT_NAME "SphereKit.Vue"
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
+)
+target_compile_definitions(Sphere_Vue
+    PUBLIC  ${MOCHIKIT_DEFINITIONS}
+    PRIVATE AUR_BUILD_SHARED
+)
+target_link_libraries(Sphere_Vue
+    PUBLIC SphereKit_GraphicComponent
+           SphereKit_JavaScriptEngine
+)
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  SphereKit.DirectAudioEngine  —  WASAPI / DirectSound audio (Windows-only)
 # ══════════════════════════════════════════════════════════════════════════════
 if(WIN32)
   set(DIRECT_AUDIO_SOURCES
-        src/audio/AUKDirectAudioEngine.cpp
+        src/audio/SPHXDirectAudioEngine.cpp
         src/audio/Streaming.cpp
         external/rtaudio/RtAudio.cpp
     )
 
-  add_library(AureliaKit_DirectAudioEngine SHARED ${DIRECT_AUDIO_SOURCES})
-  set_target_properties(AureliaKit_DirectAudioEngine PROPERTIES
-        OUTPUT_NAME "AureliaKit.DirectAudioEngine"
+  add_library(SphereKit_DirectAudioEngine SHARED ${DIRECT_AUDIO_SOURCES})
+  set_target_properties(SphereKit_DirectAudioEngine PROPERTIES
+        OUTPUT_NAME "SphereKit.DirectAudioEngine"
     )
-  target_compile_definitions(AureliaKit_DirectAudioEngine PRIVATE DAUX_EXPORTS)
-  target_compile_definitions(AureliaKit_DirectAudioEngine PUBLIC
+  target_compile_definitions(SphereKit_DirectAudioEngine PRIVATE DAUX_EXPORTS)
+  target_compile_definitions(SphereKit_DirectAudioEngine PUBLIC
         __WINDOWS_WASAPI__
         __WINDOWS_DS__
     )
-  target_link_libraries(AureliaKit_DirectAudioEngine PRIVATE
+  target_link_libraries(SphereKit_DirectAudioEngine PRIVATE
         mfplat.lib
         mfuuid.lib
         wmcodecdspuuid.lib
@@ -501,20 +494,17 @@ endif()
 # The examples currently embed a Win32 .rc and use the WIN32 GUI subsystem;
 # they only build on Windows until they grow a portable entry point.
 if(WIN32)
-  add_executable(AureliaExample WIN32
+  add_executable(SphereExample WIN32
         example/main.cpp
         example/app.rc
     )
-  target_link_libraries(AureliaExample PRIVATE
-        AureliaKit_GraphicComponent
+  target_link_libraries(SphereExample PRIVATE
+        SphereKit_GraphicComponent
     )
 
   add_subdirectory(example/ActivityMonitor)
   add_subdirectory(example/Mixer)
   add_subdirectory(example/Borderless)
-  add_subdirectory(example/DSLDemo)
   add_subdirectory(example/ReactUI)
+  add_subdirectory(example/VueUI)
 endif()
-
-# ── Frameworks / modules ─────────────────────────────────────────────────────
-add_subdirectory(framework/MikoUI)

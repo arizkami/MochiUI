@@ -26,7 +26,7 @@
 # ║  Until the packaging step picks up svg.lib + skshaper.lib + skunicode.lib║
 # ║  the consumer CMakeLists.txt compiles the SVG/skshaper sources in-tree.  ║
 # ║  Once the next prebuilt drop ships those libs, that workaround can be    ║
-# ║  removed and AureliaKit_GraphicInterface can simply link against them.   ║
+# ║  removed and SphereKit_GraphicInterface can simply link against them.   ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
 # --- Compiler & Toolchain ---

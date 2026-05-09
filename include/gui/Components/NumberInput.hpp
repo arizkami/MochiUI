@@ -1,7 +1,7 @@
 #pragma once
 #include <gui/Components/TextInput.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class NumberInput : public TextInput {
 public:
@@ -29,4 +29,4 @@ private:
     bool isHoveringDown = false;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -4,7 +4,7 @@
 #include <sstream>
 #include <cmath>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 NumberInput::NumberInput() {
     syncTextFromValue();
@@ -146,4 +146,4 @@ bool NumberInput::onMouseWheel(float x, float y, float delta) {
     return false;
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

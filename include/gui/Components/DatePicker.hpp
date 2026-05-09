@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <ctime>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class DatePicker : public FlexNode {
 public:
@@ -21,4 +21,4 @@ private:
     void updateText();
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

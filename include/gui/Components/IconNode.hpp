@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class IconNode : public FlexNode {
 public:
@@ -12,7 +12,7 @@ public:
     void setIcon(const std::string& name);
     void draw(SkCanvas* canvas) override;
 
-    AUKColor color = Theme::TextPrimary;
+    SPHXColor color = Theme::TextPrimary;
     float strokeWidth = 2.0f;
 
     static void setIconsDirectory(const std::string& dir) { iconsDir = dir; }
@@ -34,4 +34,4 @@ private:
     void parseSVG(const std::string& content);
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

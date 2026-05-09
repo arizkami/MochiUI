@@ -1,6 +1,6 @@
 #pragma once
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class Application {
 public:
@@ -11,4 +11,4 @@ private:
     Application() = default;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

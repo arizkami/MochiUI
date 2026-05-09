@@ -1,7 +1,7 @@
 #pragma once
-#include <AUKFoundation.hpp>
+#include <SPHXFoundation.hpp>
 
-// AureliaUI audio streaming — pull-model audio sources and a high-level player.
+// SphereUI audio streaming — pull-model audio sources and a high-level player.
 //
 // Pattern:
 //   auto src      = WavSource::open("sfx/hit.wav");
@@ -10,7 +10,7 @@
 //   streamer->play();
 //   // In your DAUx callback: streamer->fillBuffer(out, frames, channels);
 
-namespace AureliaUI {
+namespace SphereUI {
 namespace Audio {
 
 // ── Audio format tags ─────────────────────────────────────────────────────────
@@ -148,4 +148,4 @@ private:
 };
 
 } // namespace Audio
-} // namespace AureliaUI
+} // namespace SphereUI

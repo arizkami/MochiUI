@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 struct Shortcut {
     uint32_t key;
@@ -40,4 +40,4 @@ private:
     std::vector<Shortcut> shortcuts;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

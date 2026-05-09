@@ -6,7 +6,7 @@
 #include <vector>
 #include <functional>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 // Overlay node that renders the open dropdown on top of all other content.
 class ComboBoxDropdown : public FlexNode {
@@ -15,10 +15,10 @@ public:
 
     SkRect dropdownRect = SkRect::MakeEmpty();
     const std::vector<std::string>* items = nullptr;
-    AUKColor backgroundColor = AUKColor::white();       // solid; must be opaque
-    AUKColor borderColor     = AUKColor::RGB(169, 169, 169);
-    AUKColor textColor       = AUKColor::black();
-    AUKColor accentColor     = AUKColor::RGB(0, 120, 215);
+    SPHXColor backgroundColor = SPHXColor::white();       // solid; must be opaque
+    SPHXColor borderColor     = SPHXColor::RGB(169, 169, 169);
+    SPHXColor textColor       = SPHXColor::black();
+    SPHXColor accentColor     = SPHXColor::RGB(0, 120, 215);
     float fontSize   = Theme::FontNormal;
     float itemHeight = Theme::ControlHeight;
     int hoveredItemIndex = -1;
@@ -48,10 +48,10 @@ public:
 
     void addItem(const std::string& item) { items.push_back(item); }
 
-    AUKColor backgroundColor = AUKColor::white();
-    AUKColor borderColor     = AUKColor::RGB(169, 169, 169);
-    AUKColor textColor       = AUKColor::black();
-    AUKColor accentColor     = AUKColor::RGB(0, 120, 215);
+    SPHXColor backgroundColor = SPHXColor::white();
+    SPHXColor borderColor     = SPHXColor::RGB(169, 169, 169);
+    SPHXColor textColor       = SPHXColor::black();
+    SPHXColor accentColor     = SPHXColor::RGB(0, 120, 215);
     float fontSize = Theme::FontNormal;
 
     void draw(SkCanvas* canvas) override;
@@ -69,4 +69,4 @@ private:
     void closeDropdown();
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

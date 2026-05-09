@@ -4,7 +4,7 @@
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class EmptyStateNode : public FlexNode {
 public:
@@ -33,4 +33,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class TableHead : public FlexNode {
 public:
@@ -36,4 +36,4 @@ private:
     std::shared_ptr<TableHead> header;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

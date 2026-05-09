@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <chrono>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class SpinnerNode : public FlexNode {
 public:
@@ -12,7 +12,7 @@ public:
         startTime = std::chrono::high_resolution_clock::now();
     }
 
-    AUKColor color = Theme::Accent;
+    SPHXColor color = Theme::Accent;
     float size = 24.0f;
     float thickness = 3.0f;
 
@@ -59,4 +59,4 @@ private:
     std::chrono::high_resolution_clock::time_point startTime;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

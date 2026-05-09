@@ -1,10 +1,10 @@
-#include <AUKApplication.hpp>
-#include <AUKGraphicInterface.hpp>
-#include <AUKGraphicComponents.hpp>
+#include <SPHXApplication.hpp>
+#include <SPHXGraphicInterface.hpp>
+#include <SPHXGraphicComponents.hpp>
 #include <chrono>
 #include <windows.h>
 
-using namespace AureliaUI;
+using namespace SphereUI;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -16,7 +16,7 @@ static FlexNode::Ptr SectionLabel(const std::string& text) {
     return label;
 }
 
-static FlexNode::Ptr ColorSwatch(AUKColor color, const std::string& name) {
+static FlexNode::Ptr ColorSwatch(SPHXColor color, const std::string& name) {
     auto col = FlexNode::Column();
     col->style.setGap(6);
     col->style.setWidth(76);
@@ -78,20 +78,19 @@ static FlexNode::Ptr CreateControlsTab() {
         row->style.setGap(10);
         row->style.setFlexWrap(YGWrapWrap);
 
-        auto mkBtn = [](const std::string& lbl, AUKColor bg, AUKColor fg, AUKColor hover) {
+        auto mkBtn = [](const std::string& lbl, SPHXColor bg, SPHXColor fg, SPHXColor hover) {
             auto b = std::make_shared<ButtonNode>();
-            b->label            = lbl;
-            b->useThemeColors   = false;
-            b->normalColor      = bg;
-            b->textColor        = fg;
-            b->hoverColor       = hover;
+            b->label = lbl;
+            b->nodeStyle.background = bg;
+            b->nodeStyle.foreground = fg;
+            b->style.borderColor = hover;
             return b;
         };
 
         row->addChild(mkBtn("Primary",
             Theme::Accent,
-            AUKColor::white(),
-            AUKColor::RGB(90, 155, 255)));
+            SPHXColor::white(),
+            SPHXColor::RGB(90, 155, 255)));
 
         row->addChild(mkBtn("Secondary",
             Theme::Card,
@@ -99,17 +98,16 @@ static FlexNode::Ptr CreateControlsTab() {
             Theme::HoverOverlay));
 
         auto ghost = std::make_shared<ButtonNode>();
-        ghost->label          = "Ghost";
-        ghost->useThemeColors = false;
-        ghost->normalColor    = AUKColor::transparent();
-        ghost->textColor      = Theme::Accent;
-        ghost->hoverColor     = AUKColor::RGB(66, 133, 244, 25);
+        ghost->label = "Ghost";
+        ghost->nodeStyle.background = SPHXColor::transparent();
+        ghost->nodeStyle.foreground = Theme::Accent;
+        ghost->style.borderColor = SPHXColor::RGB(66, 133, 244, 25);
         row->addChild(ghost);
 
         row->addChild(mkBtn("Danger",
-            AUKColor::RGB(196, 43, 28),
-            AUKColor::white(),
-            AUKColor::RGB(220, 60, 42)));
+            SPHXColor::RGB(196, 43, 28),
+            SPHXColor::white(),
+            SPHXColor::RGB(220, 60, 42)));
 
         page->addChild(Card(row, "Buttons"));
     }
@@ -187,16 +185,16 @@ static FlexNode::Ptr CreateControlsTab() {
         row->style.setGap(10);
         row->style.setAlignItems(YGAlignCenter);
 
-        auto mkBadge = [](const std::string& t, AUKColor bg) {
+        auto mkBadge = [](const std::string& t, SPHXColor bg) {
             auto b = std::make_shared<BadgeNode>(t);
-            b->color = bg;
+            b->nodeStyle.background = bg;
             return b;
         };
 
         row->addChild(mkBadge("Default",  Theme::Accent));
-        row->addChild(mkBadge("Success",  AUKColor::RGB(34, 139, 34)));
-        row->addChild(mkBadge("Warning",  AUKColor::RGB(218, 165, 32)));
-        row->addChild(mkBadge("Danger",   AUKColor::RGB(196, 43, 28)));
+        row->addChild(mkBadge("Success",  SPHXColor::RGB(34, 139, 34)));
+        row->addChild(mkBadge("Warning",  SPHXColor::RGB(218, 165, 32)));
+        row->addChild(mkBadge("Danger",   SPHXColor::RGB(196, 43, 28)));
         row->addChild(mkBadge("Neutral",  Theme::Card));
 
         page->addChild(Card(row, "Badges"));
@@ -237,7 +235,7 @@ static FlexNode::Ptr CreateInputsTab() {
         col->style.setGap(10);
 
         auto combo = std::make_shared<ComboBox>();
-        combo->items         = {"Dark", "Light", "MD3 Dark", "MD3 Light", "Minimal", "WinUI Dark", "WinUI Light"};
+        combo->items         = {"Dark", "Light"};
         combo->selectedIndex = 0;
         col->addChild(combo);
 
@@ -290,7 +288,7 @@ static FlexNode::Ptr CreateVisualizersTab() {
         row->style.setGap(24);
         row->style.setJustifyContent(YGJustifyCenter);
 
-        auto mkKnob = [](const std::string& name, float val, AUKColor fill) {
+        auto mkKnob = [](const std::string& name, float val, SPHXColor fill) {
             auto col = FlexNode::Column();
             col->style.setGap(6);
             col->style.setAlignItems(YGAlignCenter);
@@ -310,9 +308,9 @@ static FlexNode::Ptr CreateVisualizersTab() {
         };
 
         row->addChild(mkKnob("Volume",  0.70f, Theme::Accent));
-        row->addChild(mkKnob("Treble",  0.50f, AUKColor::RGB(72, 199, 142)));
-        row->addChild(mkKnob("Bass",    0.35f, AUKColor::RGB(255, 171, 0)));
-        row->addChild(mkKnob("Reverb",  0.20f, AUKColor::RGB(255, 100, 80)));
+        row->addChild(mkKnob("Treble",  0.50f, SPHXColor::RGB(72, 199, 142)));
+        row->addChild(mkKnob("Bass",    0.35f, SPHXColor::RGB(255, 171, 0)));
+        row->addChild(mkKnob("Reverb",  0.20f, SPHXColor::RGB(255, 100, 80)));
 
         page->addChild(Card(row, "Knobs"));
     }
@@ -323,7 +321,7 @@ static FlexNode::Ptr CreateVisualizersTab() {
         row->style.setGap(24);
         row->style.setAlignItems(YGAlignCenter);
 
-        auto mkSpinner = [](AUKColor color, float size) {
+        auto mkSpinner = [](SPHXColor color, float size) {
             auto s = std::make_shared<SpinnerNode>();
             s->color = color;
             s->size  = size;
@@ -331,8 +329,8 @@ static FlexNode::Ptr CreateVisualizersTab() {
         };
 
         row->addChild(mkSpinner(Theme::Accent,                20.0f));
-        row->addChild(mkSpinner(AUKColor::RGB(72, 199, 142), 28.0f));
-        row->addChild(mkSpinner(AUKColor::RGB(255, 171, 0),  36.0f));
+        row->addChild(mkSpinner(SPHXColor::RGB(72, 199, 142), 28.0f));
+        row->addChild(mkSpinner(SPHXColor::RGB(255, 171, 0),  36.0f));
         row->addChild(mkSpinner(Theme::TextSecondary,         24.0f));
 
         page->addChild(Card(row, "Spinners"));
@@ -349,10 +347,10 @@ static FlexNode::Ptr CreateVisualizersTab() {
             return t;
         };
 
-        accordion->addItem("What is AureliaUI?",
-            makeContent("AureliaUI is a hardware-accelerated UI framework built on Skia and Direct3D 12 for Windows."));
+        accordion->addItem("What is SphereUI?",
+            makeContent("SphereUI is a hardware-accelerated UI framework built on Skia and Direct3D 12 for Windows."));
         accordion->addItem("Which themes are supported?",
-            makeContent("Dark, Light, MD3 Dark, MD3 Light, Minimal, WinUI Dark, WinUI Light, and System."));
+            makeContent("Dark and Light."));
         accordion->addItem("How does layout work?",
             makeContent("Layouts use the Yoga flexbox engine, mirroring CSS Flexbox semantics."));
 
@@ -393,14 +391,14 @@ static FlexNode::Ptr CreatePaletteTab() {
         auto row = FlexNode::Row();
         row->style.setGap(8);
 
-        struct { AUKColor color; const char* name; } steps[] = {
-            { AUKColor::RGB(20,  80,  180), "900" },
-            { AUKColor::RGB(30,  100, 210), "800" },
-            { AUKColor::RGB(50,  120, 230), "700" },
+        struct { SPHXColor color; const char* name; } steps[] = {
+            { SPHXColor::RGB(20,  80,  180), "900" },
+            { SPHXColor::RGB(30,  100, 210), "800" },
+            { SPHXColor::RGB(50,  120, 230), "700" },
             { Theme::Accent,                "600" },
-            { AUKColor::RGB(90,  155, 255), "500" },
-            { AUKColor::RGB(130, 180, 255), "400" },
-            { AUKColor::RGB(170, 205, 255), "300" },
+            { SPHXColor::RGB(90,  155, 255), "500" },
+            { SPHXColor::RGB(130, 180, 255), "400" },
+            { SPHXColor::RGB(170, 205, 255), "300" },
         };
 
         for (auto& s : steps)
@@ -415,13 +413,13 @@ static FlexNode::Ptr CreatePaletteTab() {
         row->style.setGap(12);
         row->style.setFlexWrap(YGWrapWrap);
 
-        row->addChild(ColorSwatch(AUKColor::RGB(34,  139, 34),  "Success"));
-        row->addChild(ColorSwatch(AUKColor::RGB(218, 165, 32),  "Warning"));
-        row->addChild(ColorSwatch(AUKColor::RGB(196, 43,  28),  "Danger"));
-        row->addChild(ColorSwatch(AUKColor::RGB(0,   165, 224), "Info"));
-        row->addChild(ColorSwatch(AUKColor::RGB(208, 188, 255), "Purple"));
-        row->addChild(ColorSwatch(AUKColor::RGB(72,  199, 142), "Teal"));
-        row->addChild(ColorSwatch(AUKColor::RGB(255, 171, 0),   "Amber"));
+        row->addChild(ColorSwatch(SPHXColor::RGB(34,  139, 34),  "Success"));
+        row->addChild(ColorSwatch(SPHXColor::RGB(218, 165, 32),  "Warning"));
+        row->addChild(ColorSwatch(SPHXColor::RGB(196, 43,  28),  "Danger"));
+        row->addChild(ColorSwatch(SPHXColor::RGB(0,   165, 224), "Info"));
+        row->addChild(ColorSwatch(SPHXColor::RGB(208, 188, 255), "Purple"));
+        row->addChild(ColorSwatch(SPHXColor::RGB(72,  199, 142), "Teal"));
+        row->addChild(ColorSwatch(SPHXColor::RGB(255, 171, 0),   "Amber"));
 
         page->addChild(Card(row, "Semantic Colors"));
     }
@@ -487,8 +485,7 @@ static FlexNode::Ptr CreateDropdownTab() {
         };
 
         col->addChild(SectionLabel("Theme"));
-        col->addChild(mkCombo({"Dark", "Light", "MD3 Dark", "MD3 Light",
-                                "Minimal", "WinUI Dark", "WinUI Light", "System"}, 0));
+        col->addChild(mkCombo({"Dark", "Light"}, 0));
 
         col->addChild(SectionLabel("Font Size"));
         col->addChild(mkCombo({"8", "10", "11", "12", "14", "16", "18",
@@ -587,8 +584,8 @@ static FlexNode::Ptr CreateCommandTab() {
             row->addChild(grpLbl);
 
             auto kbdBadge = std::make_shared<BadgeNode>(cmd.shortcut);
-            kbdBadge->color     = Theme::Card;
-            kbdBadge->textColor = Theme::TextSecondary;
+            kbdBadge->nodeStyle.background = Theme::Card;
+            kbdBadge->nodeStyle.foreground = Theme::TextSecondary;
             row->addChild(kbdBadge);
 
             return row;
@@ -635,14 +632,14 @@ static FlexNode::Ptr CreateGallery() {
     header->style.setGap(10);
     header->style.setAlignItems(YGAlignCenter);
 
-    auto title = std::make_shared<TextNode>("AureliaKit UI Gallery");
+    auto title = std::make_shared<TextNode>("SphereKit UI Gallery");
     title->fontSize = Theme::FontMedium;
     title->color    = Theme::TextPrimary;
     header->addChild(title);
 
     auto badge = std::make_shared<BadgeNode>("v0.1");
-    badge->color     = Theme::Accent;
-    badge->textColor = AUKColor::white();
+    badge->nodeStyle.background = Theme::Accent;
+    badge->nodeStyle.foreground = SPHXColor::white();
     header->addChild(badge);
 
     root->addChild(header);
@@ -663,11 +660,10 @@ static FlexNode::Ptr CreateGallery() {
 
     auto mkThemeItem = [](const std::string& name, ThemeType type) {
         auto btn = std::make_shared<ButtonNode>();
-        btn->label          = name;
-        btn->useThemeColors = false;
-        btn->normalColor    = AUKColor::transparent();
-        btn->textColor      = Theme::TextSecondary;
-        btn->hoverColor     = Theme::HoverOverlay;
+        btn->label = name;
+        btn->nodeStyle.background = SPHXColor::transparent();
+        btn->nodeStyle.foreground = Theme::TextSecondary;
+        btn->style.borderColor = Theme::HoverOverlay;
         btn->style.setWidthFull();
         btn->onClick = [type]() {
             ThemeSwitcher::getInstance().setTheme(type);
@@ -675,14 +671,8 @@ static FlexNode::Ptr CreateGallery() {
         return btn;
     };
 
-    sidebar->addChild(mkThemeItem("Dark",       ThemeType::Dark));
-    sidebar->addChild(mkThemeItem("Light",      ThemeType::Light));
-    sidebar->addChild(mkThemeItem("MD3 Dark",   ThemeType::Md3Dark));
-    sidebar->addChild(mkThemeItem("MD3 Light",  ThemeType::Md3Light));
-    sidebar->addChild(mkThemeItem("Minimal",    ThemeType::Minimal));
-    sidebar->addChild(mkThemeItem("WinUI Dark", ThemeType::WinuiDark));
-    sidebar->addChild(mkThemeItem("WinUI Light",ThemeType::WinuiLight));
-    sidebar->addChild(mkThemeItem("System",     ThemeType::System));
+    sidebar->addChild(mkThemeItem("Dark",  ThemeType::Dark));
+    sidebar->addChild(mkThemeItem("Light", ThemeType::Light));
 
     auto sep = std::make_shared<SeparatorNode>();
     sidebar->addChild(sep);
@@ -728,7 +718,7 @@ static FlexNode::Ptr CreateGallery() {
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
     Application::getInstance().init();
 
-    Win32Window window("AureliaKit UI Gallery", 1280, 800);
+    Win32Window window("SphereKit UI Gallery", 1280, 800);
     window.enableMica(true);
 
     auto menuBar = MenuBarFactory::Create(MenuBackend::Skia);
@@ -736,14 +726,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         {"Exit", 101, []() { PostQuitMessage(0); }}
     });
     menuBar->addMenu("Theme", {
-        {"Dark",       201, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Dark);      }},
-        {"Light",      202, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Light);     }},
-        {"MD3 Dark",   203, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Md3Dark);   }},
-        {"MD3 Light",  204, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Md3Light);  }},
-        {"Minimal",    205, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Minimal);   }},
-        {"WinUI Dark", 206, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::WinuiDark); }},
-        {"WinUI Light",207, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::WinuiLight);}},
-        {"System",     208, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::System);    }}
+        {"Dark",  201, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Dark);  }},
+        {"Light", 202, []() { ThemeSwitcher::getInstance().setTheme(ThemeType::Light); }}
     });
     window.setMenuBar(std::move(menuBar));
 

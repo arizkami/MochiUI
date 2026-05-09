@@ -4,7 +4,7 @@
 #include <memory>
 #include <map>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class FontManager {
 public:
@@ -41,4 +41,4 @@ private:
     std::map<std::string, sk_sp<SkTypeface>> fTypefaceCache;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

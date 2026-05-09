@@ -4,7 +4,7 @@
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class TreeItem : public FlexNode {
 public:
@@ -21,7 +21,7 @@ public:
         toggleIcon->setIcon("res://chevron-right.svg");
         toggleIcon->style.setWidth(12);
         toggleIcon->style.setHeight(12);
-        toggleIcon->color = hasChildren ? AUKColor(Theme::TextSecondary) : AUKColor::transparent();
+        toggleIcon->color = hasChildren ? SPHXColor(Theme::TextSecondary) : SPHXColor::transparent();
         header->addChild(toggleIcon);
 
         auto text = std::make_shared<TextNode>(label);
@@ -68,4 +68,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

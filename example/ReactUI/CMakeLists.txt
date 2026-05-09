@@ -13,12 +13,12 @@ find_program(BUN_EXECUTABLE bun
 )
 if(NOT BUN_EXECUTABLE)
     message(WARNING "ReactUI: 'bun' not found. Using pre-built bundle.js. "
-                    "Run `bun run bundle:demo` in modules/reactui/ to rebuild it.")
+                    "Run `bun run bundle:demo` in modules/reactui/ to rebuild from examples/App.tsx.")
 endif()
 
 set(REACTUI_BUNDLE_SRC
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui/App.tsx
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui/index.ts
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui/examples/App.tsx
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui/src/index.ts
     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui/package.json
 )
 set(REACTUI_BUNDLE_OUT ${CMAKE_CURRENT_SOURCE_DIR}/bundle.js)
@@ -47,7 +47,7 @@ set(REACTUI_GENERATED_RES_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/ReactUIResou
 
 add_custom_command(
     OUTPUT  ${REACTUI_GENERATED_RES_H} ${REACTUI_GENERATED_RES_CPP}
-    COMMAND ${Python3_EXECUTABLE}
+    COMMAND ${SPHX_PYTHON_CMD}
             ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/gen_resources.py
             ${REACTUI_RESOURCE_XML}
             ${REACTUI_GENERATED_RES_H}
@@ -69,9 +69,9 @@ target_include_directories(ReactUIDemo PRIVATE
 )
 
 target_link_libraries(ReactUIDemo PRIVATE
-    AureliaKit_GraphicComponent
-    AureliaKit_JavaScriptEngine
-    Aurelia_React
+    SphereKit_GraphicComponent
+    SphereKit_JavaScriptEngine
+    Sphere_React
 )
 
 # ── Stage artefacts ───────────────────────────────────────────────────────────

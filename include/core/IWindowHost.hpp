@@ -1,7 +1,7 @@
 #pragma once
 #include <memory>
 
-namespace AureliaUI {
+namespace SphereUI {
 class FlexNode;
 
 class IWindowHost {
@@ -12,4 +12,4 @@ public:
     virtual void removeOverlay(std::shared_ptr<FlexNode> node) {}
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

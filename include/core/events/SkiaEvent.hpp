@@ -4,7 +4,7 @@
 
 class SkCanvas;
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 // Issued around frame recording; canvas is valid only for the duration of the callback.
 struct SkiaPaintEvent {
@@ -19,4 +19,4 @@ struct SkiaSurfaceEvent {
     float dpiY = 96.0f;
 };
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

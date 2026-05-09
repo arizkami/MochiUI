@@ -1,7 +1,7 @@
 #include <gui/Components/TextInput.hpp>
 #include <windows.h>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 namespace {
     void SetClipboardText(const std::string& text) {
@@ -410,4 +410,4 @@ bool TextInput::needsRedraw() {
     return isFocused; // Keep blinking
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

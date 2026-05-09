@@ -1,11 +1,11 @@
 #include <gui/MenuBar.hpp>
-#include <AUKGraphicComponents.hpp>
+#include <SPHXGraphicComponents.hpp>
 #include <gui/Theme.hpp>
 #include <utils/FontManager/FontMgr.hpp>
 #include <windows.h>
 #include <map>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 // --- Win32 Backend Implementation ---
 class Win32MenuBar : public IMenuBar {
@@ -149,4 +149,4 @@ std::unique_ptr<IMenuBar> MenuBarFactory::Create(MenuBackend backend) {
     return std::make_unique<SkiaMenuBar>();
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

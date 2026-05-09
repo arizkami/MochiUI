@@ -1,6 +1,6 @@
 #pragma once
 // Public re-export of all Skia drawing types needed for custom draw() overrides.
-// Include this (or any AUK* umbrella) instead of Skia headers directly.
+// Include this (or any SPHX* umbrella) instead of Skia headers directly.
 
 // ── Geometry ──────────────────────────────────────────────────────────────────
 #include <include/core/SkRect.h>

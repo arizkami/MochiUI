@@ -1,17 +1,8 @@
-# Theming in AureliaUI
+# Theming in SphereUI
 
-AureliaUI features a flexible theme system that allows you to easily switch between different visual styles at runtime.
+SphereUI now ships with a small built-in theme surface: `Dark` and `Light`.
 
-## Built-in Themes
-
-AureliaUI comes with several built-in themes:
-
-- `Dark`: A modern dark theme (default).
-- `Light`: A clean light theme.
-- `Md3Dark` / `Md3Light`: Material Design 3 inspired themes.
-- `Minimal`: A simplified, high-contrast theme.
-- `WinuiDark` / `WinuiLight`: Windows UI (WinUI) inspired themes.
-- `System`: Follows the operating system's theme preference.
+The concrete color tokens live directly in `include/gui/Theme.hpp`; there is no JSON theme generation step anymore.
 
 ## Switching Themes
 
@@ -21,7 +12,7 @@ You can switch the active theme using the `ThemeSwitcher` singleton.
 #include <utils/Misc/ThemeSwitcher.hpp>
 
 // Switch to Light theme
-AureliaUI::ThemeSwitcher::getInstance().setTheme(AureliaUI::ThemeType::Light);
+SphereUI::ThemeSwitcher::getInstance().setTheme(SphereUI::ThemeType::Light);
 ```
 
 ## Using Theme Tokens
@@ -31,7 +22,7 @@ When building custom components, it is recommended to use tokens from the `Theme
 ```cpp
 #include <gui/Theme.hpp>
 
-using namespace AureliaUI;
+using namespace SphereUI;
 
 auto text = std::make_shared<TextNode>("Hello");
 text->color = Theme::TextPrimary; // Automatically uses current theme's primary text color
@@ -52,5 +43,9 @@ text->color = Theme::TextPrimary; // Automatically uses current theme's primary 
 You can also modify theme tokens directly at runtime for global changes:
 
 ```cpp
-AureliaUI::Theme::Accent = AureliaUI::AUKColor::Hex("#FF5733");
+SphereUI::Theme::Accent = SphereUI::SPHXColor::Hex("#FF5733");
 ```
+
+## Component Styling
+
+Interactive node components such as `SliderNode`, `SwitchNode`, and `KnobNode` expose `setStyleOverrides(...)` helpers for per-instance visual customization while still inheriting sensible theme-based defaults.

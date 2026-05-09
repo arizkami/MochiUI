@@ -6,7 +6,7 @@ set(BORDERLESS_SOURCES
 add_executable(BorderlessPlayer WIN32 ${BORDERLESS_SOURCES})
 
 target_link_libraries(BorderlessPlayer PRIVATE
-    AureliaKit_GraphicComponent
+    SphereKit_GraphicComponent
 )
 
 add_custom_command(TARGET BorderlessPlayer POST_BUILD

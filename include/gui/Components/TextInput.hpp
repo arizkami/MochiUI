@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class TextInput : public FlexNode {
 public:
@@ -20,11 +20,11 @@ public:
     std::function<void(const std::string&)> onChanged;
     std::function<void()> onEnter;
 
-    AUKColor backgroundColor  = AUKColor::white();
-    AUKColor borderColor      = AUKColor::RGB(169, 169, 169);   // 1px solid gray border
-    AUKColor focusColor       = AUKColor::RGB(0, 120, 215);     // blue focus ring
-    AUKColor textColor        = AUKColor::black();
-    AUKColor placeholderColor = AUKColor::RGB(128, 128, 128);
+    SPHXColor backgroundColor  = SPHXColor::white();
+    SPHXColor borderColor      = SPHXColor::RGB(169, 169, 169);   // 1px solid gray border
+    SPHXColor focusColor       = SPHXColor::RGB(0, 120, 215);     // blue focus ring
+    SPHXColor textColor        = SPHXColor::black();
+    SPHXColor placeholderColor = SPHXColor::RGB(128, 128, 128);
 
     void draw(SkCanvas* canvas) override;
     Size measure(Size available) override;
@@ -52,4 +52,4 @@ private:
     size_t getCursorIndexFromPosition(float x);
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

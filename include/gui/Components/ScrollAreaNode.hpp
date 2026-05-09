@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class ScrollAreaNode : public FlexNode {
 public:
@@ -35,4 +35,4 @@ private:
     void drawScrollbars(SkCanvas* canvas);
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 // Virtual-key style code (e.g. Windows VK_*); host maps platform scancode → this when needed.
 struct KeyEvent {
@@ -15,4 +15,4 @@ struct KeyEvent {
     bool handled = false;
 };
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

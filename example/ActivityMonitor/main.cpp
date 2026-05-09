@@ -1,6 +1,6 @@
-#include <AUKApplication.hpp>
-#include <AUKGraphicInterface.hpp>
-#include <AUKGraphicComponents.hpp>
+#include <SPHXApplication.hpp>
+#include <SPHXGraphicInterface.hpp>
+#include <SPHXGraphicComponents.hpp>
 #include <utils/FontManager/FontMgr.hpp>
 #include <windows.h>
 #include <psapi.h>
@@ -13,7 +13,7 @@
 #include <algorithm>
 #include <functional>
 
-using namespace AureliaUI;
+using namespace SphereUI;
 
 // ─── macOS Sonoma dark palette ────────────────────────────────────────────────
 namespace Mac {
@@ -354,25 +354,24 @@ void CALLBACK TimerProc(HWND hwnd, UINT, UINT_PTR, DWORD) {
     if (g_cpuBadge) {
         if (totalCpu > 80.0f) {
             g_cpuBadge->text  = "HIGH";
-            g_cpuBadge->color = AUKColor(Mac::Red);
+            g_cpuBadge->nodeStyle.background = SPHXColor(Mac::Red);
         } else if (totalCpu > 50.0f) {
             g_cpuBadge->text  = "BUSY";
-            g_cpuBadge->color = AUKColor(Mac::Orange);
+            g_cpuBadge->nodeStyle.background = SPHXColor(Mac::Orange);
         } else {
             g_cpuBadge->text  = "OK";
-            g_cpuBadge->color = AUKColor(Mac::Green);
+            g_cpuBadge->nodeStyle.background = SPHXColor(Mac::Green);
         }
     }
 
     // Update Kill button appearance based on selection
     if (g_killBtn) {
-        g_killBtn->useThemeColors = false;
         if (g_selectedPid != 0) {
-            g_killBtn->normalColor = AUKColor(Mac::Red).withAlpha(uint8_t(200));
-            g_killBtn->textColor   = AUKColor::white();
+            g_killBtn->nodeStyle.background = SPHXColor(Mac::Red).withAlpha(uint8_t(200));
+            g_killBtn->nodeStyle.foreground = SPHXColor::white();
         } else {
-            g_killBtn->normalColor = AUKColor::RGB(50, 50, 54);
-            g_killBtn->textColor   = AUKColor(Mac::TextT);
+            g_killBtn->nodeStyle.background = SPHXColor::RGB(50, 50, 54);
+            g_killBtn->nodeStyle.foreground = SPHXColor(Mac::TextT);
         }
     }
 
@@ -466,13 +465,12 @@ static FlexNode::Ptr CreateUI() {
     // Force Quit button — dims when nothing is selected
     g_killBtn = std::make_shared<ButtonNode>();
     g_killBtn->label = "Force Quit";
-    g_killBtn->fontSize = 11.5f;
+    g_killBtn->nodeStyle.fontSize = 11.5f;
     g_killBtn->style.setHeight(28.0f);
     g_killBtn->style.setWidth(92.0f);
-    g_killBtn->useThemeColors = false;
-    g_killBtn->normalColor    = AUKColor::RGB(50, 50, 54);
-    g_killBtn->textColor      = AUKColor(Mac::TextT);
-    g_killBtn->borderRadius   = 6.0f;
+    g_killBtn->nodeStyle.background = SPHXColor::RGB(50, 50, 54);
+    g_killBtn->nodeStyle.foreground = SPHXColor(Mac::TextT);
+    g_killBtn->nodeStyle.borderRadius = 6.0f;
     g_killBtn->onClick = []() {
         if (g_selectedPid == 0) return;
         HANDLE h = OpenProcess(PROCESS_TERMINATE, FALSE, g_selectedPid);
@@ -513,8 +511,8 @@ static FlexNode::Ptr CreateUI() {
     idleSwitch->label        = "Show Idle";
     idleSwitch->isOn         = true;
     idleSwitch->fontSize     = 11.0f;
-    idleSwitch->labelColor   = AUKColor(Mac::TextS);
-    idleSwitch->activeColor  = AUKColor(Mac::Blue);
+    idleSwitch->labelColor   = SPHXColor(Mac::TextS);
+    idleSwitch->activeColor  = SPHXColor(Mac::Blue);
     idleSwitch->switchWidth  = 32.0f;
     idleSwitch->switchHeight = 18.0f;
     idleSwitch->onChanged    = [](bool on) { g_showIdleProcs = on; };
@@ -554,7 +552,7 @@ static FlexNode::Ptr CreateUI() {
 
     // ── Splitter – drag to resize bottom panel ─────────────────────────────────
     auto splitter = std::make_shared<SplitterNode>(SplitterNode::Orientation::Horizontal);
-    splitter->style.backgroundColor = AUKColor(Mac::Sep);
+    splitter->style.backgroundColor = SPHXColor(Mac::Sep);
     splitter->onDrag = [](float delta) {
         g_bottomHeight = std::clamp(g_bottomHeight - delta, 80.0f, 350.0f);
         if (g_bottomPanel) g_bottomPanel->style.setHeight(g_bottomHeight);
@@ -595,9 +593,9 @@ static FlexNode::Ptr CreateUI() {
         pctRow->addChild(cpuPctLabel);
 
         g_cpuBadge = std::make_shared<BadgeNode>("OK");
-        g_cpuBadge->color     = AUKColor(Mac::Green);
-        g_cpuBadge->textColor = AUKColor::white();
-        g_cpuBadge->fontSize  = 9.0f;
+        g_cpuBadge->nodeStyle.background = SPHXColor(Mac::Green);
+        g_cpuBadge->nodeStyle.foreground = SPHXColor::white();
+        g_cpuBadge->nodeStyle.fontSize = 9.0f;
         pctRow->addChild(g_cpuBadge);
         cpuStats->addChild(pctRow);
 
@@ -624,7 +622,7 @@ static FlexNode::Ptr CreateUI() {
 
         cpuHistGraph = std::make_shared<GraphNode>();
         cpuHistGraph->style.setFlex(1.0f); cpuHistGraph->style.setWidthFull();
-        cpuHistGraph->lineColor = Mac::Green; cpuHistGraph->fillColor = AUKColor(Mac::Green).withAlpha(uint8_t(35));
+        cpuHistGraph->lineColor = Mac::Green; cpuHistGraph->fillColor = SPHXColor(Mac::Green).withAlpha(uint8_t(35));
         cpuHistGraph->maxPoints = 60; cpuHistGraph->strokeWidth = 1.5f; cpuHistGraph->showGrid = true;
         graphCol->addChild(cpuHistGraph);
 
@@ -677,7 +675,7 @@ static FlexNode::Ptr CreateUI() {
 
         memHistGraph = std::make_shared<GraphNode>();
         memHistGraph->style.setFlex(1.0f); memHistGraph->style.setWidthFull();
-        memHistGraph->lineColor = Mac::Orange; memHistGraph->fillColor = AUKColor(Mac::Orange).withAlpha(uint8_t(35));
+        memHistGraph->lineColor = Mac::Orange; memHistGraph->fillColor = SPHXColor(Mac::Orange).withAlpha(uint8_t(35));
         memHistGraph->maxPoints = 60; memHistGraph->strokeWidth = 1.5f; memHistGraph->showGrid = true;
         graphCol->addChild(memHistGraph);
 

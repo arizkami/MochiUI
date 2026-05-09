@@ -10,7 +10,7 @@ class GrDirectContext;
 
 #include <gui/OverlayNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 struct FrameContext {
     Microsoft::WRL::ComPtr<ID3D12Resource> backBuffer;
@@ -99,4 +99,4 @@ private:
     int minHeight = 0;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

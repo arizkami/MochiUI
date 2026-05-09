@@ -5,7 +5,7 @@
 #include <functional>
 #include <ctime>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class Calendar : public FlexNode {
 public:
@@ -32,4 +32,4 @@ private:
     void onMouseLeave() override { isHovered = false; }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

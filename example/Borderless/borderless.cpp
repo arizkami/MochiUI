@@ -1,30 +1,30 @@
-// Borderless floating music mini-player — AureliaUI example.
+// Borderless floating music mini-player — SphereUI example.
 // Demonstrates: WindowMode::Borderless, startDrag(), center(), setMinSize(),
 // setAlwaysOnTop(), close(), minimize(), ResourceManager + resources.xml icons.
-#include <AUKGraphicInterface.hpp>
-#include <AUKGraphicComponents.hpp>
-#include <AUKPainter.hpp>
+#include <SPHXGraphicInterface.hpp>
+#include <SPHXGraphicComponents.hpp>
+#include <SPHXPainter.hpp>
 #include <BinaryResources.hpp>
 #include <windows.h>
 #include <chrono>
 #include <string>
 #include <memory>
 
-using namespace AureliaUI;
+using namespace SphereUI;
 
 // ── Palette ───────────────────────────────────────────────────────────────────
 namespace P {
-    constexpr AUKColor Bg        = AUKColor::RGB( 14,  14,  18);
-    constexpr AUKColor Surface   = AUKColor::RGB( 22,  22,  28);
-    constexpr AUKColor Card      = AUKColor::RGB( 30,  30,  38);
-    constexpr AUKColor Border    = AUKColor::RGB(255, 255, 255, 55);
-    constexpr AUKColor TextP     = AUKColor::RGB(240, 240, 248);
-    constexpr AUKColor TextS     = AUKColor::RGB(150, 150, 165);
-    constexpr AUKColor TextT     = AUKColor::RGB( 90,  90, 105);
-    constexpr AUKColor Accent    = AUKColor::RGB(139,  92, 246);
-    constexpr AUKColor AccentDim = AUKColor::RGB(139,  92, 246,  80);
-    constexpr AUKColor Hover     = AUKColor::RGB(255, 255, 255,  28);
-    constexpr AUKColor PinActive = AUKColor::RGB(139,  92, 246,  50);
+    constexpr SPHXColor Bg        = SPHXColor::RGB( 14,  14,  18);
+    constexpr SPHXColor Surface   = SPHXColor::RGB( 22,  22,  28);
+    constexpr SPHXColor Card      = SPHXColor::RGB( 30,  30,  38);
+    constexpr SPHXColor Border    = SPHXColor::RGB(255, 255, 255, 55);
+    constexpr SPHXColor TextP     = SPHXColor::RGB(240, 240, 248);
+    constexpr SPHXColor TextS     = SPHXColor::RGB(150, 150, 165);
+    constexpr SPHXColor TextT     = SPHXColor::RGB( 90,  90, 105);
+    constexpr SPHXColor Accent    = SPHXColor::RGB(139,  92, 246);
+    constexpr SPHXColor AccentDim = SPHXColor::RGB(139,  92, 246,  80);
+    constexpr SPHXColor Hover     = SPHXColor::RGB(255, 255, 255,  28);
+    constexpr SPHXColor PinActive = SPHXColor::RGB(139,  92, 246,  50);
 }
 
 // ── Track data ────────────────────────────────────────────────────────────────
@@ -91,21 +91,21 @@ public:
         if (gPlaying) angle += dt * 20.f;
 
         float cx = frame.centerX(), cy = frame.centerY(), r = frame.width() * 0.5f;
-        AUKPainter p(canvas);
+        SPHXPainter p(canvas);
 
         // Clip to disc boundary, draw everything inside
         p.save().clipCircle(cx, cy, r);
 
         // Disc base — radial gradient: soft purple centre fading to near-black
         p.radialGradient(cx, cy, r,
-                         AUKColor::RGB(55, 18, 90),   // centre
-                         AUKColor::RGB( 8,  4, 18));  // edge
+                         SPHXColor::RGB(55, 18, 90),   // centre
+                         SPHXColor::RGB( 8,  4, 18));  // edge
 
         // Static concentric colour rings
-        const AUKColor ringCol[] = {
-            AUKColor::RGB(160,  80, 255, 60),
-            AUKColor::RGB(120,  60, 200, 40),
-            AUKColor::RGB( 80,  40, 160, 25),
+        const SPHXColor ringCol[] = {
+            SPHXColor::RGB(160,  80, 255, 60),
+            SPHXColor::RGB(120,  60, 200, 40),
+            SPHXColor::RGB( 80,  40, 160, 25),
         };
         for (int i = 0; i < 3; ++i)
             p.circleBorder(cx, cy, r * (0.72f - i * 0.22f), ringCol[i], r * 0.18f);
@@ -114,7 +114,7 @@ public:
         p.save().rotate(angle, cx, cy);
         for (int i = 1; i <= 8; ++i)
             p.circleBorder(cx, cy, r * (0.35f + i * 0.065f),
-                           AUKColor::RGB(200, 140, 255, (uint8_t)(10 + i * 7)), 0.6f);
+                           SPHXColor::RGB(200, 140, 255, (uint8_t)(10 + i * 7)), 0.6f);
         p.restore();
 
         // Inner label circle + spindle
@@ -132,11 +132,11 @@ public:
 
 // ── Chrome button (close / minimize / pin) ─────────────────────────────────────
 class ChromeBtn : public FlexNode {
-    AUKColor hoverBg;
+    SPHXColor hoverBg;
     bool* activeFlag = nullptr;
     std::shared_ptr<IconNode> icon;
 public:
-    ChromeBtn(AUKColor hBg, const std::string& iconName, bool* flag = nullptr)
+    ChromeBtn(SPHXColor hBg, const std::string& iconName, bool* flag = nullptr)
         : hoverBg(hBg), activeFlag(flag)
     {
         style.setWidth(26.f);
@@ -157,8 +157,8 @@ public:
 
     void draw(SkCanvas* canvas) override {
         bool active = activeFlag && *activeFlag;
-        AUKColor bg = active ? P::PinActive : (isHovered ? hoverBg : AUKColor::transparent());
-        AUKPainter(canvas).roundRect(frame, style.borderRadius, bg);
+        SPHXColor bg = active ? P::PinActive : (isHovered ? hoverBg : SPHXColor::transparent());
+        SPHXPainter(canvas).roundRect(frame, style.borderRadius, bg);
         icon->color = active ? P::Accent : (isHovered ? P::TextP : P::TextS);
         drawChildren(canvas);
     }
@@ -190,7 +190,7 @@ public:
 
     void draw(SkCanvas* canvas) override {
         // Top corners rounded, bottom corners square (matches the window top edge)
-        AUKPainter(canvas).roundRectCorners(frame, 10.f, 10.f, 0.f, 0.f, P::Surface);
+        SPHXPainter(canvas).roundRectCorners(frame, 10.f, 10.f, 0.f, 0.f, P::Surface);
         drawChildren(canvas);
     }
 
@@ -213,7 +213,7 @@ struct IconBtn : FlexNode {
     std::function<void()> action;
 
     static std::shared_ptr<IconBtn> make(const std::string& iconName, float iconPx,
-                                         AUKColor col, std::function<void()> act) {
+                                         SPHXColor col, std::function<void()> act) {
         auto btn = std::make_shared<IconBtn>();
         btn->action = act;
         btn->style.setWidth(iconPx + 14.f);
@@ -321,7 +321,7 @@ static FlexNode::Ptr CreateUI() {
     gripIc->style.setWidth(14.f); gripIc->style.setHeight(14.f);
     left->addChild(gripIc);
 
-    auto appLbl = std::make_shared<TextNode>("AureliaPlayer");
+    auto appLbl = std::make_shared<TextNode>("SpherePlayer");
     appLbl->fontSize = 10.f; appLbl->color = P::TextT;
     left->addChild(appLbl);
     bar->addChild(left);
@@ -341,7 +341,7 @@ static FlexNode::Ptr CreateUI() {
     minBtn->onClick = []() { if (gWindow) gWindow->minimize(); };
     chromeRow->addChild(minBtn);
 
-    auto closeBtn = std::make_shared<ChromeBtn>(AUKColor::RGB(180, 40, 40, 130), "x");
+    auto closeBtn = std::make_shared<ChromeBtn>(SPHXColor::RGB(180, 40, 40, 130), "x");
     closeBtn->onClick = []() { if (gWindow) gWindow->close(); };
     chromeRow->addChild(closeBtn);
 
@@ -543,7 +543,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 
     ThemeSwitcher::getInstance().setTheme(ThemeType::Dark);
 
-    Window window("AureliaPlayer", 400, 750);
+    Window window("SpherePlayer", 400, 750);
     gWindow = &window;
 
     window.setDarkMode(true);

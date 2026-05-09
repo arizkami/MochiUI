@@ -5,7 +5,7 @@
 #include <gui/Layout.hpp>
 #include <gui/MenuBar.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 enum class WindowMode {
     Windowed,
@@ -62,4 +62,4 @@ public:
     virtual void requestRedraw() = 0;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

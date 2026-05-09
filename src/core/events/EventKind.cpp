@@ -1,6 +1,6 @@
 #include <core/events/EventKind.hpp>
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 const char* eventKindName(EventKind kind) noexcept {
     switch (kind) {
@@ -29,4 +29,4 @@ const char* eventKindName(EventKind kind) noexcept {
     }
 }
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

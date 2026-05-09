@@ -16,15 +16,15 @@ API:
 
 `scripts/gen_resources.py` reads an XML manifest of `<file>relative/path</file>` entries and emits:
 
-- `BinaryResources.hpp` / `BinaryResources.cpp` (or per-app names such as `DSLDemoResources`)
+- `BinaryResources.hpp` / `BinaryResources.cpp` (or per-app names such as `ReactUIResources`)
 
 Each file becomes `registerResource("res://<relative/path>", ...)`.
 
 The shared SVG bundle for icons is driven from `example/shared/resources/resrouces.xml` at the root CMake level.
 
-## App pattern (DSLDemo)
+## App pattern (ReactUI)
 
-`example/DSLDemo/resource.xml` lists UI assets (e.g. `ui/container.xml`). CMake runs `gen_resources.py` with an init function name, compiles the generated `.cpp`, and `main.cpp` calls `InitDSLDemoResources()` then loads `res://ui/container.xml` and `DSL::loadFromString(...)`.
+`example/ReactUI/resource.xml` lists app assets such as `bundle.js`. CMake runs `gen_resources.py` with an init function name, compiles the generated `.cpp`, and `main.cpp` calls `InitReactUIResources()` before loading `res://bundle.js` into the JavaScript engine.
 
 ## Icon / SVG usage
 

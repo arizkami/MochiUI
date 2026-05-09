@@ -5,7 +5,7 @@
 #include <functional>
 #include <gui/Layout.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 enum class MenuBackend {
     Win32, // Native Windows Menu
@@ -32,4 +32,4 @@ public:
     static std::unique_ptr<IMenuBar> Create(MenuBackend backend);
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

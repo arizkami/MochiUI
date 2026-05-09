@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class TabsNode : public FlexNode {
 public:
@@ -95,4 +95,4 @@ private:
     FlexNode::Ptr contentArea;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

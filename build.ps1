@@ -11,8 +11,6 @@ foreach ($line in $envVars) {
     }
 }
 
-python scripts/gen_theme.py
-
 if (Test-Path "build") {
     # Build directory exists: skip CMake setup, just build
     cmake --build build -j $env:NUMBER_OF_PROCESSORS

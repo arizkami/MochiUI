@@ -25,13 +25,13 @@
 # ║      out/<cfg>/libharfbuzz.a          (skia_use_harfbuzz, vendored)      ║
 # ║      out/<cfg>/libicu.a               (skia_use_icu, vendored)           ║
 # ║                                                                          ║
-# ║  Downstream linker flags expected by AureliaKit on Linux:                ║
+# ║  Downstream linker flags expected by SphereKit on Linux:                ║
 # ║      -lpthread -ldl -lm -lfontconfig                                     ║
 # ║                                                                          ║
 # ║  Until the packaging step picks up libsvg.a + libskshaper.a + libskunicode.a║
 # ║  the consumer CMakeLists.txt compiles the SVG/skshaper sources in-tree.  ║
 # ║  Once the next prebuilt drop ships those libs, that workaround can be    ║
-# ║  removed and AureliaKit_GraphicInterface can simply link against them.   ║
+# ║  removed and SphereKit_GraphicInterface can simply link against them.   ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
 # --- Compiler & Toolchain ---

@@ -1,6 +1,6 @@
 #include <gui/Components/GroupBox.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 GroupBox::GroupBox() {
     style.setPadding(15);
@@ -143,4 +143,4 @@ void GroupBox::draw(SkCanvas* canvas) {
     drawChildren(canvas);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

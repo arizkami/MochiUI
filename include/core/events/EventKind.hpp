@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 // Stable categories for routing, logging, and future event buses.
 enum class EventKind : std::uint32_t {
@@ -42,4 +42,4 @@ enum class EventKind : std::uint32_t {
 
 const char* eventKindName(EventKind kind) noexcept;
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

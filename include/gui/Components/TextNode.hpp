@@ -4,7 +4,7 @@
 #include <utils/FontManager/FontMgr.hpp>
 #include <string>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 enum class TextAlign { Left, Center, Right };
 
@@ -18,8 +18,8 @@ public:
     }
     std::string text;
     std::string fontFamily = FontManager::DEFAULT_FONT;
-    AUKColor color = AUKColor::black();
-    float fontSize = 16.0f;
+    float fontSize = Theme::FontNormal;
+    SPHXColor color = SPHXColor(Theme::TextPrimary);
     TextAlign textAlign = TextAlign::Left;
     // Uses Segoe UI bold (SkFontStyle::Bold) when true; otherwise shaped default path.
     bool fontBold = false;
@@ -28,4 +28,4 @@ public:
     void draw(SkCanvas* canvas) override;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

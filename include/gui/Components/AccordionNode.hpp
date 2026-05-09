@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class AccordionItem : public FlexNode {
 public:
@@ -62,4 +62,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

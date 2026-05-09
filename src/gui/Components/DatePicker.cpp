@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 DatePicker::DatePicker() {
     YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
@@ -103,4 +103,4 @@ Size DatePicker::measure(Size available) {
     return { 200.0f, 36.0f };
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -11,15 +11,15 @@ def generate_resources(xml_path, header_path, source_path, init_fn="InitBinaryRe
     # Generate Header
     with open(header_path, "w") as f:
         f.write("#pragma once\n\n")
-        f.write("namespace AureliaUI {\n")
+        f.write("namespace SphereUI {\n")
         f.write(f"    void {init_fn}();\n")
-        f.write("} // namespace AureliaUI\n")
+        f.write("} // namespace SphereUI\n")
 
     # Generate Source
     with open(source_path, "w") as f:
         f.write(f'#include "{os.path.basename(header_path)}"\n')
         f.write("#include <core/ResourceManager.hpp>\n\n")
-        f.write("namespace AureliaUI {\n\n")
+        f.write("namespace SphereUI {\n\n")
 
         resources = []
         for file_tag in root.findall("file"):
@@ -59,7 +59,7 @@ def generate_resources(xml_path, header_path, source_path, init_fn="InitBinaryRe
             f.write("};\n\n")
             f.write("static BinaryResourceInitializer g_binaryResourceInitializer;\n\n")
 
-        f.write("} // namespace AureliaUI\n")
+        f.write("} // namespace SphereUI\n")
 
 
 if __name__ == "__main__":

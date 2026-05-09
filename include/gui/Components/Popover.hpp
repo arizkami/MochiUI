@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <functional>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class Popover : public FlexNode {
 public:
@@ -31,4 +31,4 @@ private:
     void clampToScreen();
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

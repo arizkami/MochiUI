@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class SidebarNode : public FlexNode {
 public:
@@ -19,4 +19,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

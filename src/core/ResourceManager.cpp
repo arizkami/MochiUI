@@ -1,6 +1,6 @@
 #include <core/ResourceManager.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 ResourceManager& ResourceManager::getInstance() {
     static ResourceManager instance;
@@ -23,4 +23,4 @@ std::string ResourceManager::getResourceString(const std::string& path) {
     return "";
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

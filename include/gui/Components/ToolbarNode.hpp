@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class ToolbarNode : public FlexNode {
 public:
@@ -17,4 +17,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

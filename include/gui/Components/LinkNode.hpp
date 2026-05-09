@@ -1,22 +1,22 @@
 #pragma once
 #include <gui/Components/TextNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class LinkNode : public TextNode {
 public:
     LinkNode(std::string text = "") : TextNode(text) {
-        color = AUKColor::RGB(0, 120, 215); // Standard link blue
+        color = SPHXColor::RGB(0, 120, 215); // Standard link blue
         enableHover = true;
         style.cursorType = Cursor::Hand;
         style.setPadding(0);
     }
 
-    AUKColor hoverColor = AUKColor::RGB(0, 150, 255);
+    SPHXColor hoverColor = SPHXColor::RGB(0, 150, 255);
     bool underlineOnHover = true;
 
     void draw(SkCanvas* canvas) override {
-        AUKColor originalColor = color;
+        SPHXColor originalColor = color;
         if (isHovered) {
             color = hoverColor;
         }
@@ -43,4 +43,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

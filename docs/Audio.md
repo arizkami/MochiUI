@@ -1,6 +1,6 @@
 # Audio Streaming
 
-AureliaUI includes a pull-model audio streaming system for handling sound effects and background music.
+SphereUI includes a pull-model audio streaming system for handling sound effects and background music.
 
 ## Core Concepts
 

@@ -3,7 +3,7 @@
 #include <include/ports/SkTypeface_win.h>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 namespace {
     struct Run {
@@ -219,4 +219,4 @@ void FontManager::getFontMetrics(float fontSize, SkFontMetrics* metrics, const s
     font.getMetrics(metrics);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

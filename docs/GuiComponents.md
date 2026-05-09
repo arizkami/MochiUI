@@ -1,6 +1,6 @@
 # GUI Components
 
-AureliaUI provides a rich set of built-in components.
+SphereUI provides a rich set of built-in components.
 
 ## Common Components
 
@@ -10,7 +10,7 @@ Displays text.
 
 - `std::string text`: The text to display.
 - `float fontSize`: Font size.
-- `AUKColor color`: Text color.
+- `SPHXColor color`: Text color.
 - `TextAlign textAlign`: Alignment (Left, Center, Right).
 
 ### ButtonNode
@@ -18,8 +18,8 @@ Displays text.
 A clickable button.
 
 - `std::string label`: Button text.
-- `AUKColor textColor`: Color of the label.
-- `AUKColor normalColor`: Background color.
+- `SPHXColor textColor`: Color of the label.
+- `SPHXColor normalColor`: Background color.
 - `bool useThemeColors`: Whether to use active theme colors automatically.
 
 ### CheckboxNode / SwitchNode

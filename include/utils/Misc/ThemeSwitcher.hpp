@@ -3,18 +3,11 @@
 #include <functional>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 enum class ThemeType {
-    Auto,       // Detect from Windows
     Dark,
     Light,
-    System,
-    Minimal,
-    Md3Dark,
-    Md3Light,
-    WinuiDark,
-    WinuiLight,
 };
 
 class ThemeSwitcher {
@@ -27,8 +20,6 @@ public:
     std::string getCurrentThemeName() const;
 
     void applyTheme();
-    void detectAndApplyWindowsTheme();
-    bool isWindowsInDarkMode();
 
     void registerThemeChangeCallback(std::function<void(ThemeType)> callback);
     void notifyThemeChanged();
@@ -39,8 +30,8 @@ private:
     ThemeSwitcher(const ThemeSwitcher&) = delete;
     ThemeSwitcher& operator=(const ThemeSwitcher&) = delete;
 
-    ThemeType currentTheme = ThemeType::Auto;
+    ThemeType currentTheme = ThemeType::Dark;
     std::vector<std::function<void(ThemeType)>> callbacks;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

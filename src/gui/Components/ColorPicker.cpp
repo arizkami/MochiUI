@@ -1,7 +1,7 @@
 #include <gui/Components/ColorPicker.hpp>
 #include <algorithm>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 ColorPicker::ColorPicker() {
     YGNodeSetMeasureFunc(getYGNode(), &FlexNode::MeasureCallback);
@@ -185,4 +185,4 @@ void ColorPicker::updateFromXY(float x, float y) {
     }
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

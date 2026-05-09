@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class ModalNode : public FlexNode {
 public:
@@ -10,7 +10,7 @@ public:
         style.setWidthPercent(100.0f);
         style.setHeightPercent(100.0f);
         style.setPositionType(YGPositionTypeAbsolute);
-        style.backgroundColor = AUKColor::black().withAlpha(uint8_t(150)); // Dim background
+        style.backgroundColor = SPHXColor::black().withAlpha(uint8_t(150)); // Dim background
         style.setAlignItems(YGAlignCenter);
 
         container = FlexNode::Create();
@@ -37,4 +37,4 @@ private:
     FlexNode::Ptr container;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -3,7 +3,7 @@
 #include <sstream>
 #include <iomanip>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 void VUMeterNode::setValue(float val) {
     value = std::clamp(val, 0.0f, 1.0f);
@@ -171,12 +171,12 @@ std::string VUMeterNode::formatValue(float val) const {
     return oss.str();
 }
 
-AUKColor VUMeterNode::getColorForValue(float val) const {
+SPHXColor VUMeterNode::getColorForValue(float val) const {
     if (val >= redThreshold) {
         return redColor;
     } else if (val >= yellowThreshold) {
         float t = (val - yellowThreshold) / (redThreshold - yellowThreshold);
-        return AUKColor::RGB(
+        return SPHXColor::RGB(
             uint8_t(greenColor.r() + t * (yellowColor.r() - greenColor.r())),
             uint8_t(greenColor.g() + t * (yellowColor.g() - greenColor.g())),
             uint8_t(greenColor.b() + t * (yellowColor.b() - greenColor.b()))
@@ -186,4 +186,4 @@ AUKColor VUMeterNode::getColorForValue(float val) const {
     }
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

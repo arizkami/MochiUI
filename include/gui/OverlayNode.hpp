@@ -1,7 +1,7 @@
 #pragma once
 #include <gui/Layout.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 // Full-window layer for toasts: must not steal hits when empty or over transparent area.
 class ToastLayerNode : public FlexNode {
@@ -67,4 +67,4 @@ private:
     FlexNode::Ptr toastLayer;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

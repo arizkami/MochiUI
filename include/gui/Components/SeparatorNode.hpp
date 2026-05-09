@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class SeparatorNode : public FlexNode {
 public:
@@ -14,7 +14,7 @@ public:
     }
 
     Orientation orientation;
-    AUKColor color = AUKColor(Theme::TextSecondary).withAlpha(uint8_t(50));
+    SPHXColor color = SPHXColor(Theme::TextSecondary).withAlpha(uint8_t(50));
     float thickness = -1.0f; // -1 to use Theme::BorderWidth
     float margin = 8.0f;
 
@@ -51,4 +51,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

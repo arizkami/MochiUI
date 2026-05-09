@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 struct FileFilter {
     std::wstring name;
@@ -135,4 +135,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

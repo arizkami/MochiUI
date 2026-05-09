@@ -1,32 +1,34 @@
-# JavaScript engine and Aurelia.React
+# JavaScript engine, Sphere.React, and SphereKit.Vue
 
-Windows builds include a V8-based embed and a small bridge DLL for driving `FlexNode` trees from JavaScript (including a React reconciler running in JS).
+Windows builds include a V8-based embed and bridge DLLs for driving `FlexNode` trees from JavaScript, including both the React reconciler host and the Vue custom renderer host.
 
 ## Deliverables
 
 | CMake target | Output name | Role |
 |--------------|-------------|------|
-| `AureliaKit_JavaScriptEngine` | `AureliaKit.JavaScriptEngine.dll` | V8 isolate, `eval()`, native `AureliaUI` bindings |
-| `Aurelia_React` | `Aurelia.React.dll` | Thin API: `RenderReactApp(...)` |
+| `SphereKit_JavaScriptEngine` | `SphereKit.JavaScriptEngine.dll` | V8 isolate, `eval()`, native `SphereUI` bindings |
+| `Sphere_React` | `Sphere.React.dll` | Thin API: `RenderReactApp(...)` |
+| `Sphere_Vue` | `SphereKit.Vue.dll` | Thin API: `RenderVueApp(...)` |
 
 Headers:
 
-- `include/AUKJavaScriptEngine.hpp` — `JavaScriptEngine`
-- `include/AureliaReact.hpp` — `RenderReactApp`
+- `include/SPHXJavaScriptEngine.hpp` — `JavaScriptEngine`
+- `include/SphereReact.hpp` — `RenderReactApp`
+- `include/SphereVUE.hpp` — `RenderVueApp`
 
 ## JavaScriptEngine
 
 ```cpp
-AureliaUI::JavaScriptEngine engine;
+SphereUI::JavaScriptEngine engine;
 engine.init();
-engine.installAureliaUIGlobal();  // defines globalThis.AureliaUI
+engine.installSphereUIGlobal();  // defines globalThis.SphereUI
 bool ok = engine.eval(script, "my.js");
 // on failure: engine.lastError()
 ```
 
 Shut down when done: `engine.shutdown()`.
 
-## Native binding: `globalThis.AureliaUI`
+## Native binding: `globalThis.SphereUI`
 
 Numeric handles identify `FlexNode` instances in a per-isolate registry.
 
@@ -39,28 +41,39 @@ Numeric handles identify `FlexNode` instances in a per-isolate registry.
 | `setStyle(id, key, value)` | String key/value; subset of layout/color (see implementation) |
 | `setRoot(id)` | Marks the root to return to C++ (see below) |
 
-## RenderReactApp
+## RenderReactApp / RenderVueApp
 
 ```cpp
-#include <AureliaReact.hpp>
+#include <SphereReact.hpp>
+#include <SphereVUE.hpp>
 
-FlexNode::Ptr root = AureliaUI::RenderReactApp(engine, jsSource, "bundle.js");
+FlexNode::Ptr root = SphereUI::RenderReactApp(engine, jsSource, "bundle.js");
+FlexNode::Ptr vueRoot = SphereUI::RenderVueApp(engine, jsSource, "bundle.js");
 ```
 
 Workflow:
 
-1. Installs `AureliaUI` globals.
+1. Installs `SphereUI` globals.
 2. Runs the script.
-3. Returns the node registered with `AureliaUI.setRoot(handle)` (one-shot `takePendingRoot`).
+3. Returns the node registered with `SphereUI.setRoot(handle)` (one-shot `takePendingRoot`).
 
-The JS bundle should end by calling `AureliaUI.setRoot(...)` with the handle of the root flex node.
+The JS bundle should end by calling `SphereUI.setRoot(...)` with the handle of the root flex node.
 
-## modules/reactui (TypeScript)
+## TypeScript hosts
 
-Source lives under `modules/reactui/`. It uses `react` and `react-reconciler` to call `globalThis.AureliaUI`.
+React source lives under `modules/reactui/`. It uses `react` and `react-reconciler` to call `globalThis.SphereUI`.
 
-- Entry: `index.ts` exports `mount(element)`.
+- Public entry: `src/index.ts` exports `mount(element)`.
+- Internal layout: `src/core/`, `src/payload/`, and `src/wrapper/`.
+- Demo entry: `examples/App.tsx`.
 - Build (when Bun is available): `bun run bundle` → `bundle.js` (see `package.json`).
+
+Vue source lives under `modules/vueui/`. It uses Vue 3's custom renderer API to call the same `globalThis.SphereUI` methods.
+
+- Public entry: `src/index.ts`.
+- Internal layout: `src/core/`, `src/payload/`, and `src/wrapper/`.
+- Demo entry: `example/App.vue`.
+- Build demo (when Bun is available): `bun run bundle:demo` → `example/VueUI/bundle.js`.
 
 V8 does not include npm by default; ship a pre-bundled script or generate `bundle.js` in your pipeline.
 

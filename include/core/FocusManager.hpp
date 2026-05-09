@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <memory>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class FocusManager {
 public:
@@ -29,4 +29,4 @@ private:
     FlexNode::Ptr focusedNode;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -2,7 +2,7 @@
 #include <gui/Components/TextInput.hpp>
 #include <gui/Components/BadgeNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class TagInputNode : public FlexNode {
 public:
@@ -18,7 +18,7 @@ public:
 
         input = std::make_shared<TextInput>();
         input->style.setWidth(100);
-        input->style.backgroundColor = AUKColor::transparent();
+        input->style.backgroundColor = SPHXColor::transparent();
         input->placeholder = "Add tag...";
 
         input->onEnter = [this]() {
@@ -44,4 +44,4 @@ private:
     std::shared_ptr<TextInput> input;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

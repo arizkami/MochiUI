@@ -5,7 +5,7 @@
 #include <core/events/KeyEvent.hpp>
 #include <core/events/TextEvent.hpp>
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 // Bridge typed events → existing FlexNode virtuals (until nodes take structs natively).
 
@@ -50,4 +50,4 @@ inline bool dispatchTextInput(FlexNode& root, TextEvent& e) {
     return r;
 }
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

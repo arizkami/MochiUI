@@ -6,7 +6,7 @@ set(MIXER_SOURCES
 add_executable(MixerConsole WIN32 ${MIXER_SOURCES})
 
 target_link_libraries(MixerConsole PRIVATE
-    AureliaKit_GraphicComponent
+    SphereKit_GraphicComponent
 )
 
 # Copy exe to top-level ${CMAKE_BINARY_DIR} (same as project root build folder).

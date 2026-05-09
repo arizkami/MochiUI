@@ -5,7 +5,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace AureliaUI {
+namespace SphereUI {
 namespace Audio {
 
 // ── WAV header structures ─────────────────────────────────────────────────────
@@ -322,4 +322,4 @@ void AudioStreamer::fillBuffer(float* outputBuffer,
 }
 
 } // namespace Audio
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -1,6 +1,6 @@
-// Re-implementation of ref/index.html "Mixer Console" using AureliaUI (Skia + Yoga).
-#include <AUKGraphicInterface.hpp>
-#include <AUKGraphicComponents.hpp>
+// Re-implementation of ref/index.html "Mixer Console" using SphereUI (Skia + Yoga).
+#include <SPHXGraphicInterface.hpp>
+#include <SPHXGraphicComponents.hpp>
 
 #include <windows.h>
 #include <chrono>
@@ -9,25 +9,25 @@
 #include <memory>
 #include <string>
 
-using namespace AureliaUI;
+using namespace SphereUI;
 
 namespace {
 
-constexpr AUKColor kBg0            = AUKColor::RGB(0x0b, 0x11, 0x16);
-constexpr AUKColor kHeaderBg       = AUKColor::RGB(0x1c, 0x27, 0x30);
-constexpr AUKColor kSurface0       = AUKColor::RGB(0x12, 0x1b, 0x22);
-constexpr AUKColor kSurface1       = AUKColor::RGB(0x16, 0x1f, 0x27);
-constexpr AUKColor kSurfaceControls = AUKColor::RGB(0x18, 0x21, 0x28);
-constexpr AUKColor kBar            = AUKColor::RGB(0x7f, 0x96, 0xa6);
-constexpr AUKColor kBarText        = AUKColor::RGB(0x10, 0x14, 0x17);
-constexpr AUKColor kText0          = AUKColor::RGB(0xd7, 0xe0, 0xe8);
-constexpr AUKColor kText1          = AUKColor::RGB(0x9f, 0xb0, 0xbf);
-constexpr AUKColor kText2          = AUKColor::RGB(0x71, 0x83, 0x94);
-constexpr AUKColor kAccentCyan     = AUKColor::RGB(0x00, 0xa7, 0xc7);
-constexpr AUKColor kAccentGreen    = AUKColor::RGB(0x66, 0xff, 0x00);
-constexpr AUKColor kBorderSoft     = AUKColor::RGB(255, 255, 255, 45);
+constexpr SPHXColor kBg0            = SPHXColor::RGB(0x0b, 0x11, 0x16);
+constexpr SPHXColor kHeaderBg       = SPHXColor::RGB(0x1c, 0x27, 0x30);
+constexpr SPHXColor kSurface0       = SPHXColor::RGB(0x12, 0x1b, 0x22);
+constexpr SPHXColor kSurface1       = SPHXColor::RGB(0x16, 0x1f, 0x27);
+constexpr SPHXColor kSurfaceControls = SPHXColor::RGB(0x18, 0x21, 0x28);
+constexpr SPHXColor kBar            = SPHXColor::RGB(0x7f, 0x96, 0xa6);
+constexpr SPHXColor kBarText        = SPHXColor::RGB(0x10, 0x14, 0x17);
+constexpr SPHXColor kText0          = SPHXColor::RGB(0xd7, 0xe0, 0xe8);
+constexpr SPHXColor kText1          = SPHXColor::RGB(0x9f, 0xb0, 0xbf);
+constexpr SPHXColor kText2          = SPHXColor::RGB(0x71, 0x83, 0x94);
+constexpr SPHXColor kAccentCyan     = SPHXColor::RGB(0x00, 0xa7, 0xc7);
+constexpr SPHXColor kAccentGreen    = SPHXColor::RGB(0x66, 0xff, 0x00);
+constexpr SPHXColor kBorderSoft     = SPHXColor::RGB(255, 255, 255, 45);
 // Channel strip outer border (~ ref/index.html border-black/55)
-constexpr AUKColor kStripBorder    = AUKColor::RGB(0, 0, 0, 140);
+constexpr SPHXColor kStripBorder    = SPHXColor::RGB(0, 0, 0, 140);
 
 static std::string channelLabel(int i) {
     const int n = i + 1;
@@ -90,7 +90,7 @@ static FlexNode::Ptr pluginRow(const char* name) {
 
     auto x = std::make_shared<TextNode>("x");
     x->fontSize = 10;
-    x->color = AUKColor::RGB(255, 255, 255, 64);
+    x->color = SPHXColor::RGB(255, 255, 255, 64);
 
     row->addChild(left);
     row->addChild(x);
@@ -117,8 +117,8 @@ static FlexNode::Ptr sendRow(const char* name, const char* db, float level01) {
     auto bar = std::make_shared<ProgressBar>();
     bar->style.setHeight(4);
     bar->style.setWidthFull();
-    bar->backgroundColor = AUKColor::RGB(0, 0, 0, 140);
-    bar->fillColor = level01 > 0.01f ? kAccentCyan : AUKColor::RGB(255, 255, 255, 36);
+    bar->backgroundColor = SPHXColor::RGB(0, 0, 0, 140);
+    bar->fillColor = level01 > 0.01f ? kAccentCyan : SPHXColor::RGB(255, 255, 255, 36);
     bar->borderRadius = 2;
     bar->value = level01;
 
@@ -185,8 +185,8 @@ struct MixerStrip : FlexNode {
         pan->showValue = false;
         pan->arcFillColor = kAccentCyan;
         pan->indicatorColor = kAccentCyan;
-        pan->knobBodyColor = AUKColor::RGB(40, 48, 56);
-        pan->knobRingColor = AUKColor::RGB(55, 64, 74);
+        pan->knobBodyColor = SPHXColor::RGB(40, 48, 56);
+        pan->knobRingColor = SPHXColor::RGB(55, 64, 74);
         panCol->addChild(pan);
 
         auto lr = FlexNode::Row();
@@ -209,11 +209,10 @@ struct MixerStrip : FlexNode {
         ms->style.setPadding(2, 0);
         strip->muteBtn = std::make_shared<ButtonNode>();
         strip->muteBtn->label = "M";
-        strip->muteBtn->fontSize = 10;
-        strip->muteBtn->useThemeColors = false;
-        strip->muteBtn->normalColor = AUKColor::RGB(0, 0, 0, 72);
-        strip->muteBtn->textColor = kText2;
-        strip->muteBtn->hoverColor = AUKColor::RGB(255, 255, 255, 100);
+        strip->muteBtn->nodeStyle.fontSize = 10;
+        strip->muteBtn->nodeStyle.background = SPHXColor::RGB(0, 0, 0, 72);
+        strip->muteBtn->nodeStyle.foreground = kText2;
+        strip->muteBtn->style.borderColor = SPHXColor::RGB(255, 255, 255, 100);
         strip->muteBtn->style.setFlex(1.0f);
         {
             std::weak_ptr<MixerStrip> w = strip;
@@ -226,11 +225,10 @@ struct MixerStrip : FlexNode {
 
         strip->soloBtn = std::make_shared<ButtonNode>();
         strip->soloBtn->label = "S";
-        strip->soloBtn->fontSize = 10;
-        strip->soloBtn->useThemeColors = false;
-        strip->soloBtn->normalColor = AUKColor::RGB(0, 0, 0, 72);
-        strip->soloBtn->textColor = kText2;
-        strip->soloBtn->hoverColor = AUKColor::RGB(255, 255, 255, 100);
+        strip->soloBtn->nodeStyle.fontSize = 10;
+        strip->soloBtn->nodeStyle.background = SPHXColor::RGB(0, 0, 0, 72);
+        strip->soloBtn->nodeStyle.foreground = kText2;
+        strip->soloBtn->style.borderColor = SPHXColor::RGB(255, 255, 255, 100);
         strip->soloBtn->style.setFlex(1.0f);
         {
             std::weak_ptr<MixerStrip> w = strip;
@@ -258,19 +256,19 @@ struct MixerStrip : FlexNode {
         strip->vu->meterWidth = 14;
         strip->vu->style.setWidth(24);
         strip->vu->style.setHeight(200);
-        strip->vu->backgroundColor = AUKColor::RGB(15, 15, 17);
+        strip->vu->backgroundColor = SPHXColor::RGB(15, 15, 17);
         strip->vu->greenColor = kAccentCyan;
-        strip->vu->yellowColor = AUKColor::RGB(0xcd, 0xdc, 0x39);
-        strip->vu->redColor = AUKColor::RGB(0xcc, 0x44, 0x22);
+        strip->vu->yellowColor = SPHXColor::RGB(0xcd, 0xdc, 0x39);
+        strip->vu->redColor = SPHXColor::RGB(0xcc, 0x44, 0x22);
 
         auto fader = std::make_shared<SliderNode>();
         fader->vertical = true;
         fader->style.setWidth(36);
         fader->style.setHeight(200);
         fader->value = 0.55f;
-        fader->trackColor = AUKColor::RGB(0, 0, 0, 140);
+        fader->trackColor = SPHXColor::RGB(0, 0, 0, 140);
         fader->fillColor = kAccentCyan;
-        fader->thumbColor = AUKColor::RGB(0xc9, 0xd6, 0xe6);
+        fader->thumbColor = SPHXColor::RGB(0xc9, 0xd6, 0xe6);
         fader->trackHeight = 4;
         fader->thumbRadius = 7;
 
@@ -295,11 +293,11 @@ struct MixerStrip : FlexNode {
     void toggleMute() {
         muted = !muted;
         if (muted) {
-            muteBtn->normalColor = AUKColor::RGB(239, 68, 68, 56);
-            muteBtn->textColor = kText0;
+            muteBtn->nodeStyle.background = SPHXColor::RGB(239, 68, 68, 56);
+            muteBtn->nodeStyle.foreground = kText0;
         } else {
-            muteBtn->normalColor = AUKColor::RGB(0, 0, 0, 72);
-            muteBtn->textColor = kText2;
+            muteBtn->nodeStyle.background = SPHXColor::RGB(0, 0, 0, 72);
+            muteBtn->nodeStyle.foreground = kText2;
         }
         markDirty();
     }
@@ -307,11 +305,11 @@ struct MixerStrip : FlexNode {
     void toggleSolo() {
         solo = !solo;
         if (solo) {
-            soloBtn->normalColor = AUKColor::RGB(0, 167, 199, 46);
-            soloBtn->textColor = kText0;
+            soloBtn->nodeStyle.background = SPHXColor::RGB(0, 167, 199, 46);
+            soloBtn->nodeStyle.foreground = kText0;
         } else {
-            soloBtn->normalColor = AUKColor::RGB(0, 0, 0, 72);
-            soloBtn->textColor = kText2;
+            soloBtn->nodeStyle.background = SPHXColor::RGB(0, 0, 0, 72);
+            soloBtn->nodeStyle.foreground = kText2;
         }
         markDirty();
     }
@@ -392,17 +390,16 @@ static FlexNode::Ptr buildMixerRoot(FlexNode::Ptr& outConsoleHint, std::shared_p
     badge->fontBold = true;
     badge->color = kText2;
     badge->style.setPadding(6, 2);
-    badge->style.backgroundColor = AUKColor::RGB(0, 0, 0, 30);
+    badge->style.backgroundColor = SPHXColor::RGB(0, 0, 0, 30);
     badge->style.borderRadius = 4;
     left->addChild(badge);
 
     outConsoleBtn = std::make_shared<ButtonNode>();
     outConsoleBtn->label = "CONSOLE";
-    outConsoleBtn->fontSize = 11;
-    outConsoleBtn->useThemeColors = false;
-    outConsoleBtn->normalColor = AUKColor::RGB(30, 43, 53);
-    outConsoleBtn->textColor = kText0;
-    outConsoleBtn->hoverColor = AUKColor::RGB(38, 53, 66);
+    outConsoleBtn->nodeStyle.fontSize = 11;
+    outConsoleBtn->nodeStyle.background = SPHXColor::RGB(30, 43, 53);
+    outConsoleBtn->nodeStyle.foreground = kText0;
+    outConsoleBtn->style.borderColor = SPHXColor::RGB(38, 53, 66);
     outConsoleBtn->labelBold = true;
 
     header->addChild(left);
@@ -425,7 +422,7 @@ static FlexNode::Ptr buildMixerRoot(FlexNode::Ptr& outConsoleHint, std::shared_p
     hintText->fontSize = 11;
     hintText->color = kText1;
     hintText->style.setPadding(8, 6);
-    hintText->style.backgroundColor = AUKColor::RGB(10, 16, 22, 140);
+    hintText->style.backgroundColor = SPHXColor::RGB(10, 16, 22, 140);
     outConsoleHint->addChild(hintText);
     root->addChild(outConsoleHint);
 
@@ -467,10 +464,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
         consoleOpen = !consoleOpen;
         if (consoleOpen) {
             consoleHint->style.setHeightAuto();
-            consoleBtn->normalColor = AUKColor::RGB(30, 76, 92);
+            consoleBtn->nodeStyle.background = SPHXColor::RGB(30, 76, 92);
         } else {
             consoleHint->style.setHeight(0);
-            consoleBtn->normalColor = AUKColor::RGB(30, 43, 53);
+            consoleBtn->nodeStyle.background = SPHXColor::RGB(30, 43, 53);
         }
         root->markDirty();
     };

@@ -6,9 +6,9 @@ MikoUI is a **header-only convenience layer** that wires `Application`, `JavaScr
 
 - `framework/MikoUI/include/MikoUI.hpp`
 - CMake: `add_subdirectory(framework/MikoUI)` defines an **INTERFACE** target `MikoUI` linking:
-  - `AureliaKit_GraphicComponent`
-  - `AureliaKit_JavaScriptEngine`
-  - `Aurelia_React`
+  - `SphereKit_GraphicComponent`
+  - `SphereKit_JavaScriptEngine`
+  - `Sphere_React`
 
 ## Usage
 
@@ -16,16 +16,16 @@ MikoUI is a **header-only convenience layer** that wires `Application`, `JavaScr
 #include <MikoUI.hpp>
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
-    AureliaUI::MikoUI::AppConfig cfg;
+    SphereUI::MikoUI::AppConfig cfg;
     cfg.title = "My App";
 
     std::string js = R"(
-      const r = AureliaUI.createNode("column");
-      AureliaUI.setStyle(r, "backgroundColor", "#1a1a2e");
-      AureliaUI.setRoot(r);
+      const r = SphereUI.createNode("column");
+      SphereUI.setStyle(r, "backgroundColor", "#1a1a2e");
+      SphereUI.setRoot(r);
     )";
 
-    return AureliaUI::MikoUI::Run(cfg, js, "inline.js");
+    return SphereUI::MikoUI::Run(cfg, js, "inline.js");
 }
 ```
 

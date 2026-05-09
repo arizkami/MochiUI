@@ -10,9 +10,8 @@
 | [Theming](Theming.md) | Themes and tokens |
 | [Layout](Layout.md) | Yoga / flexbox |
 | [Audio](Audio.md) | Direct audio engine |
-| [AUKDSL](AUKDSL.md) | YAML/CSS DSL |
 | [Resources](Resources.md) | `res://`, binary resource generation |
-| [JavaScript and React](JavaScriptAndReact.md) | V8 embed and `Aurelia.React` |
+| [JavaScript and React](JavaScriptAndReact.md) | V8 embed, `Sphere.React`, and `SphereKit.Vue` |
 | [MikoUI](MikoUI.md) | Minimal framework helper |
 | [Build and CI](BuildAndCI.md) | `build.ps1`, prebuilts, GitHub Actions |
 

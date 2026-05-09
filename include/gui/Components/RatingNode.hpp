@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class RatingNode : public FlexNode {
 public:
@@ -31,7 +31,7 @@ public:
     void setRating(int r) {
         rating = r;
         for (int i = 0; i < maxStars; ++i) {
-            stars[i]->color = (i < rating) ? AUKColor::RGB(255, 215, 0) : AUKColor(Theme::TextSecondary);
+            stars[i]->color = (i < rating) ? SPHXColor::RGB(255, 215, 0) : SPHXColor(Theme::TextSecondary);
         }
     }
 
@@ -41,4 +41,4 @@ private:
     std::vector<std::shared_ptr<IconNode>> stars;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

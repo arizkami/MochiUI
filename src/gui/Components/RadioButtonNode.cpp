@@ -1,6 +1,6 @@
 #include <gui/Components/RadioButtonNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 Size RadioButtonNode::measure(Size available) {
     float labelWidth = 0;
@@ -78,4 +78,4 @@ bool RadioButtonNode::onMouseDown(float x, float y) {
     return FlexNode::onMouseDown(x, y);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

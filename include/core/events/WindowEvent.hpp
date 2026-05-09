@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 struct WindowResizeEvent {
     std::int32_t clientWidth = 0;
@@ -15,4 +15,4 @@ struct WindowDpiEvent {
     float scaleY = 1.0f;
 };
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

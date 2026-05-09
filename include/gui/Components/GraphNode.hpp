@@ -4,7 +4,7 @@
 #include <vector>
 #include <deque>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class GraphNode : public FlexNode {
 public:
@@ -13,8 +13,8 @@ public:
     }
     std::deque<float> dataPoints;
     size_t maxPoints = 50;
-    AUKColor lineColor = Theme::Accent;
-    AUKColor fillColor = AUKColor(Theme::Accent).withAlpha(uint8_t(40));
+    SPHXColor lineColor = Theme::Accent;
+    SPHXColor fillColor = SPHXColor(Theme::Accent).withAlpha(uint8_t(40));
     float strokeWidth = 2.0f;
     bool showGrid = true;
 
@@ -76,4 +76,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

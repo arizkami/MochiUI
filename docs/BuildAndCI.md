@@ -11,8 +11,7 @@ From the repo root:
 The script:
 
 1. Runs `vcvars64.bat` so MSVC + Ninja see the standard library correctly.
-2. Runs `python scripts/gen_theme.py` (regenerates `include/gui/Theme.hpp` when themes change).
-3. Configures with **Ninja** if `build/` is missing, then builds.
+2. Configures with **Ninja** if `build/` is missing, then builds.
 
 Requirements: **Visual Studio 2022** (or compatible MSVC), **CMake**, **Ninja**, **Python 3**.
 
@@ -37,14 +36,15 @@ If an archive was extracted one level too high (`external/prebuilt/include`, `li
 
 | Target | Artifact |
 |--------|----------|
-| `AureliaKit_Foundation` | `AureliaKit.Foundation.dll` |
-| `AureliaKit_GraphicInterface` | `AureliaKit.GraphicInterface.dll` |
-| `AureliaKit_GraphicComponent` | `AureliaKit.GraphicComponent.dll` |
-| `AureliaKit_DSL` | `AureliaKit.DSL.dll` |
-| `AureliaKit_JavaScriptEngine` | `AureliaKit.JavaScriptEngine.dll` |
-| `Aurelia_React` | `Aurelia.React.dll` |
-| `AureliaKit_DirectAudioEngine` | `AureliaKit.DirectAudioEngine.dll` (Windows) |
-| `DSLDemo` | `DSLDemo.exe` (example) |
+| `SphereKit_Foundation` | `SphereKit.Foundation.dll` |
+| `SphereKit_GraphicInterface` | `SphereKit.GraphicInterface.dll` |
+| `SphereKit_GraphicComponent` | `SphereKit.GraphicComponent.dll` |
+| `SphereKit_JavaScriptEngine` | `SphereKit.JavaScriptEngine.dll` |
+| `Sphere_React` | `Sphere.React.dll` |
+| `Sphere_Vue` | `SphereKit.Vue.dll` |
+| `SphereKit_DirectAudioEngine` | `SphereKit.DirectAudioEngine.dll` (Windows) |
+| `ReactUIDemo` | `ReactUIDemo.exe` (example) |
+| `VueUIDemo` | `VueUIDemo.exe` (example) |
 
 `MikoUI` is an INTERFACE library (headers + link dependencies only).
 
@@ -54,8 +54,8 @@ Workflow: `.github/workflows/build.yml`
 
 - OS: `windows-latest`
 - Caches `external/prebuilt/skia` and `external/prebuilt/v8` keyed on `hashFiles('CMakeLists.txt')`
-- Builds the core DLLs, DSL, JS/React, and examples including `DSLDemo`
-- Uploads **AureliaKit-SDK** and **AureliaKit-Examples** artifacts
+- Builds the core DLLs plus the supported UI paths: native C++ nodes, JS/React, and JS/Vue
+- Uploads **SphereKit-SDK** and **SphereKit-Examples** artifacts
 
 ## Related
 

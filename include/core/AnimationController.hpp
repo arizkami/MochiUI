@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 // ── Easing types ──────────────────────────────────────────────────────────────
 enum class EasingType {
@@ -115,4 +115,4 @@ private:
     std::vector<Animation> animations;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

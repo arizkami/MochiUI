@@ -3,7 +3,7 @@
 #include <gui/Components/CheckboxNode.hpp>
 #include <set>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class MultiSelectNode : public FlexNode {
 public:
@@ -25,4 +25,4 @@ private:
     std::shared_ptr<TextNode> label;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

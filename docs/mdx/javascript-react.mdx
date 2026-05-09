@@ -1,23 +1,23 @@
 {/* JavaScript + React bridge — MDX */}
 
 export const meta = {
-  title: 'JavaScript & Aurelia.React',
-  description: 'V8 embed, global AureliaUI bindings, RenderReactApp entry point.',
+  title: 'JavaScript & Sphere.React',
+  description: 'V8 embed, global SphereUI bindings, RenderReactApp entry point.',
 };
 
-# JavaScript & Aurelia.React
+# JavaScript & Sphere.React
 
 ## DLLs
 
-- `AureliaKit.JavaScriptEngine.dll` — V8 + `JavaScriptEngine` + native `globalThis.AureliaUI`
-- `Aurelia.React.dll` — `RenderReactApp(engine, script, filename)`
+- `SphereKit.JavaScriptEngine.dll` — V8 + `JavaScriptEngine` + native `globalThis.SphereUI`
+- `Sphere.React.dll` — `RenderReactApp(engine, script, filename)`
 
 ## Minimal imperative script
 
 ```js
-const root = AureliaUI.createNode("column");
-AureliaUI.setStyle(root, "backgroundColor", "#0b0f14");
-AureliaUI.setRoot(root);
+const root = SphereUI.createNode("column");
+SphereUI.setStyle(root, "backgroundColor", "#0b0f14");
+SphereUI.setRoot(root);
 ```
 
 ## React reconciler

@@ -1,7 +1,7 @@
 #include <gui/Components/Popover.hpp>
 #include <algorithm>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 Popover::Popover(FlexNode::Ptr content, SkRect anchorRect, SkRect screenBounds)
     : content(content), anchor(anchorRect), screenBounds(screenBounds)
@@ -90,4 +90,4 @@ bool Popover::onMouseDown(float x, float y) {
     return FlexNode::onMouseDown(x, y);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

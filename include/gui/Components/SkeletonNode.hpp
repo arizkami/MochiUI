@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <chrono>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class SkeletonNode : public FlexNode {
 public:
@@ -40,4 +40,4 @@ private:
     std::chrono::steady_clock::time_point startTime;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

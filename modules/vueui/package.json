@@ -1,0 +1,21 @@
+{
+  "name": "vueui",
+  "module": "src/index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "bundle": "bun build src/index.ts --outfile bundle.js --format=esm --target=bun",
+    "bundle:demo": "bun run build-demo.ts"
+  },
+  "dependencies": {
+    "@vue/compiler-sfc": "^3.5.22",
+    "@vue/reactivity": "^3.5.22",
+    "vue": "^3.5.22"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

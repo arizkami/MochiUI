@@ -3,7 +3,7 @@
 #include <gui/Theme.hpp>
 #include <functional>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class ColorPicker : public FlexNode {
 public:
@@ -30,4 +30,4 @@ private:
     void updateFromXY(float x, float y);
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

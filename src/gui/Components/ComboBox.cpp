@@ -1,6 +1,6 @@
 #include <gui/Components/ComboBox.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 // ---- ComboBoxDropdown ----
 
@@ -168,7 +168,7 @@ void ComboBox::draw(SkCanvas* canvas) {
     arrowPaint.setAntiAlias(true);
     arrowPaint.setStyle(SkPaint::kStroke_Style);
     arrowPaint.setStrokeWidth(1.5f);
-    arrowPaint.setColor(AUKColor::RGB(100, 100, 100));
+    arrowPaint.setColor(SPHXColor::RGB(100, 100, 100));
 
     float arrowSize = 4.0f;
     float arrowCenterX = frame.right() - 15.0f;
@@ -205,4 +205,4 @@ bool ComboBox::onMouseMove(float x, float y) {
     return FlexNode::onMouseMove(x, y);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

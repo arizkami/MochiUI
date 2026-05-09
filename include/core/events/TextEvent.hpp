@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 // Single UTF-32 code unit (WM_CHAR–style). Surrogate pairs should be merged by the host if required.
 struct TextEvent {
@@ -9,4 +9,4 @@ struct TextEvent {
     bool handled = false;
 };
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

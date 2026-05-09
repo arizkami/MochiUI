@@ -39,7 +39,7 @@
 # ║  Until the packaging step picks up libsvg.a + libskshaper.a + libskunicode.a║
 # ║  the consumer CMakeLists.txt compiles the SVG/skshaper sources in-tree.  ║
 # ║  Once the next prebuilt drop ships those libs, that workaround can be    ║
-# ║  removed and AureliaKit_GraphicInterface can simply link against them.   ║
+# ║  removed and SphereKit_GraphicInterface can simply link against them.   ║
 # ╚══════════════════════════════════════════════════════════════════════════╝
 
 # --- Compiler & Toolchain ---
@@ -71,7 +71,7 @@ extra_cflags_cc = [ "-fno-rtti" ]
 # --- Backends ---
 # macOS desktop: Metal first-class; GL is deprecated by Apple but still works.
 # No DirectWrite, no D3D. Vulkan via MoltenVK is possible but disabled here
-# to keep the drop small; flip on if AureliaKit ever wants Vulkan on Mac.
+# to keep the drop small; flip on if SphereKit ever wants Vulkan on Mac.
 skia_enable_gpu      = true
 skia_use_metal       = true
 skia_use_gl          = false

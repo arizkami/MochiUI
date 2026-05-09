@@ -1,6 +1,6 @@
 # Layout System
 
-AureliaUI uses the **Yoga** layout engine, which implements the **CSS Flexbox** specification. This allows for highly flexible and responsive user interfaces.
+SphereUI uses the **Yoga** layout engine, which implements the **CSS Flexbox** specification. This allows for highly flexible and responsive user interfaces.
 
 ## FlexBox Basics
 

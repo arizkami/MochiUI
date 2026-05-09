@@ -6,7 +6,7 @@
 #include <vector>
 #include <string>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class BreadcrumbsNode : public FlexNode {
 public:
@@ -40,4 +40,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

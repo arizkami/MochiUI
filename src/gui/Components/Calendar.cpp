@@ -2,7 +2,7 @@
 #include <gui/Components/TextNode.hpp>
 #include <gui/Components/IconNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 Calendar::Calendar() {
     time_t t = time(nullptr);
@@ -167,7 +167,7 @@ void Calendar::updateGrid() {
         if (isSelected) {
             dayNode->style.backgroundColor = Theme::Accent;
             dayNode->color = SK_ColorWHITE;
-            dayNode->hoverOverlayColor = AUKColor::RGB(255, 255, 255, 50);
+            dayNode->hoverOverlayColor = SPHXColor::RGB(255, 255, 255, 50);
         } else if (isToday) {
             dayNode->color = Theme::Accent;
             dayNode->style.backgroundColor = SkColorSetA(Theme::Accent, 30);
@@ -211,4 +211,4 @@ void Calendar::draw(SkCanvas* canvas) {
     drawChildren(canvas);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -5,7 +5,7 @@
 #include <string>
 #include <cmath>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class VUMeterNode : public FlexNode {
 public:
@@ -19,12 +19,12 @@ public:
     bool useDecibels = true;  // Show dB values instead of percentage
 
     // Colors
-    AUKColor backgroundColor = AUKColor::RGB(30, 30, 30);
-    AUKColor greenColor = AUKColor::RGB(0, 200, 100);
-    AUKColor yellowColor = AUKColor::RGB(255, 200, 0);
-    AUKColor redColor = AUKColor::RGB(255, 50, 50);
-    AUKColor peakColor = AUKColor::white();
-    AUKColor textColor = Theme::TextSecondary;
+    SPHXColor backgroundColor = SPHXColor::RGB(30, 30, 30);
+    SPHXColor greenColor = SPHXColor::RGB(0, 200, 100);
+    SPHXColor yellowColor = SPHXColor::RGB(255, 200, 0);
+    SPHXColor redColor = SPHXColor::RGB(255, 50, 50);
+    SPHXColor peakColor = SPHXColor::white();
+    SPHXColor textColor = Theme::TextSecondary;
 
     // Thresholds (in normalized 0-1 range)
     float yellowThreshold = 0.7f;   // -6dB
@@ -47,9 +47,9 @@ public:
 private:
     float valueToDB(float normalized) const;
     std::string formatValue(float val) const;
-    AUKColor getColorForValue(float val) const;
+    SPHXColor getColorForValue(float val) const;
 
     float peakHoldTimer = 0.0f;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

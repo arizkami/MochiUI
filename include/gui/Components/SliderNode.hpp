@@ -2,8 +2,20 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 #include <functional>
+#include <optional>
 
-namespace AureliaUI {
+namespace SphereUI {
+
+struct SliderNodeStyle {
+    std::optional<SPHXColor> trackColor;
+    std::optional<SPHXColor> fillColor;
+    std::optional<SPHXColor> thumbColor;
+    std::optional<SPHXColor> thumbBorderColor;
+    std::optional<SPHXColor> shadowColor;
+    std::optional<float> trackHeight;
+    std::optional<float> thumbRadius;
+    std::optional<float> thumbBorderWidth;
+};
 
 class SliderNode : public FlexNode {
 public:
@@ -16,12 +28,16 @@ public:
     bool vertical = false;
     std::function<void(float)> onValueChange;
 
-    AUKColor trackColor = AUKColor::RGB(200, 200, 200);   // light gray track
-    AUKColor fillColor  = AUKColor::RGB(0, 120, 215);     // blue fill
-    AUKColor thumbColor = AUKColor::white();
+    SPHXColor trackColor = SPHXColor(Theme::Border).withAlpha(uint8_t{180});
+    SPHXColor fillColor = SPHXColor(Theme::Accent);
+    SPHXColor thumbColor = SPHXColor(Theme::Card).lighter(0.15f);
+    float trackHeight = 6.0f;
+    float thumbRadius = 10.0f;
 
-    float trackHeight = 4.0f;
-    float thumbRadius = 8.0f;
+    SliderNodeStyle visualStyle;
+
+    void setStyleOverrides(const SliderNodeStyle& styleOverrides) { visualStyle = styleOverrides; }
+    void clearStyleOverrides() { visualStyle = {}; }
 
     Size measure(Size available) override;
     void draw(SkCanvas* canvas) override;
@@ -31,9 +47,10 @@ public:
     bool onMouseWheel(float x, float y, float delta) override;
 
 private:
+    SliderNodeStyle resolveStyle() const;
     void updateValueFromPosition(float x, float y);
     float getNormalizedValue() const;
     bool isDragging = false;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class CheckboxNode : public FlexNode {
 public:
@@ -15,8 +15,8 @@ public:
     }
     std::string label;
     bool checked = false;
-    AUKColor checkboxColor = Theme::Accent;
-    AUKColor labelColor = Theme::TextPrimary;
+    SPHXColor checkboxColor = Theme::Accent;
+    SPHXColor labelColor = Theme::TextPrimary;
     float fontSize = 14.0f;
     float checkboxSize = 18.0f;
     float spacing = 8.0f;
@@ -27,4 +27,4 @@ public:
     bool onMouseDown(float x, float y) override;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

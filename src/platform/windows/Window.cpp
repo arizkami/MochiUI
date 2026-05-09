@@ -15,7 +15,7 @@
 #include <dwmapi.h>
 #include <windowsx.h>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 // Aero-borderless style: WS_CAPTION kept so DWM provides shadow, snap, and
 // window animations; WM_NCCALCSIZE strips the visual chrome at zero cost.
@@ -73,7 +73,7 @@ private:
 };
 
 Win32Window::Win32Window(const std::string& title, int width, int height) : width(width), height(height) {
-    const wchar_t CLASS_NAME[] = L"AureliaUIWindow";
+    const wchar_t CLASS_NAME[] = L"SphereUIWindow";
 
     WNDCLASSEXW wc = {};
     wc.cbSize = sizeof(WNDCLASSEXW);
@@ -109,9 +109,7 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
         SendMessage(hwnd, WM_SETICON, ICON_SMALL, (LPARAM)wc.hIconSm);
 
         auto& switcher = ThemeSwitcher::getInstance();
-        bool isDark = (switcher.getCurrentTheme() == ThemeType::Auto)
-                      ? switcher.isWindowsInDarkMode()
-                      : (switcher.getCurrentTheme() == ThemeType::Dark);
+        bool isDark = (switcher.getCurrentTheme() == ThemeType::Dark);
         setDarkMode(isDark);
 
         initD3D12();
@@ -748,4 +746,4 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return DefWindowProcW(hwnd, msg, wp, lp);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -1,15 +1,35 @@
 #include <gui/Components/KnobNode.hpp>
+#include <utils/FontManager/FontMgr.hpp>
 #include <algorithm>
+#include <cstdio>
 #include <windows.h> // For GetTickCount and GetKeyState
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-namespace AureliaUI {
+namespace SphereUI {
+
+KnobNodeStyle KnobNode::resolveStyle() const {
+    KnobNodeStyle resolved;
+    resolved.knobBodyColor = visualStyle.knobBodyColor.value_or(knobBodyColor);
+    resolved.knobRingColor = visualStyle.knobRingColor.value_or(knobRingColor);
+    resolved.arcTrackColor = visualStyle.arcTrackColor.value_or(arcTrackColor);
+    resolved.arcFillColor = visualStyle.arcFillColor.value_or(arcFillColor);
+    resolved.indicatorColor = visualStyle.indicatorColor.value_or(indicatorColor);
+    resolved.shadowColor = visualStyle.shadowColor.value_or(SPHXColor(Theme::Shadow).withAlpha(uint8_t{90}));
+    resolved.glowColor = visualStyle.glowColor.value_or(SPHXColor(Theme::Accent));
+    resolved.knobSize = visualStyle.knobSize.value_or(knobSize);
+    resolved.arcWidth = visualStyle.arcWidth.value_or(arcWidth);
+    return resolved;
+}
 
 Size KnobNode::measure(Size available) {
+    const auto resolved = resolveStyle();
+    const float knobSize = *resolved.knobSize;
     float size = knobSize + 30.0f;  // Increased padding for larger arc and effects
+    if (showValue)
+        size += Theme::FontSmall + 10.0f;
 
     if (style.widthMode == SizingMode::Fixed) size = style.width;
     if (style.heightMode == SizingMode::Fixed) size = style.height;
@@ -18,20 +38,28 @@ Size KnobNode::measure(Size available) {
 }
 
 void KnobNode::draw(SkCanvas* canvas) {
+    const auto resolved = resolveStyle();
+    const SPHXColor knobBodyColor = *resolved.knobBodyColor;
+    const SPHXColor knobRingColor = *resolved.knobRingColor;
+    const SPHXColor arcTrackColor = *resolved.arcTrackColor;
+    const SPHXColor arcFillColor = *resolved.arcFillColor;
+    const SPHXColor indicatorColor = *resolved.indicatorColor;
+    const SPHXColor shadowColor = *resolved.shadowColor;
+    const SPHXColor glowColor = *resolved.glowColor;
+    const float knobSize = *resolved.knobSize;
+    const float arcWidth = *resolved.arcWidth;
     float centerX = frame.centerX();
     float centerY = frame.centerY();
     float radius = knobSize / 2.0f;
     float norm = getNormalizedValue();
 
-    // 1. Draw Outer Glow (if dragging or hovered)
     if (isDragging || isHovered) {
         SkPaint glowPaint;
         glowPaint.setAntiAlias(true);
-        glowPaint.setColor(SkColorSetA(arcFillColor, isDragging ? 40 : 20));
+        glowPaint.setColor(SkColorSetA(glowColor, isDragging ? 44 : 24));
         canvas->drawCircle(centerX, centerY, radius + 15, glowPaint);
     }
 
-    // 2. Draw Arc Track (Background)
     SkPaint arcPaint;
     arcPaint.setAntiAlias(true);
     arcPaint.setStyle(SkPaint::kStroke_Style);
@@ -48,34 +76,28 @@ void KnobNode::draw(SkCanvas* canvas) {
     );
     canvas->drawArc(arcRect, startAngle, sweepAngle, false, arcPaint);
 
-    // 3. Draw Arc Fill (Value)
     arcPaint.setColor(arcFillColor);
     arcPaint.setStrokeWidth(arcWidth + 1);
-    // Add a slight glow to the arc itself
     if (isDragging) {
         arcPaint.setAlphaf(1.0f);
     }
     canvas->drawArc(arcRect, startAngle, sweepAngle * norm, false, arcPaint);
 
-    // 4. Draw Knob Body Shadow
     SkPaint shadowPaint;
     shadowPaint.setAntiAlias(true);
-    shadowPaint.setColor(SkColorSetARGB(80, 0, 0, 0));
+    shadowPaint.setColor(shadowColor);
     canvas->drawCircle(centerX, centerY + 3, radius, shadowPaint);
 
-    // 5. Draw Knob Outer Ring
     SkPaint ringPaint;
     ringPaint.setAntiAlias(true);
     ringPaint.setColor(knobRingColor);
     canvas->drawCircle(centerX, centerY, radius, ringPaint);
 
-    // 6. Draw Knob Face (Gradient)
     SkPaint facePaint;
     facePaint.setAntiAlias(true);
     facePaint.setColor(knobBodyColor);
     canvas->drawCircle(centerX, centerY, radius - 3, facePaint);
 
-    // 7. Draw Indicator Line (instead of dot, for more professional look)
     float angle = getAngleForValue();
     float angleRad = angle * M_PI / 180.0f;
 
@@ -95,18 +117,38 @@ void KnobNode::draw(SkCanvas* canvas) {
 
     canvas->drawLine(x1, y1, x2, y2, indicatorPaint);
 
-    // 8. Draw Top Highlight / Cap Effect
     SkPaint capPaint;
     capPaint.setAntiAlias(true);
     capPaint.setColor(SkColorSetARGB(30, 255, 255, 255));
     canvas->drawCircle(centerX - radius * 0.2f, centerY - radius * 0.2f, radius * 0.3f, capPaint);
+
+    if (showValue) {
+        char buf[48];
+        if (showValueAsPercent) {
+            const int pct = static_cast<int>(std::lround(getNormalizedValue() * 100.0f));
+            std::snprintf(buf, sizeof(buf), "%d%%", std::clamp(pct, 0, 100));
+        } else {
+            const int prec = std::clamp(valueDecimals, 0, 6);
+            std::snprintf(buf, sizeof(buf), "%.*f", prec, static_cast<double>(value));
+        }
+        SkPaint textPaint;
+        textPaint.setAntiAlias(true);
+        textPaint.setColor(valueLabelColor);
+
+        const float fs = Theme::FontSmall;
+        SkRect tb;
+        FontManager::getInstance().measureText(buf, fs, &tb);
+        const float anchorY = frame.bottom() - 8.0f;
+        const float textY   = anchorY - tb.centerY();
+        FontManager::getInstance().drawText(canvas, buf, centerX - tb.width() * 0.5f, textY, fs, textPaint);
+    }
 }
 
 bool KnobNode::hitTest(float x, float y) {
+    const auto resolved = resolveStyle();
     float dx = x - frame.centerX();
     float dy = y - frame.centerY();
-    float radius = knobSize / 2.0f;
-    // Allow a slight margin for the outer arc track
+    float radius = *resolved.knobSize / 2.0f;
     float hitRadius = radius + 15.0f;
     return (dx * dx + dy * dy) <= (hitRadius * hitRadius);
 }
@@ -236,4 +278,4 @@ float KnobNode::getAngleForValue() const {
     return startAngle + (sweepAngle * norm);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

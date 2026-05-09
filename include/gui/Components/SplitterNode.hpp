@@ -2,7 +2,7 @@
 #include <gui/Layout.hpp>
 #include <gui/Theme.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class SplitterNode : public FlexNode {
 public:
@@ -67,4 +67,4 @@ private:
     float lastPos = 0;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

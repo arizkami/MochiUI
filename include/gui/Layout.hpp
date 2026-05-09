@@ -4,13 +4,15 @@
 #include <string>
 #include <functional>
 #include <algorithm>
+#include <optional>
 #include <gui/SkiaDraw.hpp>
-#include <AUKColor.hpp>
+#include <SPHXColor.hpp>
 #include <yoga/Yoga.h>
+#include <yoga/node/Node.h>
 #include <core/IWindowHost.hpp>
 #include <core/events/Events.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 enum class FlexDirection { Row, Column };
 enum class SizingMode { Fixed, Flex, Hug };
@@ -48,9 +50,13 @@ public:
     void setPadding(float p) { paddingLeft = paddingTop = paddingRight = paddingBottom = p; }
     void setPadding(float h, float v) { paddingLeft = paddingRight = h; paddingTop = paddingBottom = v; }
     void setPadding(float l, float t, float r, float b) { paddingLeft = l; paddingTop = t; paddingRight = r; paddingBottom = b; }
+    void setPaddingHorizontal(float h) { paddingLeft = paddingRight = h; }
+    void setPaddingVertical(float v) { paddingTop = paddingBottom = v; }
 
     void setMargin(float m) { marginLeft = marginTop = marginRight = marginBottom = m; }
     void setMargin(float h, float v) { marginLeft = marginRight = h; marginTop = marginBottom = v; }
+    void setMarginHorizontal(float h) { marginLeft = marginRight = h; }
+    void setMarginVertical(float v) { marginTop = marginBottom = v; }
 
     void setGap(float g) { gap = g; }
 
@@ -75,7 +81,9 @@ public:
         else if (edge == YGEdgeBottom) bottom = value;
     }
 
-    AUKColor backgroundColor = AUKColor::transparent();
+    SPHXColor backgroundColor = SPHXColor::transparent();
+    SPHXColor borderColor = SPHXColor::transparent();
+    float borderWidth = 0;
     float borderRadius = 0;
     bool overflowHidden = false;
 
@@ -199,6 +207,15 @@ inline bool IsUndefined(float value) {
     return YGFloatIsUndefined(value);
 }
 
+struct NodeStyle {
+    std::optional<SPHXColor> background;
+    std::optional<SPHXColor> foreground;
+    std::optional<SPHXColor> border;
+    std::optional<float> borderRadius;
+    std::optional<float> borderWidth;
+    std::optional<float> fontSize;
+};
+
 class FlexNode : public std::enable_shared_from_this<FlexNode> {
 public:
     using Ptr = std::shared_ptr<FlexNode>;
@@ -217,6 +234,7 @@ public:
 
     YGNodeRef getYGNode() const { return ygNode; }
     LayoutStyle style;
+    NodeStyle nodeStyle;
     SkRect frame = SkRect::MakeEmpty();
     std::vector<Ptr> children;
     FlexNode* parent = nullptr;
@@ -242,12 +260,8 @@ public:
     bool isPressed = false;
     bool isFocused = false;
     bool enableHover = false;
-    AUKColor hoverOverlayColor = AUKColor::RGB(255, 255, 255, 40);
+    SPHXColor hoverOverlayColor = SPHXColor::RGB(255, 255, 255, 40);
 
-    // Uniform border drawn around the node frame (independent of per-edge DSL borders).
-    // borderWidth = 0 means no border (default).
-    AUKColor borderColor;   // defaults to transparent — no border
-    float    borderWidth = 0.0f;
     std::function<void()> onClick;
 
     float getLayoutPadding(YGEdge edge) const { return YGNodeLayoutGetPadding(ygNode, edge); }
@@ -255,9 +269,41 @@ public:
 
     virtual void addChild(Ptr child) {
         if (!child) return;
+        if (child.get() == this) return;
+
+        // If Yoga already owns this child under this node, just sync C++ state —
+        // calling YGNodeInsertChild again would trigger Yoga's fatal assertion.
+        if (YGNodeGetOwner(child->getYGNode()) == ygNode) {
+            child->parent = this;
+            if (std::find(children.begin(), children.end(), child) == children.end()) {
+                children.push_back(child);
+            }
+            return;
+        }
+
+        // C++ parent already this and child already in children — nothing to do.
+        if (child->parent == this) {
+            if (std::find(children.begin(), children.end(), child) != children.end()) {
+                return;
+            }
+        }
+
+        // Remove from old C++ parent (which also calls YGNodeRemoveChild).
         if (child->parent) {
             child->parent->removeChild(child);
         }
+
+        // Force-remove any stale Yoga owner that removeChild may have missed
+        // due to C++/Yoga state being out of sync.
+        if (YGNodeRef staleOwner = YGNodeGetOwner(child->getYGNode())) {
+            YGNodeRemoveChild(staleOwner, child->getYGNode());
+            // YGNodeRemoveChild silently no-ops when child is not in staleOwner's
+            // children list, leaving owner_ set. Force-clear it directly.
+            if (YGNodeGetOwner(child->getYGNode())) {
+                static_cast<facebook::yoga::Node*>(child->getYGNode())->setOwner(nullptr);
+            }
+        }
+
         child->parent = this;
         child->setWindowHost(windowHost);
         children.push_back(child);
@@ -378,12 +424,13 @@ public:
     }
 
     virtual void drawSelf(SkCanvas* canvas) {
-        float r = style.borderRadius;
+        float r = nodeStyle.borderRadius.value_or(style.borderRadius);
+        SPHXColor bgColor = nodeStyle.background.value_or(style.backgroundColor);
 
-        if (SkColorGetA(style.backgroundColor) > 0) {
+        if (bgColor.a() > 0) {
             SkPaint paint;
             paint.setAntiAlias(true);
-            paint.setColor(style.backgroundColor);
+            paint.setColor(bgColor);
             if (r > 0) canvas->drawRoundRect(frame, r, r, paint);
             else       canvas->drawRect(frame, paint);
         }
@@ -396,13 +443,16 @@ public:
             else       canvas->drawRect(frame, hoverPaint);
         }
 
-        if (borderWidth > 0.0f && borderColor.a() > 0) {
+        float bw = nodeStyle.borderWidth.value_or(style.borderWidth);
+        SPHXColor borderColor = nodeStyle.border.value_or(style.borderColor);
+
+        if (bw > 0.0f && borderColor.a() > 0) {
             SkPaint bp;
             bp.setAntiAlias(true);
             bp.setColor(borderColor);
             bp.setStyle(SkPaint::kStroke_Style);
-            bp.setStrokeWidth(borderWidth);
-            SkRect inset = frame.makeInset(borderWidth * 0.5f, borderWidth * 0.5f);
+            bp.setStrokeWidth(bw);
+            SkRect inset = frame.makeInset(bw * 0.5f, bw * 0.5f);
             if (r > 0) canvas->drawRoundRect(inset, r, r, bp);
             else       canvas->drawRect(inset, bp);
         }
@@ -513,6 +563,6 @@ private:
 
 inline YGNodeRef LayoutStyle::getYGNode() { return owner->getYGNode(); }
 
-} // namespace AureliaUI
+} // namespace SphereUI
 
 #include <gui/GridLayout.hpp>

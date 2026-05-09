@@ -4,7 +4,7 @@
 #include <chrono>
 #include <cmath>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class ProgressBar : public FlexNode {
 public:
@@ -13,8 +13,8 @@ public:
     }
 
     float value = 0.0f; // 0.0 to 1.0 (determinate only)
-    AUKColor fillColor = Theme::Accent;
-    AUKColor backgroundColor = Theme::Sidebar;
+    SPHXColor fillColor = Theme::Accent;
+    SPHXColor backgroundColor = Theme::Sidebar;
     float borderRadius = 4.0f;
     bool showPercentage = false;
 
@@ -87,4 +87,4 @@ public:
     }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

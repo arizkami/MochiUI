@@ -3,7 +3,7 @@
 #include <memory>
 #include <gui/Layout.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 // Equal-size cell grid: children are laid out row-major in columnCount columns.
 // Uses style.gap between cells and respects padding on the grid node.
@@ -72,4 +72,4 @@ public:
     static Ptr Create() { return std::make_shared<GridLayoutNode>(); }
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

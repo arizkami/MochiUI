@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 class RadioButtonNode : public FlexNode {
 public:
@@ -16,8 +16,8 @@ public:
 
     std::string label;
     bool selected = false;
-    AUKColor radioColor = Theme::Accent;
-    AUKColor labelColor = Theme::TextPrimary;
+    SPHXColor radioColor = Theme::Accent;
+    SPHXColor labelColor = Theme::TextPrimary;
 
     float fontSize = 14.0f;
     float radioSize = 18.0f;
@@ -30,4 +30,4 @@ public:
     bool onMouseDown(float x, float y) override;
 };
 
-} // namespace AureliaUI
+} // namespace SphereUI

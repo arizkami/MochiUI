@@ -1,7 +1,7 @@
 #include <gui/Components/Table.hpp>
 #include <gui/Components/TextNode.hpp>
 
-namespace AureliaUI {
+namespace SphereUI {
 
 TableHead::TableHead() {
     style.setFlexDirection(YGFlexDirectionRow);
@@ -107,4 +107,4 @@ void Table::draw(SkCanvas* canvas) {
     canvas->drawRoundRect(frame, style.borderRadius, style.borderRadius, paint);
 }
 
-} // namespace AureliaUI
+} // namespace SphereUI

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-namespace AureliaUI::events {
+namespace SphereUI::events {
 
 enum class PointerButton : std::uint32_t {
     None = 0,
@@ -36,4 +36,4 @@ struct PointerEvent {
     bool handled = false;
 };
 
-} // namespace AureliaUI::events
+} // namespace SphereUI::events

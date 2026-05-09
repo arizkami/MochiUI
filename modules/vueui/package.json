@@ -27,6 +27,7 @@
   "dependencies": {
     "@vue/compiler-sfc": "^3.5.22",
     "@vue/reactivity": "^3.5.22",
+    "@vue/runtime-core": "^3.5.22",
     "vue": "^3.5.22"
   },
   "devDependencies": {

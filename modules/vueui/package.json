@@ -1,6 +1,6 @@
 {
   "name": "@spherekit/vue",
-  "version": "2026.05.09",
+  "version": "2026.05.09-alpha.1",
   "description": "Vue wrapper for SphereEngine",
   "type": "module",
   "private": false,

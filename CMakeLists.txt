@@ -24,11 +24,11 @@ set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
 
 if(WIN32)
   set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
-  set(SKIA_URL      "https://github.com/arizkami/Sphere/releases/download/2026.05/skia-prebuilt-binary.zip")
+  set(SKIA_URL      "https://github.com/arizkami/SphereEngine/releases/download/2026.05/skia-prebuilt-binary.zip")
   set(SKIA_SENTINEL ${SKIA_DIR}/lib/skia.lib)
 elseif(UNIX AND NOT APPLE)
   set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-linux.tar.gz)
-  set(SKIA_URL      "https://github.com/arizkami/Sphere/releases/download/2026.05/skia-prebuilt-linux.tar.gz")
+  set(SKIA_URL      "https://github.com/arizkami/SphereEngine/releases/download/2026.05/skia-prebuilt-linux.tar.gz")
   set(SKIA_SENTINEL ${SKIA_DIR}/lib/libskia.a)
 else()
   message(FATAL_ERROR "Sphere: unsupported platform '${CMAKE_SYSTEM_NAME}'. "
@@ -56,7 +56,7 @@ set(V8_ROOT "")
 if(WIN32)
   set(V8_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/v8)
   set(V8_ARCHIVE ${CMAKE_CURRENT_SOURCE_DIR}/external/v8-windows_x64.zip)
-  set(V8_URL "https://github.com/arizkami/Sphere/releases/download/2026.04/v8-windows_x64.zip")
+  set(V8_URL "https://github.com/arizkami/SphereEngine/releases/download/2026.04/v8-windows_x64.zip")
   set(V8_SENTINEL ${V8_DIR}/lib/v8_monolith.lib)
 
   # If a previous configure extracted the zip into `external/prebuilt/{bin,include,lib,...}`

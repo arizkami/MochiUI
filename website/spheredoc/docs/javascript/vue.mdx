@@ -1,0 +1,87 @@
+---
+sidebar_position: 3
+title: Vue Bridge
+---
+
+# Vue Bridge
+
+**Header**: `include/SphereVUE.hpp`
+
+The Vue bridge lets you write SphereEngine UI using Vue 3 Single-File Components (SFCs). Like the React bridge, the compiled bundle runs inside `JavaScriptEngine` and produces a native `FlexNode` tree.
+
+## API
+
+```cpp
+namespace SphereUI {
+
+FlexNode::Ptr RenderVueApp(
+    JavaScriptEngine&  engine,
+    const std::string& entryScript,
+    const std::string& filename = "vueui.bundle.js"
+);
+
+} // namespace SphereUI
+```
+
+`RenderVueApp` calls `installSphereVueGlobal()` (which adds Vue-specific compatibility shims on top of the base `SphereUI` global), evaluates `entryScript`, and returns the root node.
+
+## Workflow
+
+### 1. Write Vue components
+
+```vue
+<!-- modules/vueui/src/App.vue -->
+<template>
+  <View :style="{ flexDirection: 'column', padding: 16, gap: 8 }">
+    <Text :style="{ fontSize: 20, color: '#ffffff' }">
+      Count: {{ count }}
+    </Text>
+    <Button title="Increment" @press="count++" />
+  </View>
+</template>
+
+<script setup lang="ts">
+import { ref } from "vue";
+const count = ref(0);
+</script>
+```
+
+### 2. Bundle
+
+```powershell
+cd modules/vueui
+bun build src/main.ts --outfile dist/vueui.bundle.js --target browser
+```
+
+### 3. Embed as a resource
+
+```powershell
+python gen_resources.py dist/vueui.bundle.js VueUIResources.hpp
+```
+
+### 4. Evaluate in C++
+
+```cpp
+#include <SphereVUE.hpp>
+#include "VueUIResources.hpp"
+
+JavaScriptEngine engine;
+engine.init();
+
+std::string src(VueUIResources::bundle,
+                VueUIResources::bundle + VueUIResources::bundle_size);
+
+auto root = SphereUI::RenderVueApp(engine, src);
+window->setRoot(root);
+window->run();
+```
+
+## Vue-specific shims
+
+`installSphereVueGlobal()` additionally installs:
+
+- A minimal `Vue` global object so `createApp` calls are intercepted.
+- `h` (hyperscript) mapped to `SphereUI.createNode`.
+- Reactivity proxies forwarded to `SphereUI.setProp` / `SphereUI.setStyle`.
+
+The same node type mapping and style property mapping as the React bridge applies — see the [React Bridge](./react) page for the full tables.

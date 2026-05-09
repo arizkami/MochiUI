@@ -1,0 +1,93 @@
+---
+sidebar_position: 3
+title: Theme
+---
+
+# Theme & ThemeManager
+
+**Headers**: `include/gui/Theme.hpp`, `include/core/ThemeManager.hpp`
+
+SphereEngine ships with a built-in dark and light theme. Tokens are global inline variables in the `Theme` namespace that components read at draw time, so switching themes takes effect on the next repaint.
+
+## Theme Tokens
+
+```cpp
+namespace Theme {
+    // Colors
+    inline SkColor Background;       // Main window background
+    inline SkColor Sidebar;          // Sidebar panel background
+    inline SkColor MenuBar;          // Menu bar background
+    inline SkColor Accent;           // Primary accent / highlight color
+    inline SkColor TextPrimary;      // Main readable text
+    inline SkColor TextSecondary;    // Muted / supporting text
+    inline SkColor HoverOverlay;     // Semi-transparent hover tint
+    inline SkColor Card;             // Card / surface background
+    inline SkColor Border;           // Subtle border color
+    inline SkColor Shadow;           // Shadow color
+
+    // Sizing
+    inline float BorderWidth   = 1.0f;
+    inline float BorderRadius  = 4.0f;
+    inline float ControlHeight = 32.0f;
+
+    // Font sizes
+    inline float FontSmall  = 12.0f;
+    inline float FontNormal = 14.0f;
+    inline float FontMedium = 16.0f;
+    inline float FontLarge  = 18.0f;
+    inline float FontHeader = 24.0f;
+}
+```
+
+All components that set `useThemeColors = true` read directly from this namespace, so a single `ThemeManager::setTheme()` call re-skins the entire application.
+
+## DarkTheme / LightTheme Presets
+
+```cpp
+namespace DarkTheme {
+    extern SkColor Background, Sidebar, MenuBar, Accent;
+    extern SkColor TextPrimary, TextSecondary;
+    extern SkColor HoverOverlay, Card, Border, Shadow;
+}
+
+namespace LightTheme {
+    extern SkColor Background, Sidebar, MenuBar, Accent;
+    extern SkColor TextPrimary, TextSecondary;
+    extern SkColor HoverOverlay, Card, Border, Shadow;
+}
+```
+
+## ThemeManager
+
+```cpp
+class ThemeManager {
+public:
+    static ThemeManager& getInstance();
+
+    void setTheme(ThemeType type);
+    void toggleDarkMode();
+};
+
+enum class ThemeType { Dark, Light };
+```
+
+### `setTheme(ThemeType)`
+
+Copies the selected preset into the `Theme` namespace tokens. Call `window->requestRedraw()` after switching if not inside a component's draw loop.
+
+### `toggleDarkMode()`
+
+Convenience wrapper — switches between `Dark` and `Light`.
+
+## Example
+
+```cpp
+// Switch to light theme
+ThemeManager::getInstance().setTheme(ThemeType::Light);
+window->requestRedraw();
+
+// Toggle from a button
+btn->onClick = [] {
+    ThemeManager::getInstance().toggleDarkMode();
+};
+```

@@ -1,0 +1,76 @@
+---
+sidebar_position: 4
+title: SPHXSvg
+---
+
+# SPHXSvg
+
+**Header**: `include/SPHXSvg.hpp`
+
+`SPHXSvg` loads and renders SVG documents using Skia's SVGDOM. Supports scaling, opacity, and named element rendering.
+
+## Loading
+
+```cpp
+static SPHXSvg fromFile    (const std::string& path);
+static SPHXSvg fromMemory  (const void* data, size_t size);
+static SPHXSvg fromString  (const std::string& svgText);
+static SPHXSvg fromResource(const std::string& resUri); // "res://name"
+```
+
+## State
+
+```cpp
+bool    isValid()        const;
+SkSize  intrinsicSize()  const;  // Declared width/height in the SVG
+float   width()          const;
+float   height()         const;
+```
+
+## Rendering
+
+### At intrinsic size
+
+```cpp
+void render(SkCanvas* canvas, float x = 0, float y = 0) const;
+```
+
+### Scale to destination rect
+
+```cpp
+void render(SkCanvas* canvas, const SkRect& dst) const;
+void render(SkCanvas* canvas, float x, float y, float w, float h) const;
+```
+
+### With opacity
+
+```cpp
+void render(SkCanvas* canvas, const SkRect& dst, float opacity) const;
+```
+
+### Named element only
+
+```cpp
+void renderNode(SkCanvas* canvas, const SkRect& dst,
+                const char* nodeId) const;
+```
+
+Renders only the element with `id="nodeId"` — useful for sprite sheets or icon atlases.
+
+## Example
+
+```cpp
+SPHXSvg icon = SPHXSvg::fromFile("assets/icons/play.svg");
+
+void PlayButton::drawSelf(SkCanvas* canvas) override {
+    SPHXPainter p(canvas);
+    p.circle(frame.centerX(), frame.centerY(), 20.0f, SPHXColor::Hex(0x4080ff));
+
+    if (icon.isValid()) {
+        float s = 16.0f;
+        float x = frame.centerX() - s / 2;
+        float y = frame.centerY() - s / 2;
+        icon.render(canvas, SkRect::MakeXYWH(x, y, s, s));
+    }
+}
+```

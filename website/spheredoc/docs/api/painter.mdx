@@ -1,0 +1,160 @@
+---
+sidebar_position: 2
+title: SPHXPainter
+---
+
+# SPHXPainter
+
+**Header**: `include/SPHXPainter.hpp`
+
+`SPHXPainter` is a fluent 2D drawing wrapper over `SkCanvas`. Every method returns `*this` so calls can be chained.
+
+Construct it inside any `FlexNode::drawSelf` override:
+
+```cpp
+void MyNode::drawSelf(SkCanvas* canvas) override {
+    SPHXPainter p(canvas);
+    p.roundRect(frame, 8.0f, SPHXColor::Hex(0x2d2d3f))
+     .roundRectBorder(frame, 8.0f, SPHXColor::Hex(0x555577), 1.0f);
+}
+```
+
+## Canvas State
+
+```cpp
+SPHXPainter& save();
+SPHXPainter& restore();
+SPHXPainter& translate(float dx, float dy);
+SPHXPainter& rotate(float degrees, float cx = 0, float cy = 0);
+SPHXPainter& scale(float sx, float sy);
+```
+
+## Clipping
+
+```cpp
+SPHXPainter& clip            (const SkRect&, bool aa = true);
+SPHXPainter& clipRounded     (const SkRect&, float radius, bool aa = true);
+SPHXPainter& clipRRect       (const SkRRect&, bool aa = true);
+SPHXPainter& clipRoundedCorners(const SkRect&,
+                                float tl, float tr, float br, float bl,
+                                bool aa = true);
+SPHXPainter& clipCircle      (float cx, float cy, float r, bool aa = true);
+```
+
+## Filled Shapes
+
+```cpp
+SPHXPainter& rect      (const SkRect&, SPHXColor);
+SPHXPainter& roundRect (const SkRect&, float radius, SPHXColor);
+SPHXPainter& roundRect (const SkRect&, float rx, float ry, SPHXColor);
+SPHXPainter& rrect     (const SkRRect&, SPHXColor);
+SPHXPainter& roundRectCorners(const SkRect&,
+                               float tl, float tr, float br, float bl,
+                               SPHXColor);
+SPHXPainter& circle    (float cx, float cy, float r, SPHXColor);
+SPHXPainter& path      (const SkPath&, SPHXColor);
+```
+
+## Stroked Shapes
+
+```cpp
+SPHXPainter& rectBorder      (const SkRect&, SPHXColor, float width = 1.0f);
+SPHXPainter& roundRectBorder (const SkRect&, float radius, SPHXColor, float w = 1.0f);
+SPHXPainter& rrectBorder     (const SkRRect&, SPHXColor, float w = 1.0f);
+SPHXPainter& circleBorder    (float cx, float cy, float r, SPHXColor, float w = 1.0f);
+SPHXPainter& pathStroke      (const SkPath&, SPHXColor, float w = 1.0f,
+                               SkPaint::Cap cap = kRound_Cap);
+```
+
+## Lines
+
+```cpp
+SPHXPainter& line(float x1, float y1, float x2, float y2,
+                  SPHXColor, float width = 1.0f,
+                  SkPaint::Cap cap = kRound_Cap);
+SPHXPainter& line(SkPoint from, SkPoint to,
+                  SPHXColor, float width = 1.0f);
+```
+
+## Arcs & Pie
+
+```cpp
+SPHXPainter& arc(const SkRect& oval,
+                 float startAngle, float sweepAngle,
+                 SPHXColor, float width = 2.0f,
+                 SkPaint::Cap cap = kRound_Cap);
+
+SPHXPainter& pie(const SkRect& oval,
+                 float startAngle, float sweepAngle,
+                 SPHXColor);
+```
+
+## Gradients
+
+```cpp
+// Linear gradient filled into a shape
+SPHXPainter& linearGradient      (const SkRect&,
+                                   SPHXColor from, SPHXColor to,
+                                   float angleDeg = 90.0f);
+SPHXPainter& roundRectGradient   (const SkRect&, float radius,
+                                   SPHXColor from, SPHXColor to,
+                                   float angleDeg = 90.0f);
+SPHXPainter& circleGradient      (float cx, float cy, float r,
+                                   SPHXColor from, SPHXColor to,
+                                   float angleDeg = 90.0f);
+
+// Radial gradients
+SPHXPainter& radialGradient      (float cx, float cy, float r,
+                                   SPHXColor center, SPHXColor edge);
+SPHXPainter& radialGradientRect  (const SkRect&,
+                                   SPHXColor center, SPHXColor edge);
+
+// Sweep gradient (conical)
+SPHXPainter& sweepGradient       (float cx, float cy, float r,
+                                   SPHXColor from, SPHXColor to,
+                                   float startAngle = 0,
+                                   float endAngle   = 360);
+```
+
+## Shadows
+
+Gaussian blur drop shadow drawn beneath the shape:
+
+```cpp
+SPHXPainter& shadow      (const SkRect&, float cornerRadius,
+                           SPHXColor, float sigma = 4.0f,
+                           float dx = 0, float dy = 3.0f);
+
+SPHXPainter& shadowCircle(float cx, float cy, float r,
+                           SPHXColor, float sigma = 4.0f,
+                           float dx = 0, float dy = 3.0f);
+```
+
+## Raw Canvas Access
+
+```cpp
+SkCanvas* raw() const;
+```
+
+Returns the underlying `SkCanvas*` for operations not covered by the fluent API.
+
+## Example — Custom node
+
+```cpp
+void MyCard::drawSelf(SkCanvas* canvas) override {
+    SPHXPainter p(canvas);
+
+    // Drop shadow
+    p.shadow(frame, 8.0f, SPHXColor::black().withAlpha(0.3f), 6.0f, 0, 4.0f);
+
+    // Card background
+    p.roundRect(frame, 8.0f, SPHXColor::Hex(0x1e1e2e));
+
+    // Accent stripe
+    SkRect stripe = SkRect::MakeXYWH(frame.left(), frame.top(), 4.0f, frame.height());
+    p.roundRectCorners(stripe, 8.0f, 0, 0, 8.0f, SPHXColor::Hex(0x4080ff));
+
+    // Border
+    p.roundRectBorder(frame, 8.0f, SPHXColor::Hex(0x333355), 1.0f);
+}
+```

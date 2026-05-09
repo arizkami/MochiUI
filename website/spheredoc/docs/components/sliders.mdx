@@ -1,0 +1,130 @@
+---
+sidebar_position: 3
+title: Sliders & Knobs
+---
+
+# Sliders & Knobs
+
+## SliderNode
+
+**Header**: `include/gui/components/SliderNode.hpp`
+
+Horizontal or vertical drag slider.
+
+```cpp
+class SliderNode : public FlexNode {
+public:
+    float value;          // Current position, 0.0 – 1.0
+    float minValue;       // Default: 0.0
+    float maxValue;       // Default: 1.0
+    bool  vertical;       // false = horizontal (default)
+
+    SPHXColor trackColor;
+    SPHXColor fillColor;      // Active / filled portion
+    SPHXColor thumbColor;
+    float     trackHeight;
+    float     thumbRadius;
+
+    std::function<void(float)> onValueChange;
+
+    SliderNodeStyle visualStyle;
+    void setStyleOverrides(const SliderNodeStyle& s);
+    void clearStyleOverrides();
+};
+```
+
+### Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `value` | `float` | Normalized position (0.0–1.0) |
+| `minValue` | `float` | Logical minimum |
+| `maxValue` | `float` | Logical maximum |
+| `vertical` | `bool` | Vertical orientation |
+| `onValueChange` | `function` | Fired while dragging |
+
+The callback receives the raw `value` (in `[minValue, maxValue]` space after denormalization).
+
+### Example
+
+```cpp
+auto vol = std::make_shared<SliderNode>();
+vol->value       = 0.75f;
+vol->trackColor  = SPHXColor::Hex(0x333344);
+vol->fillColor   = SPHXColor::Hex(0x6060ff);
+vol->thumbColor  = SPHXColor::white();
+vol->style.setWidth(200.0f);
+vol->onValueChange = [](float v) {
+    mixer.setMasterVolume(v);
+};
+root->addChild(vol);
+```
+
+---
+
+## KnobNode
+
+**Header**: `include/gui/components/KnobNode.hpp`
+
+Rotary knob control with an arc display and optional value label. Drag up/down to change value; double-click to reset to `defaultValue`.
+
+```cpp
+class KnobNode : public FlexNode {
+public:
+    float value;          // 0.0 – 1.0
+    float minValue;
+    float maxValue;
+    float defaultValue;   // Restored on double-click
+
+    SPHXColor knobBodyColor;
+    SPHXColor knobRingColor;
+    SPHXColor arcTrackColor;
+    SPHXColor arcFillColor;
+    SPHXColor indicatorColor;
+    float     knobSize;
+    float     arcWidth;
+
+    float startAngle;     // degrees — arc start (e.g. -135)
+    float sweepAngle;     // degrees — total arc sweep (e.g. 270)
+
+    bool        showValue;
+    bool        showValueAsPercent;  // true → "75%", false → raw value
+    int         valueDecimals;
+    SPHXColor   valueLabelColor;
+
+    std::function<void(float)> onValueChange;
+
+    KnobNodeStyle visualStyle;
+    void setStyleOverrides(const KnobNodeStyle& s);
+    void clearStyleOverrides();
+};
+```
+
+### Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `value` | `float` | Normalized position (0.0–1.0) |
+| `defaultValue` | `float` | Value set on double-click reset |
+| `startAngle` | `float` | Arc origin in degrees |
+| `sweepAngle` | `float` | Arc span in degrees |
+| `showValue` | `bool` | Show numeric label inside knob |
+| `showValueAsPercent` | `bool` | Format label as percentage |
+
+### Example
+
+```cpp
+auto cutoff = std::make_shared<KnobNode>();
+cutoff->value          = 0.5f;
+cutoff->defaultValue   = 0.5f;
+cutoff->minValue       = 20.0f;
+cutoff->maxValue       = 20000.0f;
+cutoff->knobSize       = 64.0f;
+cutoff->arcFillColor   = SPHXColor::Hex(0x4080ff);
+cutoff->showValue      = true;
+cutoff->valueDecimals  = 0;
+cutoff->onValueChange  = [](float v) {
+    filter.setCutoff(v * 19980.0f + 20.0f);
+};
+root->addChild(cutoff);
+```

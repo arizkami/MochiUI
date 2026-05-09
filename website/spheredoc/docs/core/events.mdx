@@ -1,0 +1,156 @@
+---
+sidebar_position: 9
+title: Event System
+---
+
+# Event System
+
+**Headers**: `include/core/events/`, `include/core/events/FlexRootDispatch.hpp`
+
+SphereEngine uses a typed event struct system. The window translates raw Win32 messages into these structs and dispatches them through the `FlexNode` tree via helper functions.
+
+## EventKind
+
+```cpp
+enum class EventKind : uint32_t {
+    PointerMove,
+    PointerDown,
+    PointerUp,
+    PointerEnter,
+    PointerLeave,
+    Wheel,
+    KeyDown,
+    KeyUp,
+    TextInput,
+    WindowResize,
+    WindowFocusIn,
+    WindowFocusOut,
+    WindowDpiChanged,
+    WindowCloseRequest,
+    SkiaSurfacePaint,
+    SkiaSurfaceResized,
+    SkiaContextLost,
+    LayoutSubtreeDirty,
+    LayoutPassRequested,
+    LayoutPassComplete,
+};
+```
+
+## PointerEvent
+
+```cpp
+namespace SphereUI::events {
+
+enum class PointerButton : uint32_t {
+    None      = 0,
+    Primary   = 1,   // Left mouse button
+    Secondary = 2,   // Right mouse button
+    Middle    = 4,
+    X1        = 8,
+    X2        = 16,
+};
+
+struct PointerEvent {
+    float x, y;                      // Client-space coordinates
+    PointerButton buttons;           // Bitmask of all held buttons
+    PointerButton changedButton;     // Which button triggered this event
+    bool pressed;
+    uint32_t clickCount;             // 1 = single, 2 = double, etc.
+    bool handled;                    // Set true to stop propagation
+};
+
+} // namespace SphereUI::events
+```
+
+## WheelEvent
+
+```cpp
+struct WheelEvent {
+    float x, y;
+    float deltaX, deltaY;
+    bool precise;       // true = high-res trackpad input
+    bool handled;
+};
+```
+
+## KeyEvent
+
+```cpp
+struct KeyEvent {
+    uint32_t keyCode;    // Virtual key code (VK_*)
+    uint32_t scanCode;
+    bool repeat;         // true = held-down auto-repeat
+    bool extendedKey;
+    bool altDown;
+    bool ctrlDown;
+    bool shiftDown;
+    bool handled;
+};
+```
+
+## TextEvent
+
+```cpp
+struct TextEvent {
+    uint32_t codeUnit;  // UTF-32 code unit
+    bool handled;
+};
+```
+
+## Dispatch Helpers
+
+These free functions walk the `FlexNode` tree and forward events using hit-testing and focus logic:
+
+```cpp
+namespace SphereUI::events {
+
+bool dispatchPointerMove       (FlexNode& root, PointerEvent& e);
+void dispatchPointerPrimaryUp  (FlexNode& root, PointerEvent& e);
+bool dispatchPointerPrimaryDown(FlexNode& root, PointerEvent& e);
+bool dispatchPointerSecondaryDown(FlexNode& root, PointerEvent& e);
+bool dispatchWheel             (FlexNode& root, WheelEvent& e);
+bool dispatchKeyDown           (FlexNode& root, KeyEvent& e);
+bool dispatchTextInput         (FlexNode& root, TextEvent& e);
+
+} // namespace SphereUI::events
+```
+
+All dispatch functions return `true` if the event was consumed (i.e., `handled` was set to `true` by a node).
+
+## FlexNode Virtual Handlers
+
+The dispatch functions call these virtuals on each `FlexNode` in the tree:
+
+```cpp
+virtual bool onMouseMove  (float x, float y);
+virtual bool onMouseDown  (float x, float y);
+virtual bool onRightDown  (float x, float y);
+virtual void onMouseUp    (float x, float y);
+virtual void onMouseEnter ();
+virtual void onMouseLeave ();
+virtual bool onMouseWheel (float x, float y, float delta);
+virtual bool onKeyDown    (uint32_t key);
+virtual bool onChar       (uint32_t charCode);
+```
+
+Return `true` from any handler to mark the event as handled and stop propagation.
+
+## Example
+
+```cpp
+class MyNode : public FlexNode {
+    bool onMouseDown(float x, float y) override {
+        isPressed = true;
+        requestRedraw();
+        return true; // consumed
+    }
+
+    bool onKeyDown(uint32_t key) override {
+        if (key == VK_RETURN) {
+            // handle enter
+            return true;
+        }
+        return false; // let parent handle
+    }
+};
+```

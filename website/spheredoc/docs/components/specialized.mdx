@@ -1,0 +1,174 @@
+---
+sidebar_position: 6
+title: Specialized Components
+---
+
+# Specialized Components
+
+## VUMeterNode
+
+**Header**: `include/gui/components/VUMeterNode.hpp`
+
+Real-time audio level meter with peak hold, colour zones, and optional dB labelling.
+
+```cpp
+class VUMeterNode : public FlexNode {
+public:
+    float value;            // Current level: 0.0–1.0 (or dBFS when useDecibels)
+    float peakValue;        // Held peak value
+    bool  vertical;
+    bool  showNumber;
+    bool  useDecibels;      // true = display dBFS labels
+
+    SPHXColor backgroundColor;
+    SPHXColor greenColor;
+    SPHXColor yellowColor;
+    SPHXColor redColor;
+    SPHXColor peakColor;
+    SPHXColor textColor;
+
+    float yellowThreshold;  // 0–1: where yellow zone begins
+    float redThreshold;     // 0–1: where red zone begins
+    float meterWidth;
+    float meterHeight;
+    float peakHoldTime;     // Seconds before peak falls
+
+    void setValue(float v);
+    void setPeak(float v);
+    void update(float deltaTime);  // Call every frame to decay peak
+};
+```
+
+### Example
+
+```cpp
+auto meter = std::make_shared<VUMeterNode>();
+meter->vertical        = true;
+meter->useDecibels     = true;
+meter->yellowThreshold = 0.75f;
+meter->redThreshold    = 0.90f;
+meter->peakHoldTime    = 1.5f;
+meter->style.setWidth(20.0f);
+meter->style.setHeightFull();
+
+// In audio callback or timer:
+meter->setValue(rmsLevel);
+meter->setPeak(peakLevel);
+root->addChild(meter);
+```
+
+---
+
+## IconNode
+
+**Header**: `include/gui/components/IconNode.hpp`
+
+Renders a named SVG icon from a directory.
+
+```cpp
+class IconNode : public FlexNode {
+public:
+    void setIcon(const std::string& name);  // Filename without extension
+    SPHXColor color;
+    float     strokeWidth;
+
+    static void setIconsDirectory(const std::string& path);
+};
+```
+
+Call `setIconsDirectory` once at startup to point to the folder containing your `.svg` files.
+
+### Example
+
+```cpp
+IconNode::setIconsDirectory("assets/icons");
+
+auto icon = std::make_shared<IconNode>();
+icon->setIcon("play");
+icon->color       = SPHXColor::white();
+icon->strokeWidth = 1.5f;
+icon->style.setWidth(24.0f);
+icon->style.setHeight(24.0f);
+```
+
+---
+
+## TooltipNode
+
+**Header**: `include/gui/components/TooltipNode.hpp`
+
+Small floating tooltip bubble with a text message.
+
+```cpp
+class TooltipNode : public FlexNode {
+public:
+    explicit TooltipNode(const std::string& text);
+};
+```
+
+Attach as an overlay child on hover:
+
+```cpp
+targetNode->onMouseEnter = [&] {
+    auto tip = std::make_shared<TooltipNode>("Click to save");
+    overlayNode->addOverlay(tip);
+};
+targetNode->onMouseLeave = [&] {
+    overlayNode->removeOverlay(tip);
+};
+```
+
+---
+
+## ToastNode
+
+**Header**: `include/gui/components/ToastNode.hpp`
+
+Temporary notification that slides in and auto-dismisses.
+
+```cpp
+class ToastNode : public FlexNode {
+    // Styled notification — add via OverlayNode::addToast()
+};
+```
+
+```cpp
+auto toast = std::make_shared<ToastNode>();
+// configure message, duration, color…
+overlayNode->addToast(toast);
+```
+
+---
+
+## Other Built-in Components
+
+The following components are also available. See the corresponding header for full member lists.
+
+| Component | Header | Description |
+|---|---|---|
+| `BadgeNode` | `BadgeNode.hpp` | Small numeric or dot badge overlay |
+| `BreadcrumbsNode` | `BreadcrumbsNode.hpp` | Navigation breadcrumb trail |
+| `AccordionNode` | `AccordionNode.hpp` | Collapsible panel group |
+| `SeparatorNode` | `SeparatorNode.hpp` | Horizontal or vertical divider line |
+| `LinkNode` | `LinkNode.hpp` | Clickable hyperlink-styled text |
+| `SpinnerNode` | `SpinnerNode.hpp` | Animated loading spinner |
+| `SkeletonNode` | `SkeletonNode.hpp` | Shimmering placeholder skeleton |
+| `EmptyStateNode` | `EmptyStateNode.hpp` | Empty state illustration + message |
+| `SearchInputNode` | `SearchInputNode.hpp` | Text input with search icon |
+| `TagInputNode` | `TagInputNode.hpp` | Chip/tag multi-input field |
+| `TreeView` | `TreeView.hpp` | Hierarchical collapsible tree |
+| `ColorPicker` | `ColorPicker.hpp` | Color selection widget |
+| `DatePicker` | `DatePicker.hpp` | Date selection calendar popup |
+| `Calendar` | `Calendar.hpp` | Standalone calendar widget |
+| `FilePickerNode` | `FilePickerNode.hpp` | File system browser |
+| `MultiSelectNode` | `MultiSelectNode.hpp` | Multi-selection dropdown |
+| `Popover` | `Popover.hpp` | Floating popover panel |
+| `SidebarNode` | `SidebarNode.hpp` | Collapsible sidebar container |
+| `SplitterNode` | `SplitterNode.hpp` | Drag-resizable split panes |
+| `StepIndicator` | `StepIndicator.hpp` | Step-by-step progress indicator |
+| `ToolbarNode` | `ToolbarNode.hpp` | Horizontal toolbar container |
+| `TimelineNode` | `TimelineNode.hpp` | Vertical timeline display |
+| `GraphNode` | `GraphNode.hpp` | Line / bar chart rendering |
+| `HeatmapNode` | `HeatmapNode.hpp` | 2D heatmap grid |
+| `LegendNode` | `LegendNode.hpp` | Chart legend |
+| `RatingNode` | `RatingNode.hpp` | Star rating control |

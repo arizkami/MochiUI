@@ -1,0 +1,108 @@
+---
+sidebar_position: 2
+title: React Bridge
+---
+
+# React Bridge
+
+**Header**: `include/SphereReact.hpp`
+
+The React bridge lets you build SphereEngine UI using React components written in TypeScript (TSX). The bundle is evaluated inside `JavaScriptEngine` and produces a native `FlexNode` tree.
+
+## API
+
+```cpp
+namespace SphereUI {
+
+FlexNode::Ptr RenderReactApp(
+    JavaScriptEngine&  engine,
+    const std::string& entryScript,
+    const std::string& filename = "reactui.bundle.js"
+);
+
+} // namespace SphereUI
+```
+
+`RenderReactApp` calls `installSphereUIGlobal()`, evaluates `entryScript`, and returns `engine.takePendingRoot()`. If evaluation fails it returns a styled error screen instead.
+
+## Workflow
+
+### 1. Write React components
+
+```tsx
+// modules/reactui/src/App.tsx
+import React from "react";
+import { View, Text, Button } from "sphere-ui"; // SphereEngine shim
+
+export default function App() {
+    const [count, setCount] = React.useState(0);
+    return (
+        <View style={{ flexDirection: "column", padding: 16, gap: 8 }}>
+            <Text style={{ fontSize: 20, color: "#ffffff" }}>
+                Count: {count}
+            </Text>
+            <Button title="Increment" onPress={() => setCount(c => c + 1)} />
+        </View>
+    );
+}
+```
+
+### 2. Bundle
+
+```powershell
+cd modules/reactui
+bun build src/index.tsx --outfile dist/app.bundle.js --target browser
+```
+
+### 3. Embed as a resource
+
+```powershell
+python gen_resources.py dist/app.bundle.js ReactUIResources.hpp
+```
+
+This generates a header with:
+```cpp
+namespace ReactUIResources {
+    extern const uint8_t bundle[];
+    extern const size_t  bundle_size;
+}
+```
+
+### 4. Evaluate in C++
+
+```cpp
+#include <SphereReact.hpp>
+#include "ReactUIResources.hpp"
+
+JavaScriptEngine engine;
+engine.init();
+
+std::string src(ReactUIResources::bundle,
+                ReactUIResources::bundle + ReactUIResources::bundle_size);
+
+auto root = SphereUI::RenderReactApp(engine, src);
+window->setRoot(root);
+window->run();
+```
+
+## Style Property Mapping
+
+React Native–style properties supported via `setStyle`:
+
+| JS property | LayoutStyle method |
+|---|---|
+| `flexDirection` | `setFlexDirection` |
+| `flex` | `setFlex` |
+| `width` | `setWidth` |
+| `height` | `setHeight` |
+| `padding` | `setPadding` |
+| `paddingHorizontal` | `setPaddingHorizontal` |
+| `paddingVertical` | `setPaddingVertical` |
+| `margin` | `setMargin` |
+| `gap` | `setGap` |
+| `alignItems` | `setAlignItems` |
+| `justifyContent` | `setJustifyContent` |
+| `backgroundColor` | `style.backgroundColor` |
+| `borderRadius` | `style.borderRadius` |
+| `borderWidth` | `style.borderWidth` |
+| `borderColor` | `style.borderColor` |

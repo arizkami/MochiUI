@@ -1,0 +1,86 @@
+---
+sidebar_position: 6
+title: MenuBar
+---
+
+# MenuBar
+
+**Header**: `include/gui/MenuBar.hpp`
+
+SphereEngine supports two menu bar implementations: a native **Win32** menu bar and a **Skia**-rendered custom menu bar.
+
+## MenuItem
+
+```cpp
+struct MenuItem {
+    std::string label;
+    int         id;
+    std::function<void()> action;
+    std::vector<MenuItem> subItems;  // Nested sub-menu
+};
+```
+
+## MenuBackend
+
+```cpp
+enum class MenuBackend {
+    Win32,  // Native Windows menu bar
+    Skia,   // Custom GPU-rendered menu bar
+};
+```
+
+## IMenuBar
+
+```cpp
+class IMenuBar {
+public:
+    virtual void addMenu(const std::string& label,
+                         const std::vector<MenuItem>& items) = 0;
+
+    virtual void attach(void* windowHandle) = 0;   // Win32 only
+    virtual FlexNode::Ptr getLayoutNode()   = 0;   // Skia only
+};
+```
+
+## MenuBarFactory
+
+```cpp
+class MenuBarFactory {
+public:
+    static std::unique_ptr<IMenuBar> Create(MenuBackend backend);
+};
+```
+
+## Example — Win32 native menu
+
+```cpp
+auto menuBar = MenuBarFactory::Create(MenuBackend::Win32);
+
+menuBar->addMenu("File", {
+    { "New",    1, [] { project.create(); } },
+    { "Open…",  2, [] { project.open();   } },
+    { "Save",   3, [] { project.save();   } },
+    { "------", 0, nullptr },                // Separator (empty action)
+    { "Exit",   4, [] { window->close();   } },
+});
+
+menuBar->addMenu("Edit", {
+    { "Undo", 10, [] { history.undo(); } },
+    { "Redo", 11, [] { history.redo(); } },
+});
+
+window->setMenuBar(std::move(menuBar));
+```
+
+## Example — Skia custom menu
+
+```cpp
+auto menuBar = MenuBarFactory::Create(MenuBackend::Skia);
+menuBar->addMenu("View", { /* … */ });
+
+// Insert the menu bar into the layout tree
+auto root = FlexNode::Column();
+root->addChild(menuBar->getLayoutNode());
+root->addChild(contentNode);
+window->setRoot(root);
+```

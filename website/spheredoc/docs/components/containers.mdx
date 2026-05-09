@@ -1,0 +1,162 @@
+---
+sidebar_position: 4
+title: Containers & Layout
+---
+
+# Containers & Layout Components
+
+## ScrollAreaNode
+
+**Header**: `include/gui/components/ScrollAreaNode.hpp`
+
+Scrollable container. The inner `content` node can be larger than the scroll area; scrollbars appear automatically.
+
+```cpp
+class ScrollAreaNode : public FlexNode {
+public:
+    void setContent(FlexNode::Ptr content);
+    void setHorizontal(bool horizontal);
+    bool isHorizontal() const;
+};
+```
+
+### Example
+
+```cpp
+auto scroll = std::make_shared<ScrollAreaNode>();
+scroll->style.setWidthFull();
+scroll->style.setHeight(400.0f);
+scroll->setHorizontal(false);  // vertical scroll
+
+auto list = FlexNode::Column();
+list->style.setGap(4.0f);
+for (int i = 0; i < 100; i++) {
+    auto row = std::make_shared<TextNode>();
+    row->text = "Item " + std::to_string(i);
+    list->addChild(row);
+}
+scroll->setContent(list);
+root->addChild(scroll);
+```
+
+---
+
+## GridLayoutNode
+
+**Header**: `include/gui/components/GridLayoutNode.hpp`
+
+Arranges children in an equal-column grid.
+
+```cpp
+class GridLayoutNode : public FlexNode {
+public:
+    int columnCount;
+    void setColumns(int n);
+};
+```
+
+Children are placed row-major. Each cell gets equal width (`total - gaps) / columnCount`.
+
+### Example
+
+```cpp
+auto grid = std::make_shared<GridLayoutNode>();
+grid->setColumns(3);
+grid->style.setWidthFull();
+grid->style.setGap(8.0f);
+
+for (int i = 0; i < 9; i++) {
+    auto cell = std::make_shared<ButtonNode>();
+    cell->label = "Cell " + std::to_string(i);
+    grid->addChild(cell);
+}
+root->addChild(grid);
+```
+
+---
+
+## GroupBox
+
+**Header**: `include/gui/components/GroupBox.hpp`
+
+Titled bordered container for logically grouping controls.
+
+```cpp
+class GroupBox : public FlexNode {
+public:
+    std::string title;
+    float       fontSize;
+    SPHXColor   borderColor;
+    SPHXColor   titleColor;
+    float       strokeWidth;
+};
+```
+
+### Example
+
+```cpp
+auto group = std::make_shared<GroupBox>();
+group->title       = "Oscillator";
+group->borderColor = SPHXColor::Hex(0x555577);
+group->style.setPadding(12.0f);
+
+auto freqKnob = std::make_shared<KnobNode>();
+group->addChild(freqKnob);
+root->addChild(group);
+```
+
+---
+
+## OverlayNode
+
+**Header**: `include/gui/components/OverlayNode.hpp`
+
+Layered root container that splits rendering into a main content layer, an overlay layer (modals, dropdowns), and a toast layer.
+
+```cpp
+class OverlayNode : public FlexNode {
+public:
+    void setMainContent(FlexNode::Ptr content);
+    void addOverlay(FlexNode::Ptr overlay);
+    void removeOverlay(FlexNode::Ptr overlay);
+    void addToast(FlexNode::Ptr toast);
+};
+```
+
+Set this as the window root to gain modal and toast support:
+
+```cpp
+auto overlay = std::make_shared<OverlayNode>();
+overlay->setMainContent(myAppRoot);
+window->setRoot(overlay);
+
+// Later — show a modal
+overlay->addOverlay(std::make_shared<ModalNode>(myModalContent));
+```
+
+---
+
+## ModalNode
+
+**Header**: `include/gui/components/ModalNode.hpp`
+
+Centered dialog with a semi-transparent dimmed backdrop.
+
+```cpp
+class ModalNode : public FlexNode {
+public:
+    explicit ModalNode(FlexNode::Ptr content);
+};
+```
+
+Wrap in `OverlayNode` to ensure proper event isolation:
+
+```cpp
+auto modal = std::make_shared<ModalNode>(dialogContent);
+overlayNode->addOverlay(modal);
+
+// Dismiss
+closeBtn->onClick = [&] {
+    overlayNode->removeOverlay(modal);
+};
+```

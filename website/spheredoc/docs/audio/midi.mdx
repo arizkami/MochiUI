@@ -1,0 +1,118 @@
+---
+sidebar_position: 2
+title: MIDI System
+---
+
+# MIDI System
+
+**Header**: `include/SPHXDirectAudioEngine.hpp`
+
+`MidiSystem` is a singleton that enumerates MIDI ports and handles real-time MIDI I/O.
+
+## MidiEventType
+
+```cpp
+enum class MidiEventType {
+    NoteOff,
+    NoteOn,
+    PolyPressure,
+    ControlChange,
+    ProgramChange,
+    ChannelPressure,
+    PitchBend,
+    SysEx,
+};
+```
+
+## MidiEvent
+
+```cpp
+struct MidiEvent {
+    MidiEventType          type;
+    uint8_t                channel;      // 0–15
+    uint8_t                note;         // MIDI note number 0–127
+    uint8_t                velocity;     // 0–127
+    uint8_t                controller;   // CC number
+    uint8_t                value;        // CC value 0–127
+    int16_t                pitchBend;    // -8192 … +8191
+    std::vector<uint8_t>   sysExData;
+    double                 timestamp;    // Seconds since port opened
+};
+```
+
+## MidiPort
+
+```cpp
+struct MidiPort {
+    unsigned int id;
+    std::string  name;
+    bool         isVirtual;
+};
+```
+
+## MidiSystem Reference
+
+```cpp
+using MidiCallback = std::function<void(const MidiEvent&)>;
+
+class MidiSystem {
+public:
+    static MidiSystem& getInstance();
+
+    // Enumeration
+    std::vector<MidiPort> getInputPorts();
+    std::vector<MidiPort> getOutputPorts();
+
+    // Input
+    bool openInputPort (unsigned int portId, MidiCallback callback);
+    void closeInputPort(unsigned int portId);
+    bool isInputPortOpen(unsigned int portId) const;
+
+    // Output
+    bool openOutputPort (unsigned int portId);
+    void closeOutputPort(unsigned int portId);
+    bool isOutputPortOpen(unsigned int portId) const;
+
+    void sendNoteOn     (unsigned int portId, uint8_t channel, uint8_t note, uint8_t velocity);
+    void sendNoteOff    (unsigned int portId, uint8_t channel, uint8_t note, uint8_t velocity = 0);
+    void sendControlChange(unsigned int portId, uint8_t channel, uint8_t controller, uint8_t value);
+    void sendPitchBend  (unsigned int portId, uint8_t channel, int16_t bend);
+    void sendRawMessage (unsigned int portId, const std::vector<uint8_t>& msg);
+
+    void setErrorCallback(std::function<void(const std::string&)> cb);
+};
+```
+
+## Example — Receive MIDI
+
+```cpp
+auto& midi = MidiSystem::getInstance();
+
+auto ports = midi.getInputPorts();
+if (!ports.empty()) {
+    midi.openInputPort(ports[0].id, [](const MidiEvent& e) {
+        if (e.type == MidiEventType::NoteOn && e.velocity > 0) {
+            synth.noteOn(e.channel, e.note, e.velocity);
+        } else if (e.type == MidiEventType::NoteOff ||
+                   (e.type == MidiEventType::NoteOn && e.velocity == 0)) {
+            synth.noteOff(e.channel, e.note);
+        }
+    });
+}
+```
+
+## Example — Send MIDI
+
+```cpp
+auto& midi = MidiSystem::getInstance();
+
+auto outPorts = midi.getOutputPorts();
+if (!outPorts.empty()) {
+    unsigned int port = outPorts[0].id;
+    midi.openOutputPort(port);
+
+    midi.sendNoteOn(port, 0, 60, 100);    // Middle C, velocity 100
+    // … later …
+    midi.sendNoteOff(port, 0, 60);
+}
+```

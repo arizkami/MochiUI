@@ -1,0 +1,97 @@
+---
+sidebar_position: 3
+title: SPHXImage
+---
+
+# SPHXImage
+
+**Header**: `include/SPHXImage.hpp`
+
+`SPHXImage` loads and renders raster images. Supported formats: **PNG, JPEG, WebP, BMP, GIF, AVIF**.
+
+## Loading
+
+```cpp
+static SPHXImage fromFile    (const std::string& path);
+static SPHXImage fromMemory  (const void* data, size_t size);
+static SPHXImage fromResource(const std::string& resUri); // "res://name"
+```
+
+`fromResource` looks up the URI in `ResourceManager`.
+
+## State
+
+```cpp
+bool    isValid()      const;   // true if loaded successfully
+int     width()        const;
+int     height()       const;
+SkISize dimensions()   const;
+float   aspectRatio()  const;   // width / height
+```
+
+## Drawing
+
+All `draw` overloads take an `SkSamplingOptions` that defaults to bilinear filtering.
+
+### At natural size
+
+```cpp
+void draw(SkCanvas* canvas, float x, float y,
+          SkSamplingOptions = linear) const;
+```
+
+### Stretch to destination rect
+
+```cpp
+void draw(SkCanvas* canvas, const SkRect& dst,
+          SkSamplingOptions = linear) const;
+```
+
+### Atlas / nine-patch (src → dst)
+
+```cpp
+void draw(SkCanvas* canvas,
+          const SkRect& src, const SkRect& dst,
+          SkSamplingOptions = linear) const;
+```
+
+### With opacity
+
+```cpp
+void draw(SkCanvas* canvas, const SkRect& dst,
+          float opacity,
+          SkSamplingOptions = linear) const;
+```
+
+### Fit (letterbox — preserves aspect ratio, leaves blank bars)
+
+```cpp
+void drawFit(SkCanvas* canvas, const SkRect& dst,
+             SkSamplingOptions = linear) const;
+```
+
+### Fill (cover — preserves aspect ratio, may crop)
+
+```cpp
+void drawFill(SkCanvas* canvas, const SkRect& dst,
+              SkSamplingOptions = linear) const;
+```
+
+## Raw Access
+
+```cpp
+sk_sp<SkImage> skImage() const;
+```
+
+## Example
+
+```cpp
+SPHXImage logo = SPHXImage::fromFile("assets/logo.png");
+
+void MyNode::drawSelf(SkCanvas* canvas) override {
+    if (logo.isValid()) {
+        // Cover-fill the node frame
+        logo.drawFill(canvas, frame);
+    }
+}
+```

@@ -1,0 +1,218 @@
+---
+sidebar_position: 1
+title: DAUx — Audio Engine
+---
+
+# DAUx — Direct Audio Engine
+
+**Header**: `include/SPHXDirectAudioEngine.hpp`
+
+`DAUx` is SphereEngine's low-latency audio I/O engine. It wraps WASAPI (or DirectSound) and provides device enumeration, stream lifecycle management, a master effects chain, and a built-in mixer.
+
+## AudioBackend
+
+```cpp
+enum class AudioBackend {
+    Default,       // Platform default (WASAPI on Windows)
+    WASAPI,
+    DirectSound,
+};
+```
+
+## AudioDevice
+
+```cpp
+struct AudioDevice {
+    unsigned int              id;
+    std::string               name;
+    unsigned int              inputChannels;
+    unsigned int              outputChannels;
+    std::vector<unsigned int> sampleRates;
+    unsigned int              preferredSampleRate;
+    bool                      isDefaultInput;
+    bool                      isDefaultOutput;
+};
+```
+
+## MixerChannel
+
+```cpp
+struct MixerChannel {
+    std::string name;
+    float       volume = 1.0f;   // 0.0 – 1.0
+    float       pan    = 0.0f;   // -1.0 (L) to +1.0 (R)
+    bool        muted;
+    bool        solo;
+
+    std::vector<std::shared_ptr<AudioEffect>> effects;
+
+    // Pull-mode audio source callback
+    // Signature: (float* buffer, unsigned int frames, unsigned int channels)
+    std::function<void(float*, unsigned int, unsigned int)> source;
+};
+```
+
+## AudioEffect (Base)
+
+```cpp
+class AudioEffect {
+public:
+    virtual void process(float* buffer,
+                         unsigned int frames,
+                         unsigned int channels,
+                         unsigned int sampleRate) = 0;
+    bool enabled = true;
+};
+```
+
+### Built-in Effects
+
+```cpp
+class GainEffect : public AudioEffect {
+public:
+    float gain = 1.0f;   // 1.0 = unity, 2.0 = +6 dB, 0.5 = -6 dB
+};
+
+class LowPassEffect : public AudioEffect {
+public:
+    float cutoffHz = 8000.0f;
+};
+
+class HighPassEffect : public AudioEffect {
+public:
+    float cutoffHz = 80.0f;
+};
+
+class LimiterEffect : public AudioEffect {
+public:
+    float thresholdDb = -0.3f;
+};
+```
+
+## DAUx Class Reference
+
+```cpp
+class DAUx {
+public:
+    explicit DAUx(AudioBackend backend = AudioBackend::Default);
+```
+
+### Device Enumeration
+
+```cpp
+std::vector<AudioDevice> getDevices();
+AudioDevice getDefaultOutputDevice();
+AudioDevice getDefaultInputDevice();
+```
+
+### Stream Lifecycle
+
+```cpp
+bool openStream(
+    unsigned int deviceId,
+    unsigned int channels,
+    unsigned int sampleRate,
+    unsigned int bufferSize,
+    std::function<void(float*, unsigned int, unsigned int)> callback
+);
+
+bool openDefaultStream(
+    unsigned int channels,
+    unsigned int sampleRate,
+    unsigned int bufferSize,
+    std::function<void(float*, unsigned int, unsigned int)> callback
+);
+
+void closeStream();
+void startStream();
+void stopStream();
+bool isStreamOpen()    const;
+bool isStreamRunning() const;
+```
+
+The audio callback signature is `(float* buffer, unsigned int frames, unsigned int channels)`. Write interleaved samples into `buffer`.
+
+### Stream Properties
+
+```cpp
+unsigned int getSampleRate()   const;
+unsigned int getChannelCount() const;
+unsigned int getBufferSize()   const;
+double       getStreamLatency() const;  // seconds
+```
+
+### Master Volume
+
+```cpp
+void  setMasterVolume(float v);   // 0.0 – 1.0
+float getMasterVolume() const;
+void  setMasterMute(bool mute);
+bool  getMasterMute()   const;
+```
+
+### Master Effects Chain
+
+```cpp
+void addMasterEffect   (std::shared_ptr<AudioEffect> fx);
+void removeMasterEffect(std::shared_ptr<AudioEffect> fx);
+void clearMasterEffects();
+```
+
+### Mixer Channels
+
+```cpp
+int          addChannel   (MixerChannel ch);          // Returns channel ID
+void         removeChannel(int id);
+void         setChannelVolume(int id, float v);
+void         setChannelPan   (int id, float pan);
+void         setChannelMute  (int id, bool mute);
+void         setChannelSolo  (int id, bool solo);
+MixerChannel* getChannel    (int id);
+```
+
+### Error Handling
+
+```cpp
+void        setErrorCallback(std::function<void(const std::string&)> cb);
+std::string getLastError()   const;
+```
+
+## Example — Sine wave output
+
+```cpp
+DAUx audio;
+
+const float kSampleRate = 48000.0f;
+float phase = 0.0f;
+
+bool ok = audio.openDefaultStream(2, 48000, 256,
+    [&](float* buf, unsigned int frames, unsigned int ch) {
+        for (unsigned int i = 0; i < frames; i++) {
+            float sample = std::sin(phase) * 0.5f;
+            phase += 2.0f * M_PI * 440.0f / kSampleRate;
+            if (phase > 2.0f * M_PI) phase -= 2.0f * M_PI;
+            for (unsigned int c = 0; c < ch; c++)
+                buf[i * ch + c] = sample;
+        }
+    });
+
+audio.startStream();
+```
+
+## Example — Mixer channel
+
+```cpp
+MixerChannel ch;
+ch.name   = "Synth";
+ch.volume = 0.8f;
+ch.pan    = -0.2f;   // Slightly left
+ch.source = [](float* buf, unsigned int frames, unsigned int chans) {
+    // Fill buf with your audio signal
+};
+
+auto limiter = std::make_shared<LimiterEffect>();
+ch.effects.push_back(limiter);
+
+int id = audio.addChannel(ch);
+audio.setChannelVolume(id, 0.9f);
+```

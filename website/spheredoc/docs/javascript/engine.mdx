@@ -1,0 +1,122 @@
+---
+sidebar_position: 1
+title: JavaScriptEngine
+---
+
+# JavaScriptEngine
+
+**Header**: `include/SPHXJavaScriptEngine.hpp`
+
+`JavaScriptEngine` embeds the V8 JavaScript runtime and bridges it to SphereEngine's `FlexNode` tree. It is used to evaluate React or Vue bundles that build the UI through the `globalThis.SphereUI` native API.
+
+## Lifecycle
+
+```cpp
+class JavaScriptEngine {
+public:
+    JavaScriptEngine();
+    ~JavaScriptEngine();
+
+    // Non-copyable, non-movable
+    JavaScriptEngine(const JavaScriptEngine&) = delete;
+    JavaScriptEngine& operator=(const JavaScriptEngine&) = delete;
+
+    bool init();      // Initialize V8 isolate and context — call once
+    void shutdown();  // Tear down V8 — called automatically by destructor
+```
+
+## Script Execution
+
+```cpp
+bool eval(std::string_view source,
+          std::string_view filename = "<eval>");
+```
+
+Evaluates `source` in the V8 context. Returns `true` on success, `false` on JavaScript exception. Check `lastError()` for details.
+
+## Error Reporting
+
+```cpp
+const std::string& lastError()  const;
+std::string        debugLog()   const;
+```
+
+`lastError()` returns the JavaScript exception message from the most recent failed `eval`. `debugLog()` returns accumulated `console.log` / `console.error` output.
+
+## SphereUI Global Installation
+
+```cpp
+void installSphereUIGlobal();    // For React apps
+void installSphereVueGlobal();   // For Vue apps (adds compatibility shims)
+```
+
+These functions expose `globalThis.SphereUI` to JavaScript. Must be called before evaluating the bundle.
+
+## Root Retrieval
+
+```cpp
+FlexNode::Ptr takePendingRoot();
+```
+
+After the bundle calls `SphereUI.setRoot(id)`, this method returns the resulting `FlexNode` tree and clears the internal reference. Returns `nullptr` if no root was set.
+
+## Error Screen
+
+```cpp
+SPHXJS_API FlexNode::Ptr MakeJSErrorScreen(
+    const std::string& framework,
+    const std::string& heading,
+    const std::string& detail,
+    const std::string& hint,
+    const std::string& v8Log = {}
+);
+```
+
+Creates a styled error UI node for display when bundle evaluation fails. Pass this as the window root when `eval()` returns `false`.
+
+## globalThis.SphereUI JavaScript API
+
+| Function | Description |
+|---|---|
+| `createNode(type)` | Create a UI node; returns an integer ID |
+| `appendChild(parentId, childId)` | Attach a child to a parent |
+| `setStyle(id, key, value)` | Set a CSS-like style property |
+| `setProp(id, key, value)` | Set a component property (text, value, etc.) |
+| `setCallback(id, event, fn)` | Attach an event callback (`"onClick"`, etc.) |
+| `setRoot(id)` | Declare this node as the UI root |
+
+### Node types
+
+| JS type string | C++ class |
+|---|---|
+| `"View"` / `"SafeAreaView"` | `FlexNode` (Column) |
+| `"Row"` | `FlexNode` (Row) |
+| `"Text"` | `TextNode` |
+| `"Button"` | `ButtonNode` |
+| `"TextInput"` | `TextInput` |
+| `"Switch"` | `SwitchNode` |
+| `"Slider"` | `SliderNode` |
+| `"ScrollView"` / `"FlatList"` | `ScrollAreaNode` |
+
+## Example
+
+```cpp
+JavaScriptEngine engine;
+engine.init();
+engine.installSphereUIGlobal();
+
+bool ok = engine.eval(bundleSource, "app.bundle.js");
+if (!ok) {
+    auto errorScreen = MakeJSErrorScreen(
+        "React", "Bundle Error", engine.lastError(),
+        "Check the browser console for details.",
+        engine.debugLog());
+    window->setRoot(errorScreen);
+    window->run();
+    return 1;
+}
+
+auto root = engine.takePendingRoot();
+window->setRoot(root);
+window->run();
+```

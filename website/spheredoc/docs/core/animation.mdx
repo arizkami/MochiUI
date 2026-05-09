@@ -1,0 +1,99 @@
+---
+sidebar_position: 5
+title: AnimationController
+---
+
+# AnimationController
+
+**Header**: `include/core/AnimationController.hpp`
+
+Singleton that drives time-based animations using easing functions. The window's render loop calls `AnimationController::update()` each frame, which ticks all active animations and fires their callbacks.
+
+## Easing Types
+
+```cpp
+enum class EasingType {
+    Linear,
+    EaseIn,
+    EaseOut,
+    EaseInOut,
+    EaseInBack,
+    EaseOutBack,
+    EaseOutBounce,
+    Spring,
+};
+```
+
+## Easing Utility
+
+```cpp
+namespace Easing {
+    float apply(float t, EasingType easing);
+}
+```
+
+`t` is a normalized progress value in `[0, 1]`. Returns a transformed value in roughly `[0, 1]` (some easing types overshoot slightly).
+
+## Animation Struct
+
+```cpp
+struct Animation {
+    float startValue;
+    float endValue;
+    std::chrono::milliseconds duration;
+    std::chrono::steady_clock::time_point startTime;
+
+    std::function<void(float value)> onUpdate;    // Called each frame with interpolated value
+    std::function<void()>            onComplete;  // Called when animation finishes
+
+    EasingType easing;
+    bool finished;
+};
+```
+
+## AnimationController Reference
+
+```cpp
+class AnimationController {
+public:
+    static AnimationController& getInstance();
+
+    void addAnimation(Animation anim);
+    void update();
+    bool hasAnimations() const;
+};
+```
+
+### `addAnimation(anim)`
+
+Queues an animation. `startTime` is automatically set to `now` if not provided. The `onUpdate` callback receives the interpolated value each frame.
+
+### `update()`
+
+Called by the render loop. Advances all active animations and removes finished ones.
+
+### `hasAnimations()`
+
+Returns `true` if there are any running animations. The window uses this to keep requesting redraws while animations are in progress.
+
+## Example
+
+```cpp
+Animation anim;
+anim.startValue = 0.0f;
+anim.endValue   = 200.0f;
+anim.duration   = std::chrono::milliseconds(300);
+anim.easing     = EasingType::EaseOutBack;
+anim.startTime  = std::chrono::steady_clock::now();
+
+anim.onUpdate = [&](float value) {
+    myNode->style.setWidth(value);
+    myNode->markDirty();
+};
+
+anim.onComplete = [] {
+    // Animation done
+};
+
+AnimationController::getInstance().addAnimation(std::move(anim));
+```

@@ -1,0 +1,651 @@
+@import '@fontsource-variable/inter';
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Design tokens — light (Vercel-inspired)
+───────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* Brand */
+  --ifm-color-primary:          #000000;
+  --ifm-color-primary-dark:     #111111;
+  --ifm-color-primary-darker:   #222222;
+  --ifm-color-primary-darkest:  #333333;
+  --ifm-color-primary-light:    #444444;
+  --ifm-color-primary-lighter:  #666666;
+  --ifm-color-primary-lightest: #888888;
+
+  /* Surfaces */
+  --sphere-bg:              #ffffff;
+  --sphere-surface:         #fafafa;
+  --sphere-surface-hover:   #f5f5f5;
+  --sphere-border:          #eaeaea;
+  --sphere-border-strong:   #d1d1d1;
+
+  /* Text */
+  --sphere-text-primary:    #000000;
+  --sphere-text-secondary:  #444444;
+  --sphere-text-muted:      #888888;
+  --sphere-text-inverted:   #ffffff;
+
+  /* Accent (Vercel blue-ish) */
+  --sphere-accent:          #0070f3;
+  --sphere-accent-hover:    #0060df;
+  --sphere-accent-subtle:   #eff6ff;
+
+  /* Code */
+  --sphere-code-bg:         #f4f4f4;
+  --sphere-code-border:     #eaeaea;
+
+  /* Ifm overrides */
+  --ifm-font-family-base:        'Inter Variable', system-ui, -apple-system, sans-serif;
+  --ifm-font-family-monospace:   'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+  --ifm-font-size-base:          15px;
+  --ifm-line-height-base:        1.65;
+  --ifm-font-weight-normal:      400;
+  --ifm-font-weight-semibold:    500;
+  --ifm-font-weight-bold:        600;
+
+  --ifm-heading-font-weight:     600;
+  --ifm-heading-color:           var(--sphere-text-primary);
+  --ifm-heading-line-height:     1.3;
+
+  --ifm-background-color:        var(--sphere-bg);
+  --ifm-background-surface-color: var(--sphere-surface);
+  --ifm-color-content:           var(--sphere-text-primary);
+  --ifm-color-content-secondary: var(--sphere-text-secondary);
+
+  --ifm-navbar-background-color: rgba(255, 255, 255, 0.85);
+  --ifm-navbar-shadow:           none;
+  --ifm-navbar-height:           58px;
+  --ifm-navbar-padding-vertical: 0;
+  --ifm-navbar-padding-horizontal: 16px;
+  --ifm-navbar-link-color:       var(--sphere-text-secondary);
+  --ifm-navbar-link-hover-color: var(--sphere-text-primary);
+
+  --ifm-sidebar-width:           260px;
+  --ifm-menu-color:              var(--sphere-text-secondary);
+  --ifm-menu-color-active:       var(--sphere-text-primary);
+  --ifm-menu-link-padding-horizontal: 12px;
+  --ifm-menu-link-padding-vertical:   6px;
+
+  --ifm-toc-border-color:        var(--sphere-border);
+  --ifm-footer-background-color: var(--sphere-surface);
+  --ifm-footer-color:            var(--sphere-text-muted);
+
+  --ifm-code-font-size:          13px;
+  --ifm-code-border-radius:      5px;
+  --ifm-code-background:         var(--sphere-code-bg);
+
+  --ifm-pre-background:          #0a0a0a;
+  --ifm-pre-border-radius:       8px;
+
+  --ifm-table-border-color:      var(--sphere-border);
+  --ifm-table-head-background:   var(--sphere-surface);
+
+  --ifm-hr-background-color:     var(--sphere-border);
+
+  --ifm-global-radius:           6px;
+  --ifm-global-shadow-md:        0 4px 16px rgba(0,0,0,0.08);
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.06);
+
+  font-feature-settings: 'cv01', 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Dark mode tokens
+───────────────────────────────────────────────────────────────────────────── */
+[data-theme='dark'] {
+  --ifm-color-primary:          #ffffff;
+  --ifm-color-primary-dark:     #dddddd;
+  --ifm-color-primary-darker:   #cccccc;
+  --ifm-color-primary-darkest:  #aaaaaa;
+  --ifm-color-primary-light:    #eeeeee;
+  --ifm-color-primary-lighter:  #f4f4f4;
+  --ifm-color-primary-lightest: #fafafa;
+
+  --sphere-bg:              #000000;
+  --sphere-surface:         #0a0a0a;
+  --sphere-surface-hover:   #111111;
+  --sphere-border:          #1a1a1a;
+  --sphere-border-strong:   #2a2a2a;
+
+  --sphere-text-primary:    #ededed;
+  --sphere-text-secondary:  #a1a1a1;
+  --sphere-text-muted:      #666666;
+  --sphere-text-inverted:   #000000;
+
+  --sphere-accent:          #0070f3;
+  --sphere-accent-hover:    #3291ff;
+  --sphere-accent-subtle:   #0d1f3c;
+
+  --sphere-code-bg:         #111111;
+  --sphere-code-border:     #2a2a2a;
+
+  --ifm-navbar-background-color: rgba(0, 0, 0, 0.8);
+
+  --ifm-pre-background:          #0a0a0a;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 255, 255, 0.07);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Base
+───────────────────────────────────────────────────────────────────────────── */
+html {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--ifm-font-family-base);
+  background-color: var(--sphere-bg);
+  color: var(--sphere-text-primary);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Navbar
+───────────────────────────────────────────────────────────────────────────── */
+.navbar {
+  backdrop-filter: saturate(180%) blur(16px);
+  -webkit-backdrop-filter: saturate(180%) blur(16px);
+  border-bottom: 1px solid var(--sphere-border);
+  height: var(--ifm-navbar-height);
+}
+
+.navbar__title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--sphere-text-primary);
+}
+
+.navbar__logo {
+  height: 24px;
+}
+
+.navbar__item {
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.navbar__link {
+  color: var(--sphere-text-secondary);
+  transition: color 0.15s ease;
+}
+
+.navbar__link:hover,
+.navbar__link--active {
+  color: var(--sphere-text-primary);
+  background: none;
+}
+
+.navbar__link--active {
+  font-weight: 500;
+}
+
+/* Vercel-style GitHub link button */
+.navbar__item.navbar__item--right .navbar__link[href*='github'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--sphere-border-strong);
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.navbar__item.navbar__item--right .navbar__link[href*='github']:hover {
+  background: var(--sphere-surface-hover);
+  border-color: var(--sphere-text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Sidebar
+───────────────────────────────────────────────────────────────────────────── */
+.theme-doc-sidebar-container {
+  border-right: 1px solid var(--sphere-border) !important;
+}
+
+.theme-doc-sidebar-menu {
+  padding: 16px 8px;
+}
+
+.menu__caret::before {
+  background: var(--sphere-text-muted);
+  opacity: 0.6;
+}
+
+.menu__list-item-collapsible {
+  border-radius: 5px;
+}
+
+.menu__list-item-collapsible:hover {
+  background: var(--sphere-surface-hover);
+}
+
+.menu__link {
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--sphere-text-secondary);
+  border-radius: 5px;
+  padding: 5px 12px;
+  transition: background 0.12s, color 0.12s;
+}
+
+.menu__link:hover {
+  background: var(--sphere-surface-hover);
+  color: var(--sphere-text-primary);
+}
+
+.menu__link--active {
+  background: var(--sphere-surface-hover) !important;
+  color: var(--sphere-text-primary) !important;
+  font-weight: 500;
+}
+
+[data-theme='dark'] .menu__link--active {
+  background: var(--sphere-border) !important;
+}
+
+.menu__link--sublist-caret {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sphere-text-muted);
+  padding: 10px 12px 4px;
+}
+
+.menu__link--sublist-caret:hover {
+  background: transparent;
+  color: var(--sphere-text-primary);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Article / Doc content
+───────────────────────────────────────────────────────────────────────────── */
+.markdown {
+  --ifm-h1-font-size: 2rem;
+  --ifm-h2-font-size: 1.4rem;
+  --ifm-h3-font-size: 1.15rem;
+}
+
+.markdown h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+  margin-bottom: 0.5rem;
+}
+
+.markdown h2 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  margin-top: 2.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--sphere-border);
+}
+
+.markdown h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin-top: 2rem;
+}
+
+.markdown h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--sphere-text-muted);
+  margin-top: 1.5rem;
+}
+
+.markdown p {
+  color: var(--sphere-text-secondary);
+  line-height: 1.7;
+}
+
+.markdown a {
+  color: var(--sphere-accent);
+  text-decoration: none;
+  font-weight: 450;
+  transition: color 0.15s;
+}
+
+.markdown a:hover {
+  color: var(--sphere-accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.markdown strong {
+  color: var(--sphere-text-primary);
+  font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Inline code
+───────────────────────────────────────────────────────────────────────────── */
+code {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 13px;
+  background: var(--sphere-code-bg);
+  border: 1px solid var(--sphere-code-border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  color: var(--sphere-text-primary);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Code blocks
+───────────────────────────────────────────────────────────────────────────── */
+.prism-code {
+  font-family: var(--ifm-font-family-monospace) !important;
+  font-size: 13px !important;
+  line-height: 1.65 !important;
+  border-radius: 8px !important;
+  border: 1px solid var(--sphere-border) !important;
+}
+
+[data-theme='dark'] .prism-code {
+  border-color: var(--sphere-border) !important;
+}
+
+div[class*='codeBlockContainer'] {
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--ifm-global-shadow-md);
+  margin: 1.5rem 0;
+}
+
+div[class*='codeBlockTitle'] {
+  font-family: var(--ifm-font-family-monospace);
+  font-size: 12px;
+  font-weight: 500;
+  background: #111111 !important;
+  color: #888 !important;
+  border-bottom: 1px solid var(--sphere-border) !important;
+  padding: 8px 16px;
+}
+
+.token-line {
+  padding: 0 4px;
+}
+
+/* Copy button */
+button[class*='copyButton'] {
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Tables
+───────────────────────────────────────────────────────────────────────────── */
+table {
+  font-size: 14px;
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1.5rem 0;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--sphere-border);
+}
+
+th {
+  background: var(--sphere-surface) !important;
+  color: var(--sphere-text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--sphere-border) !important;
+  border-right: none !important;
+}
+
+td {
+  padding: 10px 16px !important;
+  border-bottom: 1px solid var(--sphere-border) !important;
+  border-right: none !important;
+  color: var(--sphere-text-secondary);
+  vertical-align: top;
+}
+
+td code {
+  font-size: 12.5px;
+}
+
+tr:last-child td {
+  border-bottom: none !important;
+}
+
+tr:hover td {
+  background: var(--sphere-surface-hover);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   TOC (Table of contents)
+───────────────────────────────────────────────────────────────────────────── */
+.table-of-contents {
+  font-size: 12.5px;
+  border-left: 1px solid var(--sphere-border);
+}
+
+.table-of-contents__link {
+  color: var(--sphere-text-muted);
+  transition: color 0.12s;
+  padding: 3px 0;
+  display: block;
+}
+
+.table-of-contents__link:hover,
+.table-of-contents__link--active {
+  color: var(--sphere-text-primary);
+}
+
+.table-of-contents__link--active {
+  font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Admonitions (note, tip, warning, danger)
+───────────────────────────────────────────────────────────────────────────── */
+.alert {
+  border-radius: 8px;
+  border-width: 1px;
+  border-style: solid;
+  font-size: 14px;
+  padding: 14px 18px;
+  margin: 1.5rem 0;
+  box-shadow: none;
+}
+
+.alert--info    { border-color: #d0e4ff; background: #eff6ff; color: #0c4a9e; }
+.alert--success { border-color: #bbf7d0; background: #f0fdf4; color: #166534; }
+.alert--warning { border-color: #fde68a; background: #fffbeb; color: #854d0e; }
+.alert--danger  { border-color: #fecaca; background: #fef2f2; color: #991b1b; }
+
+[data-theme='dark'] .alert--info    { border-color: #1e3a5f; background: #0d1f3c; color: #93c5fd; }
+[data-theme='dark'] .alert--success { border-color: #14532d; background: #052e16; color: #86efac; }
+[data-theme='dark'] .alert--warning { border-color: #78350f; background: #2d1a00; color: #fcd34d; }
+[data-theme='dark'] .alert--danger  { border-color: #7f1d1d; background: #2d0000; color: #fca5a5; }
+
+.admonition-heading h5 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Breadcrumbs
+───────────────────────────────────────────────────────────────────────────── */
+.breadcrumbs__item {
+  font-size: 13px;
+}
+
+.breadcrumbs__link {
+  color: var(--sphere-text-muted);
+  font-weight: 400;
+  transition: color 0.12s;
+}
+
+.breadcrumbs__link:hover {
+  color: var(--sphere-text-primary);
+}
+
+.breadcrumbs__item--active .breadcrumbs__link {
+  color: var(--sphere-text-primary);
+  font-weight: 500;
+  background: transparent;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Pagination (prev / next)
+───────────────────────────────────────────────────────────────────────────── */
+.pagination-nav {
+  margin-top: 3rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.pagination-nav__link {
+  border: 1px solid var(--sphere-border);
+  border-radius: 8px;
+  padding: 14px 18px;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--sphere-bg);
+}
+
+.pagination-nav__link:hover {
+  border-color: var(--sphere-border-strong);
+  background: var(--sphere-surface-hover);
+  text-decoration: none;
+}
+
+.pagination-nav__sublabel {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--sphere-text-muted);
+}
+
+.pagination-nav__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--sphere-text-primary);
+}
+
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Search bar
+───────────────────────────────────────────────────────────────────────────── */
+.navbar__search-input {
+  font-family: var(--ifm-font-family-base);
+  font-size: 14px;
+  border: 1px solid var(--sphere-border);
+  border-radius: 6px;
+  background: var(--sphere-surface);
+  color: var(--sphere-text-primary);
+  padding: 6px 12px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.navbar__search-input:focus {
+  outline: none;
+  border-color: var(--sphere-accent);
+  box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.15);
+}
+
+.navbar__search-input::placeholder {
+  color: var(--sphere-text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Scrollbar (Webkit)
+───────────────────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sphere-border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--sphere-text-muted);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Selection highlight
+───────────────────────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 112, 243, 0.15);
+  color: inherit;
+}
+
+[data-theme='dark'] ::selection {
+  background: rgba(50, 145, 255, 0.25);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Doc page layout
+───────────────────────────────────────────────────────────────────────────── */
+.docItemContainer_node_modules-docusaurus-theme-classic-lib-theme-DocItem-Layout-styles-module {
+  max-width: 860px;
+}
+
+article {
+  padding-top: 8px;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--sphere-border);
+  margin: 2rem 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Version badge / tag chips
+───────────────────────────────────────────────────────────────────────────── */
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Mobile
+───────────────────────────────────────────────────────────────────────────── */
+@media (max-width: 996px) {
+  .navbar__title {
+    font-size: 14px;
+  }
+
+  .markdown h1 {
+    font-size: 1.6rem;
+  }
+
+  .pagination-nav {
+    grid-template-columns: 1fr;
+  }
+}

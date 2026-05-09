@@ -1,0 +1,70 @@
+---
+sidebar_position: 6
+title: ShortcutsManager
+---
+
+# ShortcutsManager
+
+**Header**: `include/core/ShortcutsManager.hpp`
+
+Singleton for registering global keyboard shortcuts. The window dispatches key events to `ShortcutsManager::handleKey()` before forwarding them to the focused UI node.
+
+## Shortcut Struct
+
+```cpp
+struct Shortcut {
+    uint32_t key;                    // Virtual key code (VK_*)
+    bool ctrl;
+    bool shift;
+    bool alt;
+    std::function<void()> action;
+};
+```
+
+## Class Reference
+
+```cpp
+class ShortcutsManager {
+public:
+    static ShortcutsManager& getInstance();
+
+    void registerShortcut(
+        uint32_t key,
+        bool ctrl,
+        bool shift,
+        bool alt,
+        std::function<void()> action
+    );
+
+    bool handleKey(uint32_t key, bool ctrl, bool shift, bool alt);
+};
+```
+
+### `registerShortcut(...)`
+
+Registers a shortcut. Multiple shortcuts with the same key combination are allowed — all matching actions are invoked.
+
+### `handleKey(...)`
+
+Returns `true` if at least one registered shortcut matched and was invoked, `false` otherwise.
+
+## Example
+
+```cpp
+auto& shortcuts = ShortcutsManager::getInstance();
+
+// Ctrl+S — Save
+shortcuts.registerShortcut(VK_S, true, false, false, [] {
+    saveProject();
+});
+
+// Ctrl+Z — Undo
+shortcuts.registerShortcut(VK_Z, true, false, false, [] {
+    history.undo();
+});
+
+// Ctrl+Shift+Z — Redo
+shortcuts.registerShortcut(VK_Z, true, true, false, [] {
+    history.redo();
+});
+```

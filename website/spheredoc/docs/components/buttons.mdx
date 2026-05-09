@@ -1,0 +1,166 @@
+---
+sidebar_position: 2
+title: Buttons & Controls
+---
+
+# Buttons & Interactive Controls
+
+## ButtonNode
+
+**Header**: `include/gui/components/ButtonNode.hpp`
+
+Clickable button with a text label. Supports theme colors and custom styling.
+
+```cpp
+class ButtonNode : public FlexNode {
+public:
+    std::string label;
+    bool        labelBold;
+    bool        useThemeColors;   // Read colors from Theme namespace
+
+    // Custom colors (used when useThemeColors = false)
+    SPHXColor normalColor;
+    SPHXColor hoverColor;
+    SPHXColor textColor;
+    SPHXColor borderColor;
+    float     borderWidth;
+    float     borderRadius;
+    float     fontSize;
+};
+```
+
+`onClick` is inherited from `FlexNode`.
+
+### Example
+
+```cpp
+auto btn = std::make_shared<ButtonNode>();
+btn->label          = "Save Project";
+btn->useThemeColors = true;
+btn->labelBold      = true;
+btn->style.setWidth(120.0f);
+btn->onClick = [] { project.save(); };
+root->addChild(btn);
+```
+
+---
+
+## CheckboxNode
+
+**Header**: `include/gui/components/CheckboxNode.hpp`
+
+Checkbox with an adjacent text label.
+
+```cpp
+class CheckboxNode : public FlexNode {
+public:
+    std::string label;
+    bool        checked;
+
+    SPHXColor checkboxColor;
+    SPHXColor labelColor;
+    float     fontSize;
+    float     checkboxSize;
+    float     spacing;           // Gap between box and label
+
+    std::function<void(bool)> onChanged;
+};
+```
+
+### Example
+
+```cpp
+auto cb = std::make_shared<CheckboxNode>();
+cb->label     = "Enable dark mode";
+cb->checked   = false;
+cb->onChanged = [](bool on) {
+    ThemeManager::getInstance().setTheme(
+        on ? ThemeType::Dark : ThemeType::Light);
+};
+root->addChild(cb);
+```
+
+---
+
+## RadioButtonNode
+
+**Header**: `include/gui/components/RadioButtonNode.hpp`
+
+Radio button (circle indicator) with a label. Group management is handled manually — set `selected = false` on the others inside `onSelected`.
+
+```cpp
+class RadioButtonNode : public FlexNode {
+public:
+    std::string label;
+    bool        selected;
+
+    SPHXColor radioColor;
+    SPHXColor labelColor;
+    float     fontSize;
+    float     radioSize;
+    float     spacing;
+
+    std::function<void(bool)> onSelected;
+};
+```
+
+### Example
+
+```cpp
+std::vector<std::shared_ptr<RadioButtonNode>> radios;
+for (auto& name : {"Option A", "Option B", "Option C"}) {
+    auto r = std::make_shared<RadioButtonNode>();
+    r->label = name;
+    r->onSelected = [&radios, r](bool) {
+        for (auto& other : radios) other->selected = false;
+        r->selected = true;
+    };
+    radios.push_back(r);
+    group->addChild(r);
+}
+radios[0]->selected = true;
+```
+
+---
+
+## SwitchNode
+
+**Header**: `include/gui/components/SwitchNode.hpp`
+
+Toggle switch (on/off) with an optional label.
+
+```cpp
+class SwitchNode : public FlexNode {
+public:
+    std::string label;
+    bool        isOn;
+
+    SPHXColor activeColor;
+    SPHXColor inactiveColor;
+    SPHXColor thumbColor;
+    SPHXColor labelColor;
+    float     fontSize;
+    float     switchWidth;
+    float     switchHeight;
+    float     spacing;
+
+    std::function<void(bool)> onChanged;
+
+    SwitchNodeStyle visualStyle;
+    void setStyleOverrides(const SwitchNodeStyle& s);
+    void clearStyleOverrides();
+};
+```
+
+### Example
+
+```cpp
+auto sw = std::make_shared<SwitchNode>();
+sw->label       = "Auto-save";
+sw->isOn        = true;
+sw->activeColor = SPHXColor::Hex(0x4caf50);
+sw->onChanged   = [](bool on) {
+    settings.autoSave = on;
+};
+root->addChild(sw);
+```

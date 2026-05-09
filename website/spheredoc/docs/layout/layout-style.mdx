@@ -1,0 +1,142 @@
+---
+sidebar_position: 2
+title: LayoutStyle
+---
+
+# LayoutStyle
+
+**Header**: `include/gui/Layout.hpp`
+
+`LayoutStyle` controls how a `FlexNode` is sized, positioned, and styled. It wraps a Yoga `YGNode` and exposes a clean API over the raw Yoga enums.
+
+Every `FlexNode` has a public `style` member of this type.
+
+## Sizing
+
+```cpp
+void setWidth (float px);
+void setHeight(float px);
+
+void setWidthFull();          // Stretch to parent (flex: 1)
+void setHeightFull();
+
+void setWidthPercent (float pct);   // 0–100
+void setHeightPercent(float pct);
+
+void setWidthAuto();          // Hug content
+void setHeightAuto();
+
+void setMinWidth (float px);
+void setMinHeight(float px);
+void setMaxWidth (float px);
+void setMaxHeight(float px);
+```
+
+## Flex
+
+```cpp
+void setFlex      (float value);   // Shorthand (grow + shrink + basis:auto)
+void setFlexGrow  (float value);
+void setFlexShrink(float value);
+void setFlexBasis (float px);
+```
+
+## Gap & Spacing
+
+```cpp
+void setGap(float px);             // Space between children
+
+// Padding
+void setPadding(float all);
+void setPadding(float horizontal, float vertical);
+void setPadding(float left, float top, float right, float bottom);
+void setPaddingHorizontal(float px);
+void setPaddingVertical  (float px);
+
+// Margin
+void setMargin           (float all);
+void setMarginHorizontal (float px);
+void setMarginVertical   (float px);
+```
+
+## Direction & Alignment
+
+```cpp
+void setFlexDirection(YGFlexDirection dir);
+// YGFlexDirectionRow, YGFlexDirectionColumn, …
+
+void setAlignItems   (YGAlign align);
+// YGAlignFlexStart, YGAlignCenter, YGAlignFlexEnd, YGAlignStretch, …
+
+void setJustifyContent(YGJustify justify);
+// YGJustifyFlexStart, YGJustifyCenter, YGJustifyFlexEnd,
+// YGJustifySpaceBetween, YGJustifySpaceAround, …
+
+void setFlexWrap(YGWrap wrap);
+// YGWrapNoWrap, YGWrapWrap, YGWrapWrapReverse
+
+void setPositionType(YGPositionType type);
+// YGPositionTypeStatic, YGPositionTypeAbsolute
+
+void setPosition(YGEdge edge, float px);
+// YGEdgeLeft, YGEdgeTop, YGEdgeRight, YGEdgeBottom
+```
+
+## Visual Style
+
+```cpp
+SPHXColor backgroundColor;
+SPHXColor borderColor;
+float     borderWidth;
+float     borderRadius;
+bool      overflowHidden;    // Clip children to this node's bounds
+```
+
+## Cursor Hint
+
+```cpp
+enum class Cursor {
+    Arrow,
+    IBeam,
+    Hand,
+    SizeNS,
+    SizeWE,
+};
+
+Cursor cursorType;
+```
+
+## Apply
+
+```cpp
+void syncLegacy();
+```
+
+Flushes style properties into the underlying Yoga node. Called automatically during layout — you do not normally need to call this manually.
+
+## Enumerations (SphereEngine helpers)
+
+```cpp
+enum class FlexDirection { Row, Column };
+enum class SizingMode    { Fixed, Flex, Hug };
+enum class AlignItems    { FlexStart, Center, FlexEnd, Stretch };
+```
+
+These are convenience aliases used internally; the raw `YGFlexDirection` / `YGAlign` enums are also accepted in the setter methods.
+
+## Example
+
+```cpp
+auto card = FlexNode::Column();
+card->style.setWidth(320.0f);
+card->style.setHeight(200.0f);
+card->style.setPadding(16.0f);
+card->style.setGap(8.0f);
+card->style.backgroundColor  = SPHXColor::Hex(0x2d2d3f);
+card->style.borderColor       = SPHXColor::Hex(0x444466);
+card->style.borderWidth       = 1.0f;
+card->style.borderRadius      = 8.0f;
+card->style.overflowHidden    = true;
+card->style.setAlignItems(YGAlignCenter);
+card->style.setJustifyContent(YGJustifyCenter);
+```

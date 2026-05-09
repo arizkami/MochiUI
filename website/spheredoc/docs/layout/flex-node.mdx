@@ -1,0 +1,172 @@
+---
+sidebar_position: 1
+title: FlexNode
+---
+
+# FlexNode
+
+**Header**: `include/gui/Layout.hpp`
+
+`FlexNode` is the fundamental building block of every SphereEngine UI. It is a reference-counted tree node that combines:
+
+- **Yoga** flex layout
+- **Skia** rendering
+- Hit-testing
+- Mouse, keyboard, and scroll event handling
+
+Every built-in component inherits from `FlexNode`.
+
+## Types
+
+```cpp
+using Ptr = std::shared_ptr<FlexNode>;
+
+struct Size {
+    float width;
+    float height;
+};
+```
+
+## Factory Methods
+
+```cpp
+static FlexNode::Ptr Create();    // Bare flex container
+static FlexNode::Ptr Row();       // FlexDirection::Row
+static FlexNode::Ptr Column();    // FlexDirection::Column (default)
+```
+
+## Public Members
+
+```cpp
+std::vector<FlexNode::Ptr> children;
+FlexNode* parent;
+
+LayoutStyle style;   // Flex, sizing, padding, color, border, etc.
+NodeStyle nodeStyle; // Optional per-node style overrides
+
+SkRect frame;        // Computed bounding box (x, y, w, h) after layout
+bool dirtyLayout;
+
+bool isHovered;
+bool isPressed;
+bool isFocused;
+bool enableHover;            // Draw hover overlay automatically
+SPHXColor hoverOverlayColor;
+
+std::function<void()> onClick;
+```
+
+## Tree Management
+
+```cpp
+void addChild(FlexNode::Ptr child);
+void removeChild(FlexNode::Ptr child);
+void removeAllChildren();
+```
+
+## Layout
+
+```cpp
+void markDirty();
+void calculateLayout(SkRect available);
+void applyYogaLayout(float offsetX, float offsetY);
+void syncSubtreeStyles();
+```
+
+Call `markDirty()` whenever a style change should trigger a re-layout. `calculateLayout` is called automatically by the window's render loop.
+
+## Rendering
+
+These methods are called by the render loop — override them in custom nodes:
+
+```cpp
+virtual void draw       (SkCanvas* canvas);  // Calls drawSelf + drawChildren
+virtual void drawSelf   (SkCanvas* canvas);  // Background, border, content
+virtual void drawChildren(SkCanvas* canvas); // Iterates children in order
+virtual Size measure    (Size available);    // Content size hint (text, icons…)
+```
+
+## Hit Testing
+
+```cpp
+virtual bool     hitTest    (float x, float y);            // Is point inside?
+virtual FlexNode::Ptr findNodeAt(float x, float y);        // Deepest node at point
+float getLayoutPadding(YGEdge edge);
+float getLayoutMargin (YGEdge edge);
+```
+
+## Event Handlers
+
+All handlers return `bool` — return `true` to mark the event as handled and stop propagation.
+
+```cpp
+virtual bool onMouseMove  (float x, float y);
+virtual bool onMouseDown  (float x, float y);
+virtual bool onRightDown  (float x, float y);
+virtual void onMouseUp    (float x, float y);
+virtual void onMouseEnter ();
+virtual void onMouseLeave ();
+virtual bool onMouseWheel (float x, float y, float delta);
+virtual bool onKeyDown    (uint32_t key);
+virtual bool onChar       (uint32_t charCode);
+virtual bool needsRedraw  ();                 // true → next frame is requested
+```
+
+## Window Hosting
+
+```cpp
+virtual void setWindowHost(IWindowHost* host);
+virtual void requestRedraw();
+```
+
+`requestRedraw()` schedules the owning window to redraw on the next frame. Call this inside event handlers after changing visual state.
+
+## NodeStyle
+
+Fine-grained per-node overrides that take priority over `LayoutStyle`:
+
+```cpp
+struct NodeStyle {
+    std::optional<SPHXColor> background;
+    std::optional<SPHXColor> foreground;
+    std::optional<SPHXColor> border;
+    std::optional<float>     borderRadius;
+    std::optional<float>     borderWidth;
+    std::optional<float>     fontSize;
+};
+```
+
+## Examples
+
+### Basic column layout
+
+```cpp
+auto root = FlexNode::Column();
+root->style.setPadding(16.0f);
+root->style.setGap(8.0f);
+root->style.backgroundColor = SPHXColor::Hex(0x1e1e2e);
+
+auto label = std::make_shared<TextNode>();
+label->text = "Hello";
+root->addChild(label);
+```
+
+### Custom component
+
+```cpp
+class CircleNode : public FlexNode {
+public:
+    SPHXColor color = SPHXColor::blue();
+
+    void drawSelf(SkCanvas* canvas) override {
+        SPHXPainter p(canvas);
+        float cx = frame.centerX(), cy = frame.centerY();
+        float r  = std::min(frame.width(), frame.height()) / 2.0f;
+        p.circle(cx, cy, r, color);
+    }
+
+    Size measure(Size available) override {
+        return { 64.0f, 64.0f };
+    }
+};
+```

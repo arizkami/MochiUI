@@ -1,0 +1,53 @@
+---
+sidebar_position: 4
+title: FocusManager
+---
+
+# FocusManager
+
+**Header**: `include/core/FocusManager.hpp`
+
+Singleton that tracks which `FlexNode` currently holds keyboard focus. Components that accept text input (e.g., `TextInput`) register themselves here on click.
+
+## Class Reference
+
+```cpp
+class FocusManager {
+public:
+    static FocusManager& getInstance();
+
+    void setFocusedNode(FlexNode::Ptr node);
+    FlexNode::Ptr getFocusedNode() const;
+    void clearFocus();
+};
+```
+
+### `setFocusedNode(node)`
+
+Transfers focus to `node`. The previously focused node receives an `onMouseLeave`-equivalent focus-lost notification (its `isFocused` flag is set to `false` and it schedules a redraw).
+
+### `getFocusedNode()`
+
+Returns the currently focused node, or `nullptr` if nothing is focused.
+
+### `clearFocus()`
+
+Removes focus from any focused node.
+
+## Example
+
+```cpp
+// Manually focus a node
+FocusManager::getInstance().setFocusedNode(myTextInput);
+
+// Check if a specific node has focus
+auto focused = FocusManager::getInstance().getFocusedNode();
+if (focused == myTextInput) {
+    // ...
+}
+
+// Release focus when clicking outside
+container->onClick = [] {
+    FocusManager::getInstance().clearFocus();
+};
+```

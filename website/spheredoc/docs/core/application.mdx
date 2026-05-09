@@ -1,0 +1,49 @@
+---
+sidebar_position: 1
+title: Application
+---
+
+# Application
+
+**Header**: `include/core/Application.hpp`  
+**Umbrella**: `SPHXApplication.hpp`
+
+The `Application` class is the global application singleton. It must be initialized before any window or UI component is created.
+
+## Class Reference
+
+```cpp
+class Application {
+public:
+    static Application& getInstance();
+    void init();
+};
+```
+
+### `getInstance()`
+
+```cpp
+static Application& getInstance();
+```
+
+Returns the process-wide singleton. Every call returns the same instance.
+
+### `init()`
+
+```cpp
+void init();
+```
+
+Initializes all framework subsystems — font manager, theme, animation controller, resource manager, and the Skia rendering backend. Call this exactly once at the start of `main()` before creating any window.
+
+## Example
+
+```cpp
+#include <SPHXApplication.hpp>
+
+int main() {
+    Application::getInstance().init();
+
+    // Now safe to create windows and UI nodes
+}
+```

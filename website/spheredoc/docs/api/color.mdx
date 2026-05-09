@@ -1,0 +1,128 @@
+---
+sidebar_position: 1
+title: SPHXColor
+---
+
+# SPHXColor
+
+**Header**: `include/SPHXColor.hpp`
+
+`SPHXColor` is the primary color type throughout SphereEngine. It wraps `SkColor` and provides rich parsing, construction, and manipulation utilities.
+
+## Construction
+
+### Hex literals
+
+```cpp
+static constexpr SPHXColor Hex(uint32_t hex);
+static SPHXColor Hex(const std::string& str);
+static SPHXColor Hex(const char* str);
+```
+
+```cpp
+SPHXColor red   = SPHXColor::Hex(0xFF0000);    // 0xRRGGBB
+SPHXColor teal  = SPHXColor::Hex(0x80CCBBAA);  // 0xAARRGGBB
+SPHXColor white = SPHXColor::Hex("#fff");       // "#RGB"
+SPHXColor navy  = SPHXColor::Hex("#002244");    // "#RRGGBB"
+```
+
+### CSS parse
+
+```cpp
+static SPHXColor parse(const std::string& css);
+static SPHXColor parse(const char* css);
+```
+
+Accepts hex strings, CSS named colors, `rgb(r, g, b)`, and `hsl(h, s%, l%)`.
+
+```cpp
+auto c1 = SPHXColor::parse("cornflowerblue");
+auto c2 = SPHXColor::parse("rgb(64, 128, 255)");
+auto c3 = SPHXColor::parse("hsl(210, 80%, 60%)");
+```
+
+### RGB / Float / HSL
+
+```cpp
+static constexpr SPHXColor RGB(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 255);
+static SPHXColor Float(float r, float g, float b, float a = 1.0f);
+static SPHXColor HSL(float h, float s, float l, float a = 1.0f);
+```
+
+```cpp
+auto c = SPHXColor::RGB(64, 128, 255);
+auto d = SPHXColor::Float(0.25f, 0.5f, 1.0f);
+auto e = SPHXColor::HSL(210.0f, 0.8f, 0.6f);
+```
+
+### Named constants
+
+```cpp
+static constexpr SPHXColor transparent();
+static constexpr SPHXColor black();
+static constexpr SPHXColor white();
+static constexpr SPHXColor red();
+static constexpr SPHXColor green();
+static constexpr SPHXColor blue();
+static constexpr SPHXColor yellow();
+static constexpr SPHXColor cyan();
+static constexpr SPHXColor magenta();
+```
+
+## Component Access
+
+```cpp
+uint8_t r() const;   // 0–255
+uint8_t g() const;
+uint8_t b() const;
+uint8_t a() const;
+
+float rf() const;   // 0.0–1.0
+float gf() const;
+float bf() const;
+float af() const;
+```
+
+## Manipulation
+
+```cpp
+SPHXColor withAlpha(uint8_t a);
+SPHXColor withAlpha(float a);             // 0.0–1.0
+
+SPHXColor lighter(float amount = 0.10f);  // Blend toward white
+SPHXColor darker (float amount = 0.10f);  // Scale toward black
+
+SPHXColor mix(SPHXColor other, float t);  // Lerp; t=0 → this, t=1 → other
+```
+
+## Output
+
+```cpp
+std::string toHexString(bool includeAlpha = false);
+// → "#rrggbb" or "#aarrggbb"
+```
+
+## Operators
+
+```cpp
+bool operator==(SPHXColor other) const;
+bool operator!=(SPHXColor other) const;
+constexpr operator SkColor() const;       // Implicit conversion to Skia color
+```
+
+## Examples
+
+```cpp
+// Translucent overlay
+SPHXColor overlay = SPHXColor::black().withAlpha(0.4f);
+
+// Hover tint — slightly lighter
+SPHXColor hover = base.lighter(0.12f);
+
+// Pressed tint — slightly darker
+SPHXColor pressed = base.darker(0.15f);
+
+// Animated color interpolation
+float t = /* 0–1 from AnimationController */;
+SPHXColor current = fromColor.mix(toColor, t);
+```

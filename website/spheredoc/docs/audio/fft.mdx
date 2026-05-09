@@ -1,0 +1,89 @@
+---
+sidebar_position: 3
+title: FFTAnalyzer
+---
+
+# FFTAnalyzer
+
+**Header**: `include/SPHXDirectAudioEngine.hpp`
+
+Thread-safe spectrum analyzer. Push audio samples from the audio thread; read magnitude spectrum and level meters from the UI thread.
+
+## Constructor
+
+```cpp
+explicit FFTAnalyzer(unsigned int fftSize = 2048);
+```
+
+`fftSize` must be a power of two. Larger values give finer frequency resolution at the cost of time resolution.
+
+## Audio Thread API
+
+```cpp
+void pushSamples(const float* buffer,
+                 unsigned int frames,
+                 unsigned int channels);
+```
+
+Call this inside your DAUx audio callback. Downmixes to mono internally before accumulating into the FFT window.
+
+## UI Thread API
+
+```cpp
+std::vector<float> getMagnitudeSpectrum() const;
+```
+
+Returns `fftSize / 2 + 1` magnitude bins in **dBFS**. Index 0 is DC, the last index is the Nyquist frequency.
+
+```cpp
+float getPeakMagnitude(float lowHz, float highHz, float sampleRate) const;
+```
+
+Returns the peak magnitude (dBFS) within a frequency band.
+
+```cpp
+float getRMSLevel() const;
+```
+
+Returns the current RMS level in dBFS.
+
+## Properties
+
+```cpp
+unsigned int getFFTSize()   const;   // As set in constructor
+unsigned int getBinCount()  const;   // fftSize / 2 + 1
+
+float smoothing = 0.8f;  // 0.0 = no smoothing, 1.0 = frozen
+```
+
+Higher `smoothing` values produce a slower, more readable display. Typical values: `0.7 – 0.85`.
+
+## Example
+
+```cpp
+FFTAnalyzer fft(2048);
+
+// Audio thread (inside DAUx callback):
+audio.openDefaultStream(2, 48000, 256,
+    [&](float* buf, unsigned int frames, unsigned int ch) {
+        fft.pushSamples(buf, frames, ch);
+        // … your signal processing …
+    });
+
+// UI thread (inside a FlexNode::drawSelf override):
+void SpectrumNode::drawSelf(SkCanvas* canvas) override {
+    auto bins = fft.getMagnitudeSpectrum();
+    SPHXPainter p(canvas);
+
+    float w = frame.width() / bins.size();
+    for (size_t i = 0; i < bins.size(); i++) {
+        float dB    = bins[i];                    // typically -120 to 0
+        float norm  = (dB + 120.0f) / 120.0f;    // 0 – 1
+        float h     = frame.height() * norm;
+        float x     = frame.left() + i * w;
+        float y     = frame.bottom() - h;
+        p.rect(SkRect::MakeXYWH(x, y, w - 1, h),
+               SPHXColor::Hex(0x4080ff));
+    }
+}
+```

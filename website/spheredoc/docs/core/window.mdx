@@ -1,0 +1,163 @@
+---
+sidebar_position: 2
+title: Window
+---
+
+# Window
+
+**Header**: `include/core/Window.hpp` (abstract), `include/platform/windows/Window.hpp` (Win32 impl)  
+**Umbrella**: `SPHXGraphicInterface.hpp`
+
+`IWindow` is the abstract window interface. The concrete implementation `Win32Window` targets Windows and renders using Direct3D 12 + Skia.
+
+## Enumerations
+
+### `WindowMode`
+
+```cpp
+enum class WindowMode {
+    Windowed,       // Standard decorated window
+    Borderless,     // No title bar (custom chrome)
+    Fullscreen,     // Exclusive fullscreen
+};
+```
+
+### `CornerPreference`
+
+```cpp
+enum class CornerPreference {
+    Default,        // System decides
+    None,           // Square corners
+    Round,          // Rounded corners (Windows 11)
+    RoundSmall,     // Small rounded corners
+};
+```
+
+## IWindow Reference
+
+### Title & Appearance
+
+```cpp
+void setTitle(const std::string& title);
+```
+Sets the window title bar text.
+
+```cpp
+void setDarkMode(bool enabled);
+```
+Enables or disables the Windows dark title bar.
+
+```cpp
+void enableMica(bool enabled);
+```
+Enables the Windows 11 Mica acrylic background material on the window.
+
+```cpp
+void setWindowMode(WindowMode mode);
+```
+Switches between windowed, borderless, and fullscreen modes.
+
+```cpp
+void setOpacity(float opacity);
+```
+Sets overall window transparency. `1.0` = fully opaque, `0.0` = fully transparent.
+
+```cpp
+void setAlwaysOnTop(bool enable);
+```
+Keeps the window above all other windows when `true`.
+
+### DWM Visual Effects (Windows 11)
+
+```cpp
+void setCornerPreference(CornerPreference pref);
+```
+Controls window corner rounding via DWM.
+
+```cpp
+void setShadow(bool enable);
+```
+Shows or hides the DWM drop shadow.
+
+### Size & Position
+
+```cpp
+void setSize(int width, int height);
+void setPosition(int x, int y);
+void center();
+void setMinSize(int width, int height);
+int getWidth() const;
+int getHeight() const;
+```
+
+### Window State
+
+```cpp
+void minimize();
+void maximize();
+void restore();
+void close();
+```
+
+### Interaction
+
+```cpp
+void startDrag();
+```
+Initiates a window drag from wherever the user clicked. Use this on a custom title bar in borderless mode.
+
+```cpp
+void setMenuBar(std::unique_ptr<IMenuBar> menuBar);
+```
+Attaches a menu bar to the window.
+
+```cpp
+void setRoot(FlexNode::Ptr root);
+```
+Sets the root UI node that is rendered and receives events.
+
+```cpp
+void run();
+```
+Enters the message loop. Blocks until the window is closed.
+
+### Native Access
+
+```cpp
+void* getNativeHandle() const;
+```
+Returns the `HWND` as a `void*`.
+
+```cpp
+void requestRedraw();
+```
+Schedules a repaint on the next frame.
+
+## Example
+
+```cpp
+#include <SPHXGraphicInterface.hpp>
+
+auto window = SphereUI::createWindow();
+window->setTitle("My App");
+window->setSize(1024, 768);
+window->center();
+window->setDarkMode(true);
+window->enableMica(true);
+window->setCornerPreference(CornerPreference::Round);
+
+window->setRoot(myRootNode);
+window->run();
+```
+
+### Borderless Draggable Window
+
+```cpp
+window->setWindowMode(WindowMode::Borderless);
+
+// Inside a custom title bar node's onMouseDown:
+node->onMouseDown = [&](float x, float y) -> bool {
+    window->startDrag();
+    return true;
+};
+```

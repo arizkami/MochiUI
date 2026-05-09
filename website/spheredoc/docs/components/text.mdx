@@ -1,0 +1,162 @@
+---
+sidebar_position: 1
+title: Text & Input
+---
+
+# Text & Input Components
+
+## TextNode
+
+**Header**: `include/gui/components/TextNode.hpp`
+
+Renders a single line or multi-line string of text.
+
+```cpp
+class TextNode : public FlexNode {
+public:
+    std::string text;
+    std::string fontFamily;    // Default: "Segoe UI"
+    float       fontSize;      // Default: 14.0f
+    SPHXColor   color;
+    TextAlign   textAlign;     // Left, Center, Right
+    bool        fontBold;
+};
+```
+
+### Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `text` | `std::string` | The string to display |
+| `fontFamily` | `std::string` | Font family name |
+| `fontSize` | `float` | Point size |
+| `color` | `SPHXColor` | Text color |
+| `textAlign` | `TextAlign` | Horizontal alignment |
+| `fontBold` | `bool` | Bold weight |
+
+### Example
+
+```cpp
+auto label = std::make_shared<TextNode>();
+label->text       = "Welcome to SphereEngine";
+label->fontSize   = 18.0f;
+label->color      = SPHXColor::white();
+label->textAlign  = TextAlign::Center;
+label->fontBold   = true;
+root->addChild(label);
+```
+
+---
+
+## TextInput
+
+**Header**: `include/gui/components/TextInput.hpp`
+
+Single-line editable text field with cursor, selection, and clipboard support.
+
+```cpp
+class TextInput : public FlexNode {
+public:
+    std::string text;
+    std::string placeholder;
+    float       fontSize;
+
+    SPHXColor backgroundColor;
+    SPHXColor borderColor;
+    SPHXColor focusColor;
+    SPHXColor textColor;
+    SPHXColor placeholderColor;
+
+    std::function<void(const std::string&)> onChanged;
+    std::function<void()>                   onEnter;
+};
+```
+
+### Properties
+
+| Property | Type | Description |
+|---|---|---|
+| `text` | `std::string` | Current text value |
+| `placeholder` | `std::string` | Gray hint shown when empty |
+| `fontSize` | `float` | Font size |
+| `onChanged` | `function` | Called on every character change |
+| `onEnter` | `function` | Called when the user presses Enter |
+
+### Keyboard Behaviour
+
+- **Arrow keys** — move cursor
+- **Shift + Arrow** — extend selection
+- **Ctrl+A** — select all
+- **Ctrl+C / X / V** — clipboard operations
+- **Backspace / Delete** — delete character or selection
+- **Home / End** — jump to line start/end
+- **Enter** — fires `onEnter`
+
+### Example
+
+```cpp
+auto input = std::make_shared<TextInput>();
+input->placeholder = "Search…";
+input->fontSize    = 14.0f;
+input->style.setWidthFull();
+input->onChanged = [](const std::string& val) {
+    filterList(val);
+};
+input->onEnter = [&] {
+    submitSearch(input->text);
+};
+root->addChild(input);
+```
+
+---
+
+## NumberInput
+
+**Header**: `include/gui/components/NumberInput.hpp`
+
+Extends `TextInput`; restricts input to numeric values and adds increment/decrement spinner arrows.
+
+```cpp
+class NumberInput : public TextInput {
+public:
+    double value;
+    double min;
+    double max;
+    double step;      // Amount per spinner click
+    int    precision; // Decimal places shown
+
+    std::function<void(double)> onValueChanged;
+};
+```
+
+### Properties
+
+| Property | Type | Default | Description |
+|---|---|---|---|
+| `value` | `double` | `0.0` | Current numeric value |
+| `min` | `double` | `-∞` | Minimum allowed value |
+| `max` | `double` | `+∞` | Maximum allowed value |
+| `step` | `double` | `1.0` | Increment per spinner click |
+| `precision` | `int` | `2` | Decimal places in display |
+
+### Internal Methods
+
+```cpp
+void syncTextFromValue();  // Update display string from value
+void syncValueFromText();  // Parse text and update value
+```
+
+### Example
+
+```cpp
+auto freq = std::make_shared<NumberInput>();
+freq->value     = 440.0;
+freq->min       = 20.0;
+freq->max       = 20000.0;
+freq->step      = 1.0;
+freq->precision = 1;
+freq->onValueChanged = [](double hz) {
+    oscillator.setFrequency(hz);
+};
+root->addChild(freq);
+```

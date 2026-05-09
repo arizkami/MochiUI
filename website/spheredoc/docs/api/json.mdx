@@ -1,0 +1,83 @@
+---
+sidebar_position: 5
+title: SPHXJson
+---
+
+# SPHXJson
+
+**Header**: `include/SPHXJson.hpp`
+
+`SPHXJson` re-exports **nlohmann::json** and adds safe, exception-free helper functions for common access patterns.
+
+## Type Alias
+
+```cpp
+using Json = nlohmann::json;
+```
+
+All nlohmann::json API is available through this alias.
+
+## Helper Functions
+
+### `jsonGet` — safe key access
+
+```cpp
+template<typename T>
+T jsonGet(const Json& obj,
+          const std::string& key,
+          const T& defaultVal = T{}) noexcept;
+```
+
+Returns `obj[key]` as type `T`, or `defaultVal` if the key is missing, null, or the value cannot be converted. Never throws.
+
+```cpp
+Json cfg = jsonParse(R"({"volume": 0.8, "name": "Master"})");
+float vol  = jsonGet<float>(cfg, "volume", 1.0f);   // → 0.8
+int   pan  = jsonGet<int>  (cfg, "pan",    0);       // → 0 (missing → default)
+```
+
+### `jsonGetPath` — nested dot-path access
+
+```cpp
+template<typename T>
+T jsonGetPath(const Json& obj,
+              const std::string& path,
+              const T& defaultVal = T{}) noexcept;
+```
+
+`path` is dot-separated: `"audio.device.sampleRate"`. Returns `defaultVal` if any segment is missing.
+
+```cpp
+Json settings = jsonParse(R"({"audio":{"device":{"sampleRate":48000}}})");
+int sr = jsonGetPath<int>(settings, "audio.device.sampleRate", 44100);  // → 48000
+```
+
+### `jsonParse` — parse from string
+
+```cpp
+Json jsonParse(const std::string& text) noexcept;
+```
+
+Returns a parsed `Json` object, or an empty `Json{}` on parse error. Never throws.
+
+```cpp
+Json doc = jsonParse(rawText);
+if (!doc.is_null()) {
+    // success
+}
+```
+
+## Full nlohmann::json API
+
+Since `Json` is just `nlohmann::json`, all its API is available:
+
+```cpp
+Json j;
+j["key"]     = "value";
+j["count"]   = 42;
+j["list"]    = {1, 2, 3};
+
+std::string s = j.dump(2);   // Pretty-print with 2-space indent
+```
+
+Refer to the [nlohmann/json documentation](https://json.nlohmann.me) for the complete API.

@@ -1,0 +1,163 @@
+---
+sidebar_position: 5
+title: Data Display
+---
+
+# Data Display Components
+
+## ComboBox
+
+**Header**: `include/gui/components/ComboBox.hpp`
+
+Dropdown selector. A click opens a floating overlay menu.
+
+```cpp
+class ComboBox : public FlexNode {
+public:
+    std::vector<std::string> items;
+    int                      selectedIndex;    // -1 = nothing selected
+    std::string              placeholder;
+
+    SPHXColor backgroundColor;
+    SPHXColor borderColor;
+    SPHXColor textColor;
+    SPHXColor accentColor;
+    float     fontSize;
+
+    std::function<void(int index)> onSelectionChanged;
+
+    void addItem(const std::string& item);
+};
+```
+
+### Example
+
+```cpp
+auto combo = std::make_shared<ComboBox>();
+combo->placeholder = "Select device…";
+for (auto& dev : audio.getDevices())
+    combo->addItem(dev.name);
+
+combo->onSelectionChanged = [&](int idx) {
+    audio.openDevice(idx);
+};
+root->addChild(combo);
+```
+
+---
+
+## TabsNode
+
+**Header**: `include/gui/components/TabsNode.hpp`
+
+Tabbed panel switcher. Each tab has a title and a content `FlexNode`.
+
+```cpp
+class TabsNode : public FlexNode {
+public:
+    void addTab(const std::string& title, FlexNode::Ptr content);
+    void selectTab(size_t index);
+};
+```
+
+### Example
+
+```cpp
+auto tabs = std::make_shared<TabsNode>();
+
+auto page1 = FlexNode::Column();
+// … fill page1 with widgets …
+
+auto page2 = FlexNode::Column();
+// … fill page2 …
+
+tabs->addTab("General", page1);
+tabs->addTab("Advanced", page2);
+tabs->selectTab(0);
+root->addChild(tabs);
+```
+
+---
+
+## TableHead & Table
+
+**Headers**: `include/gui/components/Table.hpp`
+
+Data grid with a fixed header row and scrollable body rows.
+
+```cpp
+class TableHead : public FlexNode {
+public:
+    void addColumn(const std::string& title, float width = -1.0f);
+    std::string fontFamily;
+};
+
+class Table : public FlexNode {
+public:
+    void setHeader(std::shared_ptr<TableHead> header);
+    void addRow   (const std::vector<std::string>& cells);
+    void removeRow(size_t index);
+    void clearRows();
+    std::string fontFamily;
+};
+```
+
+Pass `width = -1.0f` for a column to have it flex-fill the remaining space.
+
+### Example
+
+```cpp
+auto head = std::make_shared<TableHead>();
+head->addColumn("Name",   180.0f);
+head->addColumn("Value",  100.0f);
+head->addColumn("Unit",    80.0f);
+
+auto table = std::make_shared<Table>();
+table->setHeader(head);
+table->addRow({"Frequency", "440", "Hz"});
+table->addRow({"Amplitude", "0.75", ""});
+root->addChild(table);
+```
+
+---
+
+## ProgressBar
+
+**Header**: `include/gui/components/ProgressBar.hpp`
+
+Determinate or indeterminate progress indicator.
+
+```cpp
+class ProgressBar : public FlexNode {
+public:
+    float     value;             // 0.0 – 1.0 (ignored in indeterminate mode)
+    SPHXColor fillColor;
+    SPHXColor backgroundColor;
+    float     borderRadius;
+    bool      showPercentage;
+
+    // Indeterminate mode
+    bool        indeterminate;
+    float       indeterminateSegment;   // Moving segment width as fraction 0–1
+    std::chrono::milliseconds indeterminatePeriod;
+
+    void setIndeterminate(bool enabled);
+};
+```
+
+### Example
+
+```cpp
+// Determinate
+auto bar = std::make_shared<ProgressBar>();
+bar->value         = 0.6f;
+bar->fillColor     = SPHXColor::Hex(0x4caf50);
+bar->showPercentage = true;
+bar->style.setWidthFull();
+bar->style.setHeight(8.0f);
+
+// Indeterminate (loading spinner-bar)
+bar->setIndeterminate(true);
+bar->indeterminatePeriod = std::chrono::milliseconds(1200);
+root->addChild(bar);
+```

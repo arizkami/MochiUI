@@ -1,8 +1,12 @@
 {
   "name": "@spherekit/vue",
-  "version": "2026.05",
+  "version": "2026.05.09",
+  "description": "Vue wrapper for SphereEngine",
   "type": "module",
-  "private": true,
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -3,16 +3,6 @@ set(VUEUI_SOURCES
     ../app.rc
 )
 
-find_program(BUN_EXECUTABLE bun
-    PATHS
-        "$ENV{USERPROFILE}/.bun/bin"
-        "$ENV{HOME}/.bun/bin"
-)
-if(NOT BUN_EXECUTABLE)
-    message(WARNING "VueUI: 'bun' not found. Using pre-built bundle.js. "
-                    "Run `bun run bundle:demo` in modules/vueui/ to rebuild from example/App.vue.")
-endif()
-
 set(VUEUI_BUNDLE_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/vueui/example/App.vue
     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/vueui/src/index.ts
@@ -26,21 +16,13 @@ set(VUEUI_BUNDLE_SRC
 )
 set(VUEUI_BUNDLE_OUT ${CMAKE_CURRENT_SOURCE_DIR}/bundle.js)
 
-if(BUN_EXECUTABLE)
-    add_custom_command(
-        OUTPUT  ${VUEUI_BUNDLE_OUT}
-        COMMAND ${BUN_EXECUTABLE} run bundle:demo
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/vueui
-        DEPENDS ${VUEUI_BUNDLE_SRC}
-        COMMENT "Building Vue UI JS bundle (bun -> bundle.js)"
-    )
-else()
-    add_custom_command(
-        OUTPUT  ${VUEUI_BUNDLE_OUT}
-        COMMAND ${CMAKE_COMMAND} -E echo "Using pre-built bundle.js"
-        COMMENT "VueUI: skipping bun build (bun not found)"
-    )
-endif()
+add_custom_command(
+    OUTPUT  ${VUEUI_BUNDLE_OUT}
+    COMMAND ${BUN_EXECUTABLE} run bundle:demo
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/vueui
+    DEPENDS ${VUEUI_BUNDLE_SRC} ${SPHERE_MODULES_INSTALL_STAMP}
+    COMMENT "Building Vue UI JS bundle (bun -> bundle.js)"
+)
 
 set(VUEUI_RESOURCE_XML       ${CMAKE_CURRENT_SOURCE_DIR}/resource.xml)
 set(VUEUI_GENERATED_RES_H    ${CMAKE_CURRENT_BINARY_DIR}/generated/VueUIResources.hpp)

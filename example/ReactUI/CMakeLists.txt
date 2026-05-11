@@ -4,18 +4,6 @@ set(REACTUI_SOURCES
 )
 
 # ── Step 1: build the JS bundle with bun ─────────────────────────────────────
-# Search the user-local bun install location in addition to PATH, because
-# vcvars64.bat may not propagate it when cmake reconfigures.
-find_program(BUN_EXECUTABLE bun
-    PATHS
-        "$ENV{USERPROFILE}/.bun/bin"
-        "$ENV{HOME}/.bun/bin"
-)
-if(NOT BUN_EXECUTABLE)
-    message(WARNING "ReactUI: 'bun' not found. Using pre-built bundle.js. "
-                    "Run `bun run bundle:demo` in modules/reactui/ to rebuild from examples/App.tsx.")
-endif()
-
 set(REACTUI_BUNDLE_SRC
     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui/examples/App.tsx
     ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui/src/index.ts
@@ -23,22 +11,13 @@ set(REACTUI_BUNDLE_SRC
 )
 set(REACTUI_BUNDLE_OUT ${CMAKE_CURRENT_SOURCE_DIR}/bundle.js)
 
-if(BUN_EXECUTABLE)
-    add_custom_command(
-        OUTPUT  ${REACTUI_BUNDLE_OUT}
-        COMMAND ${BUN_EXECUTABLE} run bundle:demo
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui
-        DEPENDS ${REACTUI_BUNDLE_SRC}
-        COMMENT "Building React UI JS bundle (bun -> bundle.js)"
-    )
-else()
-    # bun unavailable: treat pre-built bundle.js as always up-to-date.
-    add_custom_command(
-        OUTPUT  ${REACTUI_BUNDLE_OUT}
-        COMMAND ${CMAKE_COMMAND} -E echo "Using pre-built bundle.js"
-        COMMENT "ReactUI: skipping bun build (bun not found)"
-    )
-endif()
+add_custom_command(
+    OUTPUT  ${REACTUI_BUNDLE_OUT}
+    COMMAND ${BUN_EXECUTABLE} run bundle:demo
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../modules/reactui
+    DEPENDS ${REACTUI_BUNDLE_SRC} ${SPHERE_MODULES_INSTALL_STAMP}
+    COMMENT "Building React UI JS bundle (bun -> bundle.js)"
+)
 
 # ── Step 2: embed bundle.js as a C++ byte array ───────────────────────────────
 set(REACTUI_RESOURCE_XML     ${CMAKE_CURRENT_SOURCE_DIR}/resource.xml)

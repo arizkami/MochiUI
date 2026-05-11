@@ -8,6 +8,7 @@ external/prebuilt
 
 # Generated files
 src/gui/Theme.hpp
+**/bundle.js
 
 # IDE files
 .vs/

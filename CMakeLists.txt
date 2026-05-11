@@ -157,6 +157,64 @@ if (NOT SPHX_PYTHON_CMD)
     find_package(Python3 REQUIRED COMPONENTS Interpreter)
     set(SPHX_PYTHON_CMD ${Python3_EXECUTABLE})
 endif()
+
+# ── Bun / JS workspace setup ─────────────────────────────────────────────────
+set(SPHERE_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+
+find_program(BUN_EXECUTABLE
+    NAMES bun bun.exe
+    PATHS
+        "$ENV{USERPROFILE}/.bun/bin"
+        "$ENV{HOME}/.bun/bin"
+)
+
+if(WIN32 AND NOT BUN_EXECUTABLE AND NOT DEFINED ENV{CI})
+    message(STATUS "Bun not found. Installing Bun with PowerShell...")
+    execute_process(
+        COMMAND powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "irm bun.sh/install.ps1|iex"
+        RESULT_VARIABLE BUN_INSTALL_RESULT
+    )
+    if(NOT BUN_INSTALL_RESULT EQUAL 0)
+        message(FATAL_ERROR "Failed to install Bun. Install it manually or rerun CMake after fixing the installer error.")
+    endif()
+
+    find_program(BUN_EXECUTABLE
+        NAMES bun bun.exe
+        PATHS
+            "$ENV{USERPROFILE}/.bun/bin"
+            "$ENV{HOME}/.bun/bin"
+        NO_CACHE
+    )
+endif()
+
+if(NOT BUN_EXECUTABLE)
+    message(FATAL_ERROR "Bun is required to build the JavaScript UI bundles, but no bun executable was found.")
+endif()
+
+set(SPHERE_MODULES_INSTALL_STAMP ${CMAKE_BINARY_DIR}/modules-bun-install.stamp)
+if(DEFINED ENV{CI} AND EXISTS "${SPHERE_MODULES_DIR}/node_modules")
+    add_custom_command(
+        OUTPUT  ${SPHERE_MODULES_INSTALL_STAMP}
+        COMMAND ${CMAKE_COMMAND} -E touch ${SPHERE_MODULES_INSTALL_STAMP}
+        DEPENDS
+            ${SPHERE_MODULES_DIR}/package.json
+            ${SPHERE_MODULES_DIR}/bun.lock
+        COMMENT "Using JavaScript workspace dependencies installed by CI"
+    )
+else()
+    add_custom_command(
+        OUTPUT  ${SPHERE_MODULES_INSTALL_STAMP}
+        COMMAND ${BUN_EXECUTABLE} install
+        COMMAND ${CMAKE_COMMAND} -E touch ${SPHERE_MODULES_INSTALL_STAMP}
+        WORKING_DIRECTORY ${SPHERE_MODULES_DIR}
+        DEPENDS
+            ${SPHERE_MODULES_DIR}/package.json
+            ${SPHERE_MODULES_DIR}/bun.lock
+        COMMENT "Installing JavaScript workspace dependencies (bun install)"
+    )
+endif()
+add_custom_target(SphereModulesSetup DEPENDS ${SPHERE_MODULES_INSTALL_STAMP})
+
 set(RESOURCES_XML        ${CMAKE_CURRENT_SOURCE_DIR}/example/shared/resources/resrouces.xml)
 set(GENERATED_RESOURCES_H   ${CMAKE_CURRENT_BINARY_DIR}/generated/BinaryResources.hpp)
 set(GENERATED_RESOURCES_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/BinaryResources.cpp)

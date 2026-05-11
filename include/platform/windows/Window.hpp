@@ -37,6 +37,7 @@ public:
     void setMinSize(int width, int height) override;
     int getWidth() const override { return width; }
     int getHeight() const override { return height; }
+    float getDpiScale() const { return dpiScale; }
 
     void minimize() override;
     void maximize() override;
@@ -67,11 +68,16 @@ public:
 private:
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
     void onPaint();
-    void onSize(int w, int h);
+    void onSize(int pixelWidth, int pixelHeight);
+    void onDpiChanged(UINT newDpi, const RECT* suggestedRect);
 
     bool initD3D12();
     void cleanupD3D12();
-    void resizeBuffers(int width, int height);
+    void resizeBuffers(int pixelWidth, int pixelHeight);
+    void updateDpi();
+    int logicalToPixel(float value) const;
+    float pixelToLogical(int value) const;
+    float pixelToLogical(float value) const;
 
     HWND hwnd;
     OverlayNode::Ptr overlayRoot;
@@ -79,6 +85,10 @@ private:
     FlexNode::Ptr masterRoot;
     std::unique_ptr<IMenuBar> menuBar;
     int width, height;
+    int pixelWidth = 0;
+    int pixelHeight = 0;
+    UINT dpi = 96;
+    float dpiScale = 1.0f;
 
     // D3D12 resources
     Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice;

@@ -14,6 +14,8 @@
 #include <include/gpu/ganesh/GrBackendSurface.h>
 #include <dwmapi.h>
 #include <windowsx.h>
+#include <algorithm>
+#include <cmath>
 
 namespace SphereUI {
 
@@ -25,6 +27,20 @@ static constexpr DWORD kAeroBorderlessStyle =
 static bool compositionEnabled() {
     BOOL enabled = FALSE;
     return DwmIsCompositionEnabled(&enabled) == S_OK && enabled;
+}
+
+static void enableProcessDpiAwareness() {
+    static bool didEnable = false;
+    if (didEnable) return;
+    didEnable = true;
+
+    if (!SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2)) {
+        SetProcessDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
+    }
+}
+
+static int scaleForDpi(int value, UINT dpi) {
+    return MulDiv(value, static_cast<int>(dpi), USER_DEFAULT_SCREEN_DPI);
 }
 
 class SimpleD3DAlloc : public GrD3DAlloc {};
@@ -73,6 +89,8 @@ private:
 };
 
 Win32Window::Win32Window(const std::string& title, int width, int height) : width(width), height(height) {
+    enableProcessDpiAwareness();
+
     const wchar_t CLASS_NAME[] = L"SphereUIWindow";
 
     WNDCLASSEXW wc = {};
@@ -95,14 +113,21 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
         wtitle.pop_back();
     }
 
+    dpi = GetDpiForSystem();
+    dpiScale = static_cast<float>(dpi) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
+
+    const int initialPixelWidth = scaleForDpi(width, dpi);
+    const int initialPixelHeight = scaleForDpi(height, dpi);
+
     hwnd = CreateWindowExW(
         0, CLASS_NAME, wtitle.c_str(),
         WS_OVERLAPPEDWINDOW,
-        CW_USEDEFAULT, CW_USEDEFAULT, width, height,
+        CW_USEDEFAULT, CW_USEDEFAULT, initialPixelWidth, initialPixelHeight,
         NULL, NULL, wc.hInstance, this
     );
     if (hwnd) {
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)this);
+        updateDpi();
 
         // Ensure icon is set for the window and taskbar
         SendMessage(hwnd, WM_SETICON, ICON_BIG, (LPARAM)wc.hIcon);
@@ -112,6 +137,9 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
         bool isDark = (switcher.getCurrentTheme() == ThemeType::Dark);
         setDarkMode(isDark);
 
+        RECT clientRect;
+        GetClientRect(hwnd, &clientRect);
+        onSize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top);
         initD3D12();
     }
 }
@@ -156,8 +184,8 @@ bool Win32Window::initD3D12() {
 
     DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
     swapChainDesc.BufferCount = bufferCount;
-    swapChainDesc.Width = width;
-    swapChainDesc.Height = height;
+    swapChainDesc.Width = std::max(1, pixelWidth);
+    swapChainDesc.Height = std::max(1, pixelHeight);
     swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
@@ -194,7 +222,7 @@ bool Win32Window::initD3D12() {
 
     if (!grContext) return false;
 
-    resizeBuffers(width, height);
+    resizeBuffers(pixelWidth, pixelHeight);
     return true;
 }
 
@@ -237,6 +265,9 @@ void Win32Window::cleanupD3D12() {
 void Win32Window::resizeBuffers(int w, int h) {
     if (!swapChain || !grContext) return;
 
+    w = std::max(1, w);
+    h = std::max(1, h);
+
     // Flush and wait for GPU to finish all work before releasing back buffers
     grContext->flush();
     grContext->submit(GrSyncCpu::kYes);
@@ -277,6 +308,24 @@ void Win32Window::resizeBuffers(int w, int h) {
         frames[i].surface = SkSurfaces::WrapBackendRenderTarget(
             grContext.get(), backendRT, kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType, nullptr, &props);
     }
+}
+
+void Win32Window::updateDpi() {
+    dpi = hwnd ? GetDpiForWindow(hwnd) : GetDpiForSystem();
+    if (dpi == 0) dpi = USER_DEFAULT_SCREEN_DPI;
+    dpiScale = static_cast<float>(dpi) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
+}
+
+int Win32Window::logicalToPixel(float value) const {
+    return std::max(1, static_cast<int>(std::lround(value * dpiScale)));
+}
+
+float Win32Window::pixelToLogical(int value) const {
+    return static_cast<float>(value) / dpiScale;
+}
+
+float Win32Window::pixelToLogical(float value) const {
+    return value / dpiScale;
 }
 
 void Win32Window::setTitle(const std::string& title) {
@@ -382,7 +431,7 @@ void Win32Window::setShadow(bool enable) {
 }
 
 void Win32Window::setSize(int w, int h) {
-    SetWindowPos(hwnd, NULL, 0, 0, w, h,
+    SetWindowPos(hwnd, NULL, 0, 0, logicalToPixel((float)w), logicalToPixel((float)h),
                  SWP_NOMOVE | SWP_NOZORDER | SWP_NOOWNERZORDER);
 }
 
@@ -449,10 +498,14 @@ void Win32Window::setRoot(FlexNode::Ptr node) {
 
 void Win32Window::onSize(int w, int h) {
     if (w == 0 || h == 0) return;
-    width = w;
-    height = h;
 
-    resizeBuffers(w, h);
+    updateDpi();
+    pixelWidth = std::max(1, w);
+    pixelHeight = std::max(1, h);
+    width = std::max(1, static_cast<int>(std::lround(pixelToLogical(pixelWidth))));
+    height = std::max(1, static_cast<int>(std::lround(pixelToLogical(pixelHeight))));
+
+    resizeBuffers(pixelWidth, pixelHeight);
 
     if (overlayRoot) {
         if (menuBar && menuBar->getLayoutNode()) {
@@ -472,11 +525,33 @@ void Win32Window::onSize(int w, int h) {
         } else {
             if (root) overlayRoot->setMainContent(root);
         }
-        overlayRoot->calculateLayout(SkRect::MakeWH((float)w, (float)h));
+        overlayRoot->calculateLayout(SkRect::MakeWH((float)width, (float)height));
     }
 
     // Synchronous paint to reduce jitter during resize
     onPaint();
+}
+
+void Win32Window::onDpiChanged(UINT newDpi, const RECT* suggestedRect) {
+    dpi = newDpi ? newDpi : USER_DEFAULT_SCREEN_DPI;
+    dpiScale = static_cast<float>(dpi) / static_cast<float>(USER_DEFAULT_SCREEN_DPI);
+
+    if (suggestedRect) {
+        SetWindowPos(hwnd, NULL,
+                     suggestedRect->left,
+                     suggestedRect->top,
+                     suggestedRect->right - suggestedRect->left,
+                     suggestedRect->bottom - suggestedRect->top,
+                     SWP_NOZORDER | SWP_NOACTIVATE);
+    }
+
+    if (overlayRoot) {
+        overlayRoot->markDirty();
+    }
+
+    RECT clientRect;
+    GetClientRect(hwnd, &clientRect);
+    onSize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top);
 }
 
 void Win32Window::onPaint() {
@@ -497,7 +572,10 @@ void Win32Window::onPaint() {
 
     canvas->clear(SK_ColorTRANSPARENT);
 
+    canvas->save();
+    canvas->scale(dpiScale, dpiScale);
     overlayRoot->draw(canvas);
+    canvas->restore();
 
     grContext->flush(surface.get());
     grContext->submit();
@@ -591,8 +669,10 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 RECT wr;
                 GetWindowRect(hwnd, &wr);
                 POINT cur = { GET_X_LPARAM(lp), GET_Y_LPARAM(lp) };
-                const int bx = GetSystemMetrics(SM_CXFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
-                const int by = GetSystemMetrics(SM_CYFRAME) + GetSystemMetrics(SM_CXPADDEDBORDER);
+                const int bx = GetSystemMetricsForDpi(SM_CXFRAME, win->dpi)
+                             + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, win->dpi);
+                const int by = GetSystemMetricsForDpi(SM_CYFRAME, win->dpi)
+                             + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, win->dpi);
                 const int L = (cur.x <  wr.left   + bx);
                 const int R = (cur.x >= wr.right  - bx);
                 const int T = (cur.y <  wr.top    + by);
@@ -625,6 +705,8 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (win && effectiveRoot) {
                 using namespace events;
                 PointerEvent e = pointerEventFromClient(lp, pointerButtonsFromKeyState());
+                e.x = win->pixelToLogical(e.x);
+                e.y = win->pixelToLogical(e.y);
                 if (dispatchPointerMove(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
@@ -636,6 +718,8 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 using namespace events;
                 PointerButton btns = pointerButtonsFromKeyState() | PointerButton::Primary;
                 PointerEvent e = pointerEventFromClient(lp, btns, PointerButton::Primary, true);
+                e.x = win->pixelToLogical(e.x);
+                e.y = win->pixelToLogical(e.y);
                 if (msg == WM_LBUTTONDBLCLK) e.clickCount = 2;
                 if (dispatchPointerPrimaryDown(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
@@ -647,6 +731,8 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 using namespace events;
                 PointerEvent e = pointerEventFromClient(
                     lp, pointerButtonsFromKeyState(), PointerButton::Primary, false);
+                e.x = win->pixelToLogical(e.x);
+                e.y = win->pixelToLogical(e.y);
                 dispatchPointerPrimaryUp(*effectiveRoot, e);
                 InvalidateRect(hwnd, NULL, FALSE);
             }
@@ -656,6 +742,8 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 using namespace events;
                 PointerButton btns = pointerButtonsFromKeyState() | PointerButton::Secondary;
                 PointerEvent e = pointerEventFromClient(lp, btns, PointerButton::Secondary, true);
+                e.x = win->pixelToLogical(e.x);
+                e.y = win->pixelToLogical(e.y);
                 if (dispatchPointerSecondaryDown(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
@@ -665,6 +753,8 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (win && effectiveRoot) {
                 using namespace events;
                 WheelEvent e = wheelEventFromMouseWheel(hwnd, wp, lp);
+                e.x = win->pixelToLogical(e.x);
+                e.y = win->pixelToLogical(e.y);
                 if (dispatchWheel(*effectiveRoot, e)) {
                     InvalidateRect(hwnd, NULL, FALSE);
                 }
@@ -696,7 +786,9 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
                 ScreenToClient(hwnd, &pt);
 
                 if (win->overlayRoot) {
-                    auto node = win->overlayRoot->findNodeAt((float)pt.x, (float)pt.y);
+                    auto node = win->overlayRoot->findNodeAt(
+                        win->pixelToLogical(static_cast<int>(pt.x)),
+                        win->pixelToLogical(static_cast<int>(pt.y)));
                     if (node) {
                         LPCWSTR cursorId = (LPCWSTR)IDC_ARROW;
                         switch (node->style.cursorType) {
@@ -726,11 +818,15 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         case WM_GETMINMAXINFO:
             if (win && (win->minWidth > 0 || win->minHeight > 0)) {
                 auto* mmi = reinterpret_cast<MINMAXINFO*>(lp);
-                if (win->minWidth  > 0) mmi->ptMinTrackSize.x = win->minWidth;
-                if (win->minHeight > 0) mmi->ptMinTrackSize.y = win->minHeight;
+                if (win->minWidth  > 0) mmi->ptMinTrackSize.x = win->logicalToPixel((float)win->minWidth);
+                if (win->minHeight > 0) mmi->ptMinTrackSize.y = win->logicalToPixel((float)win->minHeight);
                 return 0;
             }
             break;
+
+        case WM_DPICHANGED:
+            if (win) win->onDpiChanged(HIWORD(wp), reinterpret_cast<RECT*>(lp));
+            return 0;
 
         case WM_SIZE:
             if (win) win->onSize(LOWORD(lp), HIWORD(lp));

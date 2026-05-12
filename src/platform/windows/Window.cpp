@@ -13,6 +13,7 @@
 #include <include/gpu/ganesh/d3d/GrD3DBackendSurface.h>
 #include <include/gpu/ganesh/GrBackendSurface.h>
 #include <dwmapi.h>
+#include <shellapi.h>
 #include <windowsx.h>
 #include <algorithm>
 #include <cmath>
@@ -24,9 +25,21 @@ namespace SphereUI {
 static constexpr DWORD kAeroBorderlessStyle =
     WS_POPUP | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
 
+static constexpr UINT kShellAppBarCallbackMessage = WM_APP + 0x2B00;
+
 static bool compositionEnabled() {
     BOOL enabled = FALSE;
     return DwmIsCompositionEnabled(&enabled) == S_OK && enabled;
+}
+
+static UINT appBarEdgeToWin32(ShellAppBarEdge edge) {
+    switch (edge) {
+        case ShellAppBarEdge::Left:   return ABE_LEFT;
+        case ShellAppBarEdge::Right:  return ABE_RIGHT;
+        case ShellAppBarEdge::Bottom: return ABE_BOTTOM;
+        case ShellAppBarEdge::Top:
+        default:                      return ABE_TOP;
+    }
 }
 
 static void enableProcessDpiAwareness() {
@@ -145,6 +158,7 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
 }
 
 Win32Window::~Win32Window() {
+    unregisterShellAppBar();
     cleanupD3D12();
 }
 
@@ -190,6 +204,7 @@ bool Win32Window::initD3D12() {
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
     swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
 
     Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
     hr = factory->CreateSwapChainForHwnd(
@@ -200,6 +215,17 @@ bool Win32Window::initD3D12() {
         nullptr,
         &swapChain1
     );
+    if (FAILED(hr)) {
+        swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+        hr = factory->CreateSwapChainForHwnd(
+            commandQueue.Get(),
+            hwnd,
+            &swapChainDesc,
+            nullptr,
+            nullptr,
+            &swapChain1
+        );
+    }
     if (FAILED(hr)) return false;
 
     factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
@@ -341,7 +367,33 @@ void Win32Window::setDarkMode(bool enable) {
 }
 
 void Win32Window::enableMica(bool enable) {
-    int value = enable ? 2 : 0;
+    micaEnabled = enable;
+    applyBackdrop();
+}
+
+void Win32Window::setTransparentBackground(bool enable) {
+    transparentBackground = enable;
+    applyBackdrop();
+    requestRedraw();
+}
+
+void Win32Window::applyBackdrop() {
+    if (!hwnd || !compositionEnabled()) return;
+
+    if (transparentBackground || shellAppBarEnabled) {
+        MARGINS margins = {-1, -1, -1, -1};
+        DwmExtendFrameIntoClientArea(hwnd, &margins);
+    } else if (currentMode == WindowMode::Borderless) {
+        MARGINS margins = {1, 1, 1, 1};
+        DwmExtendFrameIntoClientArea(hwnd, &margins);
+    } else {
+        MARGINS margins = {0, 0, 0, 0};
+        DwmExtendFrameIntoClientArea(hwnd, &margins);
+    }
+
+    static constexpr DWORD DWMWA_SYSTEMBACKDROP_TYPE = 38;
+    int value = 0;
+    if (micaEnabled) value = 2; // DWMSBT_MAINWINDOW / Mica on supported Windows builds.
     DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, &value, sizeof(value));
 }
 
@@ -370,8 +422,7 @@ void Win32Window::setWindowMode(WindowMode mode) {
         }
     } else if (mode == WindowMode::Windowed) {
         SetWindowLongPtr(hwnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-        MARGINS margins = {0, 0, 0, 0};
-        DwmExtendFrameIntoClientArea(hwnd, &margins);
+        applyBackdrop();
         if (prevMode == WindowMode::Fullscreen || prevMode == WindowMode::Borderless) {
             SetWindowPlacement(hwnd, &wpPrev);
         }
@@ -385,8 +436,7 @@ void Win32Window::setWindowMode(WindowMode mode) {
         }
         SetWindowLongPtr(hwnd, GWL_STYLE, kAeroBorderlessStyle);
         if (compositionEnabled()) {
-            MARGINS margins = {1, 1, 1, 1};
-            DwmExtendFrameIntoClientArea(hwnd, &margins);
+            applyBackdrop();
         }
         SetWindowPos(hwnd, NULL, 0, 0, 0, 0,
                      SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER |
@@ -480,6 +530,144 @@ void Win32Window::startDrag() {
     SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
 }
 
+void Win32Window::setShellAppBar(ShellAppBarEdge edge, int thickness, int marginStart, int marginEnd) {
+    shellAppBarEnabled = true;
+    shellAppBarEdge = edge;
+    shellAppBarThickness = std::max(1, thickness);
+    shellAppBarMarginStart = std::max(0, marginStart);
+    shellAppBarMarginEnd = std::max(0, marginEnd);
+
+    applyShellAppBarWindowStyle();
+    registerShellAppBar();
+    updateShellAppBarPosition();
+    requestRedraw();
+}
+
+void Win32Window::clearShellAppBar() {
+    shellAppBarEnabled = false;
+    unregisterShellAppBar();
+    requestRedraw();
+}
+
+void Win32Window::registerShellAppBar() {
+    if (!hwnd || shellAppBarRegistered) return;
+
+    APPBARDATA abd = {};
+    abd.cbSize = sizeof(abd);
+    abd.hWnd = hwnd;
+    abd.uCallbackMessage = kShellAppBarCallbackMessage;
+
+    if (SHAppBarMessage(ABM_NEW, &abd)) {
+        shellAppBarRegistered = true;
+    }
+}
+
+void Win32Window::unregisterShellAppBar() {
+    if (!hwnd || !shellAppBarRegistered) return;
+
+    APPBARDATA abd = {};
+    abd.cbSize = sizeof(abd);
+    abd.hWnd = hwnd;
+    SHAppBarMessage(ABM_REMOVE, &abd);
+    shellAppBarRegistered = false;
+}
+
+RECT Win32Window::getShellAppBarRect(HMONITOR monitor, int thicknessPx, int marginStartPx, int marginEndPx) const {
+    MONITORINFO mi = { sizeof(mi) };
+    GetMonitorInfo(monitor, &mi);
+
+    RECT rc = mi.rcMonitor;
+    switch (shellAppBarEdge) {
+        case ShellAppBarEdge::Left:
+            rc.top += marginStartPx;
+            rc.bottom -= marginEndPx;
+            rc.right = rc.left + thicknessPx;
+            break;
+        case ShellAppBarEdge::Right:
+            rc.top += marginStartPx;
+            rc.bottom -= marginEndPx;
+            rc.left = rc.right - thicknessPx;
+            break;
+        case ShellAppBarEdge::Bottom:
+            rc.left += marginStartPx;
+            rc.right -= marginEndPx;
+            rc.top = rc.bottom - thicknessPx;
+            break;
+        case ShellAppBarEdge::Top:
+        default:
+            rc.left += marginStartPx;
+            rc.right -= marginEndPx;
+            rc.bottom = rc.top + thicknessPx;
+            break;
+    }
+
+    if (rc.right <= rc.left) rc.right = rc.left + thicknessPx;
+    if (rc.bottom <= rc.top) rc.bottom = rc.top + thicknessPx;
+    return rc;
+}
+
+void Win32Window::applyShellAppBarWindowStyle() {
+    if (!hwnd) return;
+
+    currentMode = WindowMode::Borderless;
+
+    SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
+
+    LONG_PTR exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
+    exStyle &= ~WS_EX_APPWINDOW;
+    exStyle |= WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE;
+    SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle);
+
+    applyBackdrop();
+
+    static constexpr DWORD DWMWA_WINDOW_CORNER_PREFERENCE = 33;
+    DWORD corner = 1; // DWMWCP_DONOTROUND
+    DwmSetWindowAttribute(hwnd, DWMWA_WINDOW_CORNER_PREFERENCE, &corner, sizeof(corner));
+
+    SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0,
+                 SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE |
+                 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+}
+
+void Win32Window::updateShellAppBarPosition() {
+    if (!hwnd || !shellAppBarEnabled) return;
+    applyShellAppBarWindowStyle();
+    registerShellAppBar();
+    if (!shellAppBarRegistered) return;
+
+    updateDpi();
+
+    const int thicknessPx = logicalToPixel((float)shellAppBarThickness);
+    const int marginStartPx = shellAppBarMarginStart > 0 ? logicalToPixel((float)shellAppBarMarginStart) : 0;
+    const int marginEndPx = shellAppBarMarginEnd > 0 ? logicalToPixel((float)shellAppBarMarginEnd) : 0;
+
+    APPBARDATA abd = {};
+    abd.cbSize = sizeof(abd);
+    abd.hWnd = hwnd;
+    abd.uEdge = appBarEdgeToWin32(shellAppBarEdge);
+    abd.rc = getShellAppBarRect(MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST),
+                                thicknessPx, marginStartPx, marginEndPx);
+
+    SHAppBarMessage(ABM_QUERYPOS, &abd);
+
+    switch (shellAppBarEdge) {
+        case ShellAppBarEdge::Left:   abd.rc.right = abd.rc.left + thicknessPx; break;
+        case ShellAppBarEdge::Right:  abd.rc.left = abd.rc.right - thicknessPx; break;
+        case ShellAppBarEdge::Bottom: abd.rc.top = abd.rc.bottom - thicknessPx; break;
+        case ShellAppBarEdge::Top:
+        default:                      abd.rc.bottom = abd.rc.top + thicknessPx; break;
+    }
+
+    SHAppBarMessage(ABM_SETPOS, &abd);
+
+    SetWindowPos(hwnd, HWND_TOPMOST,
+                 abd.rc.left,
+                 abd.rc.top,
+                 abd.rc.right - abd.rc.left,
+                 abd.rc.bottom - abd.rc.top,
+                 SWP_NOACTIVATE | SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+}
+
 void Win32Window::setMenuBar(std::unique_ptr<IMenuBar> bar) {
     menuBar = std::move(bar);
     if (menuBar) {
@@ -552,6 +740,10 @@ void Win32Window::onDpiChanged(UINT newDpi, const RECT* suggestedRect) {
     RECT clientRect;
     GetClientRect(hwnd, &clientRect);
     onSize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top);
+
+    if (shellAppBarEnabled) {
+        updateShellAppBarPosition();
+    }
 }
 
 void Win32Window::onPaint() {
@@ -608,12 +800,15 @@ void Win32Window::onPaint() {
 }
 
 void Win32Window::run() {
-    ShowWindow(hwnd, SW_SHOWNORMAL);
+    ShowWindow(hwnd, shellAppBarEnabled ? SW_SHOWNOACTIVATE : SW_SHOWNORMAL);
     UpdateWindow(hwnd);
 
     RECT rect;
     GetClientRect(hwnd, &rect);
     onSize(rect.right - rect.left, rect.bottom - rect.top);
+    if (shellAppBarEnabled) {
+        updateShellAppBarPosition();
+    }
 
     MSG msg = {};
     while (true) {
@@ -697,6 +892,23 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             // native frame on activation; return 1 to suppress that artefact.
             if (win && win->currentMode == WindowMode::Borderless && !compositionEnabled())
                 return 1;
+            break;
+
+        case kShellAppBarCallbackMessage:
+            if (win && win->shellAppBarRegistered) {
+                switch ((UINT)wp) {
+                    case ABN_POSCHANGED:
+                        win->updateShellAppBarPosition();
+                        break;
+                    case ABN_FULLSCREENAPP:
+                        SetWindowPos(hwnd,
+                                     lp ? HWND_BOTTOM : HWND_TOPMOST,
+                                     0, 0, 0, 0,
+                                     SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
+                        break;
+                }
+                return 0;
+            }
             break;
 
         case WM_ERASEBKGND:
@@ -815,6 +1027,31 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (wp == 1) InvalidateRect(hwnd, NULL, FALSE);
             return 0;
 
+        case WM_WINDOWPOSCHANGED:
+            if (win && win->shellAppBarRegistered) {
+                APPBARDATA abd = {};
+                abd.cbSize = sizeof(abd);
+                abd.hWnd = hwnd;
+                SHAppBarMessage(ABM_WINDOWPOSCHANGED, &abd);
+            }
+            break;
+
+        case WM_ACTIVATE:
+            if (win && win->shellAppBarRegistered) {
+                APPBARDATA abd = {};
+                abd.cbSize = sizeof(abd);
+                abd.hWnd = hwnd;
+                abd.lParam = (LOWORD(wp) != WA_INACTIVE) ? TRUE : FALSE;
+                SHAppBarMessage(ABM_ACTIVATE, &abd);
+            }
+            break;
+
+        case WM_DISPLAYCHANGE:
+            if (win && win->shellAppBarRegistered) {
+                win->updateShellAppBarPosition();
+            }
+            break;
+
         case WM_GETMINMAXINFO:
             if (win && (win->minWidth > 0 || win->minHeight > 0)) {
                 auto* mmi = reinterpret_cast<MINMAXINFO*>(lp);
@@ -836,6 +1073,7 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             if (win) win->onPaint();
             return 0;
         case WM_DESTROY:
+            if (win) win->unregisterShellAppBar();
             PostQuitMessage(0);
             return 0;
     }

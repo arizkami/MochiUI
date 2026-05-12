@@ -20,6 +20,13 @@ enum class CornerPreference {
     RoundSmall, // small round corners
 };
 
+enum class ShellAppBarEdge {
+    Left,
+    Top,
+    Right,
+    Bottom
+};
+
 class IWindow {
 public:
     virtual ~IWindow() = default;
@@ -28,6 +35,7 @@ public:
     virtual void setTitle(const std::string& title) = 0;
     virtual void setDarkMode(bool enable) = 0;
     virtual void enableMica(bool enable) = 0;
+    virtual void setTransparentBackground(bool enable) {}
     virtual void setWindowMode(WindowMode mode) = 0;
     virtual void setOpacity(float opacity) = 0;
     virtual void setAlwaysOnTop(bool enable) = 0;
@@ -52,6 +60,13 @@ public:
 
     // Borderless drag support
     virtual void startDrag() = 0;
+
+    // Shell integration for desktop-reserving bars/docks.
+    // Dimensions are logical pixels. Backends that do not support shell appbars
+    // may leave the default no-op implementation in place.
+    virtual void setShellAppBar(ShellAppBarEdge edge, int thickness, int marginStart = 0, int marginEnd = 0) {}
+    virtual void clearShellAppBar() {}
+    virtual bool isShellAppBarRegistered() const { return false; }
 
     // UI tree / menu
     virtual void setMenuBar(std::unique_ptr<IMenuBar> bar) = 0;

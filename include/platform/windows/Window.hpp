@@ -25,6 +25,7 @@ public:
     void setTitle(const std::string& title) override;
     void setDarkMode(bool enable) override;
     void enableMica(bool enable) override;
+    void setTransparentBackground(bool enable) override;
     void setWindowMode(WindowMode mode) override;
     void setOpacity(float opacity) override;
     void setAlwaysOnTop(bool enable) override;
@@ -45,6 +46,9 @@ public:
     void close() override;
 
     void startDrag() override;
+    void setShellAppBar(ShellAppBarEdge edge, int thickness, int marginStart = 0, int marginEnd = 0) override;
+    void clearShellAppBar() override;
+    bool isShellAppBarRegistered() const override { return shellAppBarRegistered; }
 
     void setMenuBar(std::unique_ptr<IMenuBar> bar) override;
     void setRoot(FlexNode::Ptr node) override;
@@ -78,6 +82,12 @@ private:
     int logicalToPixel(float value) const;
     float pixelToLogical(int value) const;
     float pixelToLogical(float value) const;
+    void registerShellAppBar();
+    void unregisterShellAppBar();
+    void updateShellAppBarPosition();
+    RECT getShellAppBarRect(HMONITOR monitor, int thicknessPx, int marginStartPx, int marginEndPx) const;
+    void applyShellAppBarWindowStyle();
+    void applyBackdrop();
 
     HWND hwnd;
     OverlayNode::Ptr overlayRoot;
@@ -107,6 +117,14 @@ private:
     WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
     int minWidth = 0;
     int minHeight = 0;
+    bool micaEnabled = false;
+    bool transparentBackground = false;
+    bool shellAppBarEnabled = false;
+    bool shellAppBarRegistered = false;
+    ShellAppBarEdge shellAppBarEdge = ShellAppBarEdge::Top;
+    int shellAppBarThickness = 0;
+    int shellAppBarMarginStart = 0;
+    int shellAppBarMarginEnd = 0;
 };
 
 } // namespace SphereUI

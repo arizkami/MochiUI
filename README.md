@@ -1,3 +1,6 @@
+
+![Banner](./assets/banner.png)
+
 # SphereKit — Work in Progress
 
 > This project is currently under active development and is not yet stable.

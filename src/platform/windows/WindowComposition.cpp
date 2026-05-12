@@ -49,7 +49,9 @@ bool Win32Window::createSwapChain() {
         ? DXGI_FORMAT_B8G8R8A8_UNORM
         : DXGI_FORMAT_R8G8B8A8_UNORM;
     swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.SwapEffect = wantsCompositionSwapChain()
+        ? DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL
+        : DXGI_SWAP_EFFECT_FLIP_DISCARD;
     swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.AlphaMode = wantsCompositionSwapChain()
         ? DXGI_ALPHA_MODE_PREMULTIPLIED

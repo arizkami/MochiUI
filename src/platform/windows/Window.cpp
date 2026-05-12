@@ -131,6 +131,8 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
 
     const int initialPixelWidth = scaleForDpi(width, dpi);
     const int initialPixelHeight = scaleForDpi(height, dpi);
+    pixelWidth = std::max(1, initialPixelWidth);
+    pixelHeight = std::max(1, initialPixelHeight);
 
     hwnd = CreateWindowExW(
         0, CLASS_NAME, wtitle.c_str(),
@@ -152,8 +154,8 @@ Win32Window::Win32Window(const std::string& title, int width, int height) : widt
 
         RECT clientRect;
         GetClientRect(hwnd, &clientRect);
-        onSize(clientRect.right - clientRect.left, clientRect.bottom - clientRect.top);
-        initD3D12();
+        pixelWidth = std::max(1, static_cast<int>(clientRect.right - clientRect.left));
+        pixelHeight = std::max(1, static_cast<int>(clientRect.bottom - clientRect.top));
     }
 }
 
@@ -631,7 +633,6 @@ void Win32Window::applyShellAppBarWindowStyle() {
 
 void Win32Window::updateShellAppBarPosition() {
     if (!hwnd || !shellAppBarEnabled) return;
-    applyShellAppBarWindowStyle();
     registerShellAppBar();
     if (!shellAppBarRegistered) return;
 
@@ -800,6 +801,18 @@ void Win32Window::onPaint() {
 }
 
 void Win32Window::run() {
+    if (shellAppBarEnabled) {
+        updateShellAppBarPosition();
+    }
+
+    RECT initialRect;
+    GetClientRect(hwnd, &initialRect);
+    onSize(initialRect.right - initialRect.left, initialRect.bottom - initialRect.top);
+
+    if (!grContext && !initD3D12()) {
+        return;
+    }
+
     ShowWindow(hwnd, shellAppBarEnabled ? SW_SHOWNOACTIVATE : SW_SHOWNORMAL);
     UpdateWindow(hwnd);
 

@@ -239,7 +239,7 @@ bool Win32Window::createSwapChain() {
     swapChainDesc.SampleDesc.Count = 1;
     swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
 
-    const bool needsAlpha = transparentBackground || shellAppBarEnabled || micaEnabled;
+    const bool needsAlpha = transparentBackground || shellAppBarEnabled || systemBackdrop != SystemBackdrop::None;
     if (needsAlpha && createCompositionSwapChain(factory.Get(), swapChainDesc)) {
         factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
         currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
@@ -452,15 +452,29 @@ void Win32Window::setDarkMode(bool enable) {
 }
 
 void Win32Window::enableMica(bool enable) {
-    micaEnabled = enable;
+    setSystemBackdrop(enable ? SystemBackdrop::Mica : SystemBackdrop::None);
+}
+
+void Win32Window::setSystemBackdrop(SystemBackdrop backdrop) {
+    if (systemBackdrop == backdrop) return;
+
+    const bool wasComposition = usingCompositionSwapChain;
+    systemBackdrop = backdrop;
     applyBackdrop();
+
+    const bool wantsComposition = transparentBackground || shellAppBarEnabled || systemBackdrop != SystemBackdrop::None;
+    if (grContext && commandQueue && wasComposition != wantsComposition) {
+        recreateSwapChain();
+    }
+
+    requestRedraw();
 }
 
 void Win32Window::setTransparentBackground(bool enable) {
     if (transparentBackground == enable) return;
     transparentBackground = enable;
     applyBackdrop();
-    const bool wantsComposition = transparentBackground || shellAppBarEnabled || micaEnabled;
+    const bool wantsComposition = transparentBackground || shellAppBarEnabled || systemBackdrop != SystemBackdrop::None;
     if (grContext && commandQueue && usingCompositionSwapChain != wantsComposition) {
         recreateSwapChain();
     }
@@ -483,7 +497,13 @@ void Win32Window::applyBackdrop() {
 
     static constexpr DWORD DWMWA_SYSTEMBACKDROP_TYPE = 38;
     int value = 0;
-    if (micaEnabled) value = 2; // DWMSBT_MAINWINDOW / Mica on supported Windows builds.
+    switch (systemBackdrop) {
+        case SystemBackdrop::Mica:    value = 2; break; // DWMSBT_MAINWINDOW
+        case SystemBackdrop::Acrylic: value = 3; break; // DWMSBT_TRANSIENTWINDOW / Desktop Acrylic
+        case SystemBackdrop::MicaAlt: value = 4; break; // DWMSBT_TABBEDWINDOW
+        case SystemBackdrop::None:
+        default:                      value = 0; break; // DWMSBT_AUTO/NONE-compatible fallback
+    }
     DwmSetWindowAttribute(hwnd, DWMWA_SYSTEMBACKDROP_TYPE, &value, sizeof(value));
 }
 

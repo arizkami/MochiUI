@@ -26,6 +26,7 @@ public:
     void setTitle(const std::string& title) override;
     void setDarkMode(bool enable) override;
     void enableMica(bool enable) override;
+    void setSystemBackdrop(SystemBackdrop backdrop) override;
     void setTransparentBackground(bool enable) override;
     void setWindowMode(WindowMode mode) override;
     void setOpacity(float opacity) override;
@@ -126,7 +127,7 @@ private:
     WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
     int minWidth = 0;
     int minHeight = 0;
-    bool micaEnabled = false;
+    SystemBackdrop systemBackdrop = SystemBackdrop::None;
     bool transparentBackground = false;
     bool shellAppBarEnabled = false;
     bool shellAppBarRegistered = false;

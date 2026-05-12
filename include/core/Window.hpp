@@ -27,6 +27,13 @@ enum class ShellAppBarEdge {
     Bottom
 };
 
+enum class SystemBackdrop {
+    None,
+    Mica,
+    Acrylic,
+    MicaAlt
+};
+
 class IWindow {
 public:
     virtual ~IWindow() = default;
@@ -35,6 +42,7 @@ public:
     virtual void setTitle(const std::string& title) = 0;
     virtual void setDarkMode(bool enable) = 0;
     virtual void enableMica(bool enable) = 0;
+    virtual void setSystemBackdrop(SystemBackdrop backdrop) {}
     virtual void setTransparentBackground(bool enable) {}
     virtual void setWindowMode(WindowMode mode) = 0;
     virtual void setOpacity(float opacity) = 0;

@@ -81,6 +81,10 @@ private:
     bool createSwapChain();
     bool createHwndSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc);
     bool createCompositionSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc);
+    bool wantsCompositionSwapChain() const;
+    DXGI_FORMAT swapChainFormat() const;
+    SkColorType swapChainColorType() const;
+    void applyCompositionWindowStyle();
     void recreateSwapChain();
     void cleanupD3D12();
     void resizeBuffers(int pixelWidth, int pixelHeight);

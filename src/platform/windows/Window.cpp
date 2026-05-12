@@ -12,7 +12,6 @@
 #include <include/gpu/ganesh/SkSurfaceGanesh.h>
 #include <include/gpu/ganesh/d3d/GrD3DBackendSurface.h>
 #include <include/gpu/ganesh/GrBackendSurface.h>
-#include <dcomp.h>
 #include <dwmapi.h>
 #include <shellapi.h>
 #include <windowsx.h>
@@ -219,121 +218,6 @@ bool Win32Window::initD3D12() {
     return true;
 }
 
-bool Win32Window::createSwapChain() {
-    if (!commandQueue || !hwnd) return false;
-
-    Microsoft::WRL::ComPtr<IDXGIFactory4> factory;
-    UINT createFactoryFlags = 0;
-#if defined(_DEBUG)
-    createFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
-#endif
-    if (FAILED(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&factory)))) return false;
-
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = bufferCount;
-    swapChainDesc.Width = std::max(1, pixelWidth);
-    swapChainDesc.Height = std::max(1, pixelHeight);
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapChainDesc.SampleDesc.Count = 1;
-    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
-
-    const bool needsAlpha = transparentBackground || shellAppBarEnabled || systemBackdrop != SystemBackdrop::None;
-    if (needsAlpha && createCompositionSwapChain(factory.Get(), swapChainDesc)) {
-        factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-        currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
-        usingCompositionSwapChain = true;
-        return true;
-    }
-
-    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-    if (!createHwndSwapChain(factory.Get(), swapChainDesc)) return false;
-
-    factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-    currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
-    usingCompositionSwapChain = false;
-    return true;
-}
-
-bool Win32Window::createHwndSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc) {
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
-    HRESULT hr = factory->CreateSwapChainForHwnd(
-        commandQueue.Get(),
-        hwnd,
-        &swapChainDesc,
-        nullptr,
-        nullptr,
-        &swapChain1
-    );
-    if (FAILED(hr)) return false;
-
-    dcompVisual.Reset();
-    dcompTarget.Reset();
-    dcompDevice.Reset();
-    swapChain1.As(&swapChain);
-    return swapChain != nullptr;
-}
-
-bool Win32Window::createCompositionSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc) {
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
-    HRESULT hr = factory->CreateSwapChainForComposition(
-        commandQueue.Get(),
-        &swapChainDesc,
-        nullptr,
-        &swapChain1
-    );
-    if (FAILED(hr)) return false;
-
-    Microsoft::WRL::ComPtr<IDCompositionDevice> nextDevice;
-    Microsoft::WRL::ComPtr<IDCompositionTarget> nextTarget;
-    Microsoft::WRL::ComPtr<IDCompositionVisual> nextVisual;
-
-    hr = DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&nextDevice));
-    if (FAILED(hr)) return false;
-    hr = nextDevice->CreateTargetForHwnd(hwnd, TRUE, &nextTarget);
-    if (FAILED(hr)) return false;
-    hr = nextDevice->CreateVisual(&nextVisual);
-    if (FAILED(hr)) return false;
-    hr = nextVisual->SetContent(swapChain1.Get());
-    if (FAILED(hr)) return false;
-    hr = nextTarget->SetRoot(nextVisual.Get());
-    if (FAILED(hr)) return false;
-    hr = nextDevice->Commit();
-    if (FAILED(hr)) return false;
-
-    dcompDevice = nextDevice;
-    dcompTarget = nextTarget;
-    dcompVisual = nextVisual;
-    swapChain1.As(&swapChain);
-    return swapChain != nullptr;
-}
-
-void Win32Window::recreateSwapChain() {
-    if (!grContext || !commandQueue) return;
-
-    grContext->flush();
-    grContext->submit(GrSyncCpu::kYes);
-    if (commandQueue && fence && fenceEvent) {
-        const uint64_t fenceVal = fenceValue;
-        commandQueue->Signal(fence.Get(), fenceVal);
-        fenceValue++;
-        if (fence->GetCompletedValue() < fenceVal) {
-            fence->SetEventOnCompletion(fenceVal, fenceEvent);
-            WaitForSingleObject(fenceEvent, INFINITE);
-        }
-    }
-
-    frames.clear();
-    swapChain.Reset();
-    dcompVisual.Reset();
-    dcompTarget.Reset();
-    dcompDevice.Reset();
-    if (createSwapChain()) {
-        resizeBuffers(pixelWidth, pixelHeight);
-    }
-}
-
 void Win32Window::cleanupD3D12() {
     if (grContext) {
         grContext->flush();
@@ -396,7 +280,7 @@ void Win32Window::resizeBuffers(int w, int h) {
     // Must release all Skia surfaces and D3D12 back buffers before resizing
     frames.clear();
 
-    HRESULT hr = swapChain->ResizeBuffers(bufferCount, w, h, DXGI_FORMAT_R8G8B8A8_UNORM, 0);
+    HRESULT hr = swapChain->ResizeBuffers(bufferCount, w, h, swapChainFormat(), 0);
     if (FAILED(hr)) return;
 
     frames.resize(bufferCount);
@@ -409,7 +293,7 @@ void Win32Window::resizeBuffers(int w, int h) {
         GrD3DTextureResourceInfo info(frames[i].backBuffer.Get(),
                                       nullptr,
                                       D3D12_RESOURCE_STATE_PRESENT,
-                                      DXGI_FORMAT_R8G8B8A8_UNORM,
+                                      swapChainFormat(),
                                       1,
                                       1,
                                       0);
@@ -417,7 +301,7 @@ void Win32Window::resizeBuffers(int w, int h) {
         GrBackendRenderTarget backendRT = GrBackendRenderTargets::MakeD3D(w, h, info);
         SkSurfaceProps props(0, kRGB_H_SkPixelGeometry);
         frames[i].surface = SkSurfaces::WrapBackendRenderTarget(
-            grContext.get(), backendRT, kTopLeft_GrSurfaceOrigin, kRGBA_8888_SkColorType, nullptr, &props);
+            grContext.get(), backendRT, kTopLeft_GrSurfaceOrigin, swapChainColorType(), SkColorSpace::MakeSRGB(), &props);
     }
 }
 
@@ -731,7 +615,7 @@ void Win32Window::applyShellAppBarWindowStyle() {
 
     LONG_PTR exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
     exStyle &= ~WS_EX_APPWINDOW;
-    exStyle |= WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE;
+    exStyle |= WS_EX_TOOLWINDOW | WS_EX_TOPMOST | WS_EX_NOACTIVATE | WS_EX_NOREDIRECTIONBITMAP;
     SetWindowLongPtr(hwnd, GWL_EXSTYLE, exStyle);
 
     applyBackdrop();

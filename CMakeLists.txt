@@ -388,7 +388,10 @@ set(FOUNDATION_SOURCES
     ${GENERATED_RESOURCES_CPP}
 )
 if(WIN32)
-  list(APPEND FOUNDATION_SOURCES src/platform/windows/Window.cpp)
+  list(APPEND FOUNDATION_SOURCES
+      src/platform/windows/Window.cpp
+      src/platform/windows/WindowComposition.cpp
+  )
 endif()
 # TODO(linux): add src/platform/linux/Window.cpp once an X11/Wayland backend exists.
 

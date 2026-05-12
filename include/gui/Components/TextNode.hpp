@@ -21,7 +21,8 @@ public:
     float fontSize = Theme::FontNormal;
     SPHXColor color = SPHXColor(Theme::TextPrimary);
     TextAlign textAlign = TextAlign::Left;
-    // Uses Segoe UI bold (SkFontStyle::Bold) when true; otherwise shaped default path.
+    // CSS-like font weight. Kept separate from fontBold so callers can request Medium/Semibold.
+    int fontWeight = 400;
     bool fontBold = false;
 
     Size measure(Size available) override;

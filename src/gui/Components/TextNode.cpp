@@ -1,6 +1,19 @@
 #include <gui/Components/TextNode.hpp>
 
+#include <algorithm>
+
 namespace SphereUI {
+
+namespace {
+SkFontStyle resolveFontStyle(bool bold, int weight) {
+    const int resolvedWeight = bold ? SkFontStyle::kBold_Weight : std::clamp(weight, 100, 900);
+    return SkFontStyle(resolvedWeight, SkFontStyle::kNormal_Width, SkFontStyle::kUpright_Slant);
+}
+
+bool needsExplicitFontStyle(bool bold, int weight) {
+    return bold || weight != SkFontStyle::kNormal_Weight;
+}
+}
 
 Size TextNode::measure(Size available) {
     if (text.empty()) return { 0, 0 };
@@ -9,8 +22,8 @@ Size TextNode::measure(Size available) {
     float height = 0;
     float fs = nodeStyle.fontSize.value_or(fontSize);
 
-    if (fontBold) {
-        SkFont font = FontManager::getInstance().createFont(fontFamily, fs, SkFontStyle::Bold());
+    if (needsExplicitFontStyle(fontBold, fontWeight)) {
+        SkFont font = FontManager::getInstance().createFont(fontFamily, fs, resolveFontStyle(fontBold, fontWeight));
         width = font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8);
         SkFontMetrics metrics;
         font.getMetrics(&metrics);
@@ -46,8 +59,8 @@ void TextNode::draw(SkCanvas* canvas) {
         float textWidth = 0;
         float x = frame.left() + getLayoutPadding(YGEdgeLeft);
 
-        if (fontBold) {
-            SkFont font = FontManager::getInstance().createFont(fontFamily, fs, SkFontStyle::Bold(), grayscaleText);
+        if (needsExplicitFontStyle(fontBold, fontWeight)) {
+            SkFont font = FontManager::getInstance().createFont(fontFamily, fs, resolveFontStyle(fontBold, fontWeight), grayscaleText);
             font.getMetrics(&metrics);
             textWidth = font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8);
             if (textAlign == TextAlign::Center) {

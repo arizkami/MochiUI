@@ -283,6 +283,21 @@ static void ApiSetText(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 // ── Style key dispatcher ──────────────────────────────────────────────────────
 
+static int parseFontWeight(const std::string& value) {
+    if (value == "normal" || value == "regular") return 400;
+    if (value == "medium") return 500;
+    if (value == "semibold" || value == "semi-bold" || value == "demibold") return 600;
+    if (value == "bold") return 700;
+    if (value == "extrabold" || value == "extra-bold") return 800;
+    if (value == "black" || value == "heavy") return 900;
+
+    int weight = 400;
+    if (sscanf(value.c_str(), "%d", &weight) == 1) {
+        return std::clamp(weight, 100, 900);
+    }
+    return 400;
+}
+
 static bool applyStyleKey(FlexNode& node, const std::string& key, const std::string& val) {
     float f = 0;
     auto pf = [&](float& out) { return sscanf(val.c_str(), "%f", &out) == 1; };
@@ -407,9 +422,12 @@ static bool applyStyleKey(FlexNode& node, const std::string& key, const std::str
         return true;
     }
     if (key == "fontWeight") {
-        bool bold = (val == "bold" || val == "700" || val == "800" || val == "900");
-        if (auto* t = dynamic_cast<TextNode*>(&node))   t->fontBold   = bold;
-        if (auto* b = dynamic_cast<ButtonNode*>(&node)) b->labelBold  = bold;
+        const int weight = parseFontWeight(val);
+        if (auto* t = dynamic_cast<TextNode*>(&node)) {
+            t->fontWeight = weight;
+            t->fontBold = weight >= 700;
+        }
+        if (auto* b = dynamic_cast<ButtonNode*>(&node)) b->labelBold = weight >= 700;
         return true;
     }
     if (key == "textAlign") {
@@ -498,11 +516,14 @@ static void ApiSetProp(const v8::FunctionCallbackInfo<v8::Value>& args) {
     if (auto* btn = dynamic_cast<ButtonNode*>(node.get())) {
         if (key == "title" || key == "label" || key == "text") btn->label = val;
         else if (key == "fontSize")   { if (sscanf(val.c_str(), "%f", &f) == 1) btn->fontSize  = f; }
-        else if (key == "fontWeight") btn->labelBold = (val == "bold" || val == "700");
+        else if (key == "fontWeight") btn->labelBold = parseFontWeight(val) >= 700;
     } else if (auto* tn = dynamic_cast<TextNode*>(node.get())) {
         if      (key == "text")       tn->text = val;
         else if (key == "fontSize")   { if (sscanf(val.c_str(), "%f", &f) == 1) tn->fontSize = f; }
-        else if (key == "fontWeight") tn->fontBold = (val == "bold" || val == "700");
+        else if (key == "fontWeight") {
+            tn->fontWeight = parseFontWeight(val);
+            tn->fontBold = tn->fontWeight >= 700;
+        }
         else if (key == "color")      tn->color = SPHXColor::parse(val);
         else if (key == "textAlign") {
             if      (val == "center") tn->textAlign = TextAlign::Center;

@@ -12,6 +12,7 @@
 #include <include/gpu/ganesh/SkSurfaceGanesh.h>
 #include <include/gpu/ganesh/d3d/GrD3DBackendSurface.h>
 #include <include/gpu/ganesh/GrBackendSurface.h>
+#include <dcomp.h>
 #include <dwmapi.h>
 #include <shellapi.h>
 #include <windowsx.h>
@@ -196,41 +197,7 @@ bool Win32Window::initD3D12() {
     hr = d3dDevice->CreateCommandQueue(&queueDesc, IID_PPV_ARGS(&commandQueue));
     if (FAILED(hr)) return false;
 
-    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-    swapChainDesc.BufferCount = bufferCount;
-    swapChainDesc.Width = std::max(1, pixelWidth);
-    swapChainDesc.Height = std::max(1, pixelHeight);
-    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-    swapChainDesc.SampleDesc.Count = 1;
-    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
-
-    Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
-    hr = factory->CreateSwapChainForHwnd(
-        commandQueue.Get(),
-        hwnd,
-        &swapChainDesc,
-        nullptr,
-        nullptr,
-        &swapChain1
-    );
-    if (FAILED(hr)) {
-        swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
-        hr = factory->CreateSwapChainForHwnd(
-            commandQueue.Get(),
-            hwnd,
-            &swapChainDesc,
-            nullptr,
-            nullptr,
-            &swapChain1
-        );
-    }
-    if (FAILED(hr)) return false;
-
-    factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
-    swapChain1.As(&swapChain);
-    currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
+    if (!createSwapChain()) return false;
 
     hr = d3dDevice->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
     if (FAILED(hr)) return false;
@@ -250,6 +217,121 @@ bool Win32Window::initD3D12() {
 
     resizeBuffers(pixelWidth, pixelHeight);
     return true;
+}
+
+bool Win32Window::createSwapChain() {
+    if (!commandQueue || !hwnd) return false;
+
+    Microsoft::WRL::ComPtr<IDXGIFactory4> factory;
+    UINT createFactoryFlags = 0;
+#if defined(_DEBUG)
+    createFactoryFlags |= DXGI_CREATE_FACTORY_DEBUG;
+#endif
+    if (FAILED(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&factory)))) return false;
+
+    DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+    swapChainDesc.BufferCount = bufferCount;
+    swapChainDesc.Width = std::max(1, pixelWidth);
+    swapChainDesc.Height = std::max(1, pixelHeight);
+    swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+    swapChainDesc.SampleDesc.Count = 1;
+    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
+
+    const bool needsAlpha = transparentBackground || shellAppBarEnabled || micaEnabled;
+    if (needsAlpha && createCompositionSwapChain(factory.Get(), swapChainDesc)) {
+        factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
+        currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
+        usingCompositionSwapChain = true;
+        return true;
+    }
+
+    swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_IGNORE;
+    if (!createHwndSwapChain(factory.Get(), swapChainDesc)) return false;
+
+    factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER);
+    currentFrameIndex = swapChain->GetCurrentBackBufferIndex();
+    usingCompositionSwapChain = false;
+    return true;
+}
+
+bool Win32Window::createHwndSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc) {
+    Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
+    HRESULT hr = factory->CreateSwapChainForHwnd(
+        commandQueue.Get(),
+        hwnd,
+        &swapChainDesc,
+        nullptr,
+        nullptr,
+        &swapChain1
+    );
+    if (FAILED(hr)) return false;
+
+    dcompVisual.Reset();
+    dcompTarget.Reset();
+    dcompDevice.Reset();
+    swapChain1.As(&swapChain);
+    return swapChain != nullptr;
+}
+
+bool Win32Window::createCompositionSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc) {
+    Microsoft::WRL::ComPtr<IDXGISwapChain1> swapChain1;
+    HRESULT hr = factory->CreateSwapChainForComposition(
+        commandQueue.Get(),
+        &swapChainDesc,
+        nullptr,
+        &swapChain1
+    );
+    if (FAILED(hr)) return false;
+
+    Microsoft::WRL::ComPtr<IDCompositionDevice> nextDevice;
+    Microsoft::WRL::ComPtr<IDCompositionTarget> nextTarget;
+    Microsoft::WRL::ComPtr<IDCompositionVisual> nextVisual;
+
+    hr = DCompositionCreateDevice(nullptr, IID_PPV_ARGS(&nextDevice));
+    if (FAILED(hr)) return false;
+    hr = nextDevice->CreateTargetForHwnd(hwnd, TRUE, &nextTarget);
+    if (FAILED(hr)) return false;
+    hr = nextDevice->CreateVisual(&nextVisual);
+    if (FAILED(hr)) return false;
+    hr = nextVisual->SetContent(swapChain1.Get());
+    if (FAILED(hr)) return false;
+    hr = nextTarget->SetRoot(nextVisual.Get());
+    if (FAILED(hr)) return false;
+    hr = nextDevice->Commit();
+    if (FAILED(hr)) return false;
+
+    dcompDevice = nextDevice;
+    dcompTarget = nextTarget;
+    dcompVisual = nextVisual;
+    swapChain1.As(&swapChain);
+    return swapChain != nullptr;
+}
+
+void Win32Window::recreateSwapChain() {
+    if (!grContext || !commandQueue) return;
+
+    grContext->flush();
+    grContext->submit(GrSyncCpu::kYes);
+    if (commandQueue && fence && fenceEvent) {
+        const uint64_t fenceVal = fenceValue;
+        commandQueue->Signal(fence.Get(), fenceVal);
+        fenceValue++;
+        if (fence->GetCompletedValue() < fenceVal) {
+            fence->SetEventOnCompletion(fenceVal, fenceEvent);
+            WaitForSingleObject(fenceEvent, INFINITE);
+        }
+    }
+
+    frames.clear();
+    swapChain.Reset();
+    dcompVisual.Reset();
+    dcompTarget.Reset();
+    dcompDevice.Reset();
+    if (createSwapChain()) {
+        resizeBuffers(pixelWidth, pixelHeight);
+    }
 }
 
 void Win32Window::cleanupD3D12() {
@@ -283,6 +365,9 @@ void Win32Window::cleanupD3D12() {
     }
 
     fence.Reset();
+    dcompVisual.Reset();
+    dcompTarget.Reset();
+    dcompDevice.Reset();
     swapChain.Reset();
     commandQueue.Reset();
     d3dDevice.Reset();
@@ -372,8 +457,13 @@ void Win32Window::enableMica(bool enable) {
 }
 
 void Win32Window::setTransparentBackground(bool enable) {
+    if (transparentBackground == enable) return;
     transparentBackground = enable;
     applyBackdrop();
+    const bool wantsComposition = transparentBackground || shellAppBarEnabled || micaEnabled;
+    if (grContext && commandQueue && usingCompositionSwapChain != wantsComposition) {
+        recreateSwapChain();
+    }
     requestRedraw();
 }
 
@@ -532,6 +622,7 @@ void Win32Window::startDrag() {
 }
 
 void Win32Window::setShellAppBar(ShellAppBarEdge edge, int thickness, int marginStart, int marginEnd) {
+    const bool wasComposition = usingCompositionSwapChain;
     shellAppBarEnabled = true;
     shellAppBarEdge = edge;
     shellAppBarThickness = std::max(1, thickness);
@@ -539,6 +630,9 @@ void Win32Window::setShellAppBar(ShellAppBarEdge edge, int thickness, int margin
     shellAppBarMarginEnd = std::max(0, marginEnd);
 
     applyShellAppBarWindowStyle();
+    if (wasComposition && grContext && commandQueue) {
+        recreateSwapChain();
+    }
     registerShellAppBar();
     updateShellAppBarPosition();
     requestRedraw();
@@ -613,6 +707,7 @@ void Win32Window::applyShellAppBarWindowStyle() {
     currentMode = WindowMode::Borderless;
 
     SetWindowLongPtr(hwnd, GWL_STYLE, WS_POPUP);
+    SetWindowTextW(hwnd, L"");
 
     LONG_PTR exStyle = GetWindowLongPtr(hwnd, GWL_EXSTYLE);
     exStyle &= ~WS_EX_APPWINDOW;

@@ -2,6 +2,7 @@
 #include <core/Window.hpp>
 #include <windows.h>
 #include <d3d12.h>
+#include <dcomp.h>
 #include <dxgi1_4.h>
 #include <wrl/client.h>
 #include <vector>
@@ -76,6 +77,10 @@ private:
     void onDpiChanged(UINT newDpi, const RECT* suggestedRect);
 
     bool initD3D12();
+    bool createSwapChain();
+    bool createHwndSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc);
+    bool createCompositionSwapChain(IDXGIFactory4* factory, DXGI_SWAP_CHAIN_DESC1 swapChainDesc);
+    void recreateSwapChain();
     void cleanupD3D12();
     void resizeBuffers(int pixelWidth, int pixelHeight);
     void updateDpi();
@@ -104,6 +109,9 @@ private:
     Microsoft::WRL::ComPtr<ID3D12Device> d3dDevice;
     Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandQueue;
     Microsoft::WRL::ComPtr<IDXGISwapChain3> swapChain;
+    Microsoft::WRL::ComPtr<IDCompositionDevice> dcompDevice;
+    Microsoft::WRL::ComPtr<IDCompositionTarget> dcompTarget;
+    Microsoft::WRL::ComPtr<IDCompositionVisual> dcompVisual;
     Microsoft::WRL::ComPtr<ID3D12Fence> fence;
     HANDLE fenceEvent = nullptr;
     uint64_t fenceValue = 0;
@@ -113,6 +121,7 @@ private:
     std::vector<FrameContext> frames;
 
     sk_sp<GrDirectContext> grContext;
+    bool usingCompositionSwapChain = false;
     WindowMode currentMode = WindowMode::Windowed;
     WINDOWPLACEMENT wpPrev = { sizeof(wpPrev) };
     int minWidth = 0;

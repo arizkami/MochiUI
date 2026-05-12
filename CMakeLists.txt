@@ -267,6 +267,7 @@ if(WIN32)
         Shell32.lib
         Usp10.lib
         Dwmapi.lib
+        dcomp.lib
         Shlwapi.lib
         ComCtl32.lib
         Imm32.lib

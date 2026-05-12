@@ -526,6 +526,7 @@ void Win32Window::close() {
 }
 
 void Win32Window::startDrag() {
+    if (shellAppBarEnabled) return;
     ReleaseCapture();
     SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
 }
@@ -858,6 +859,10 @@ LRESULT CALLBACK Win32Window::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             break;
 
         case WM_NCHITTEST: {
+            if (win && win->shellAppBarEnabled) {
+                return HTCLIENT;
+            }
+
             // For borderless windows provide resize hit-zones at the edges so that
             // aero-snap and manual resizing still work without native chrome.
             if (win && win->currentMode == WindowMode::Borderless) {

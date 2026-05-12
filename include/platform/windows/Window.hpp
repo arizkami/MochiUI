@@ -57,6 +57,9 @@ public:
     void run() override;
 
     void* getNativeHandle() const override { return (void*)hwnd; }
+    bool prefersGrayscaleTextAntialiasing() const override {
+        return usingCompositionSwapChain || transparentBackground;
+    }
 
     void requestRedraw() override {
         InvalidateRect(hwnd, NULL, FALSE);

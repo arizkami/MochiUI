@@ -18,8 +18,13 @@ public:
     SkFont createFont(const std::string& familyName,
                       float size,
                       SkFontStyle style = SkFontStyle());
+    SkFont createFont(const std::string& familyName,
+                      float size,
+                      SkFontStyle style,
+                      bool grayscaleAntialiasing);
 
     float drawText(SkCanvas* canvas, const std::string& text, float x, float y, float fontSize, const SkPaint& paint, const std::string& familyName = DEFAULT_FONT);
+    float drawText(SkCanvas* canvas, const std::string& text, float x, float y, float fontSize, const SkPaint& paint, const std::string& familyName, bool grayscaleAntialiasing);
     float measureText(const std::string& text, float fontSize, SkRect* outBounds = nullptr, const std::string& familyName = DEFAULT_FONT);
     float measureText(const std::string& text, size_t byteLength, float fontSize, SkRect* outBounds = nullptr, const std::string& familyName = DEFAULT_FONT);
 

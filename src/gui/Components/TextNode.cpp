@@ -41,12 +41,13 @@ void TextNode::draw(SkCanvas* canvas) {
         paint.setColor(textCol);
 
         float fs = nodeStyle.fontSize.value_or(fontSize);
+        bool grayscaleText = windowHost && windowHost->prefersGrayscaleTextAntialiasing();
         SkFontMetrics metrics{};
         float textWidth = 0;
         float x = frame.left() + getLayoutPadding(YGEdgeLeft);
 
         if (fontBold) {
-            SkFont font = FontManager::getInstance().createFont(fontFamily, fs, SkFontStyle::Bold());
+            SkFont font = FontManager::getInstance().createFont(fontFamily, fs, SkFontStyle::Bold(), grayscaleText);
             font.getMetrics(&metrics);
             textWidth = font.measureText(text.c_str(), text.size(), SkTextEncoding::kUTF8);
             if (textAlign == TextAlign::Center) {
@@ -69,7 +70,7 @@ void TextNode::draw(SkCanvas* canvas) {
             float y = frame.centerY() - (metrics.fAscent + metrics.fDescent) / 2.0f;
             x = std::round(x);
             y = std::round(y);
-            FontManager::getInstance().drawText(canvas, text, x, y, fs, paint, fontFamily);
+            FontManager::getInstance().drawText(canvas, text, x, y, fs, paint, fontFamily, grayscaleText);
         }
 
         canvas->restore();

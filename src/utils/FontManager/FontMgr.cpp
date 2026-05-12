@@ -147,9 +147,16 @@ sk_sp<SkTypeface> FontManager::getTypeface(const std::string& familyName,
 SkFont FontManager::createFont(const std::string& familyName,
                                 float size,
                                 SkFontStyle style) {
+    return createFont(familyName, size, style, false);
+}
+
+SkFont FontManager::createFont(const std::string& familyName,
+                                float size,
+                                SkFontStyle style,
+                                bool grayscaleAntialiasing) {
     auto typeface = getTypeface(familyName, style);
     SkFont font(typeface, size);
-    font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
+    font.setEdging(grayscaleAntialiasing ? SkFont::Edging::kAntiAlias : SkFont::Edging::kSubpixelAntiAlias);
     font.setSubpixel(true);
     font.setHinting(SkFontHinting::kFull);
     font.setBaselineSnap(true);
@@ -158,12 +165,16 @@ SkFont FontManager::createFont(const std::string& familyName,
 }
 
 float FontManager::drawText(SkCanvas* canvas, const std::string& text, float x, float y, float fontSize, const SkPaint& paint, const std::string& familyName) {
+    return drawText(canvas, text, x, y, fontSize, paint, familyName, false);
+}
+
+float FontManager::drawText(SkCanvas* canvas, const std::string& text, float x, float y, float fontSize, const SkPaint& paint, const std::string& familyName, bool grayscaleAntialiasing) {
     if (!fFontMgr) initialize();
     auto runs = shapeText(text, fFontMgr.get(), familyName);
     float currentX = x;
     for (const auto& run : runs) {
         SkFont font(run.typeface, fontSize);
-        font.setEdging(SkFont::Edging::kSubpixelAntiAlias);
+        font.setEdging(grayscaleAntialiasing ? SkFont::Edging::kAntiAlias : SkFont::Edging::kSubpixelAntiAlias);
         font.setSubpixel(true);
         font.setHinting(SkFontHinting::kFull);
         font.setBaselineSnap(true);

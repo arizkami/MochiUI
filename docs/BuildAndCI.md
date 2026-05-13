@@ -33,7 +33,7 @@ Common keys:
 - `USE_PREBUILT`: `ON` by default. Uses Skia/V8 prebuilts.
 - `FETCH_PREBUILT`: `ON` by default. Downloads missing prebuilts during CMake configure.
 - `PREBUILT_DIR`: defaults to `external/prebuilt`.
-- `SKIA_DIR`, `V8_DIR`: optional prebuilt directory overrides.
+- `SKIA_DIR`, `V8_DIR`: default to `external/prebuilt/skia` and `external/prebuilt/v8`.
 - `SKIA_URL`, `V8_URL`: optional archive URL overrides.
 - `BUILD_DIR`, `CMAKE_BUILD_TYPE`, `CMAKE_GENERATOR`, `CMAKE_PATH`: build tool overrides.
 - `FETCH_SUBMODULES`, `BUN_INSTALL_MODULES`: dependency setup toggles for `fetch:deps`.

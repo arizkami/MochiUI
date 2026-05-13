@@ -26,15 +26,15 @@ set(REACTUI_GENERATED_RES_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/ReactUIResou
 
 add_custom_command(
     OUTPUT  ${REACTUI_GENERATED_RES_H} ${REACTUI_GENERATED_RES_CPP}
-    COMMAND ${SPHX_PYTHON_CMD}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/gen_resources.py
+    COMMAND ${BUN_EXECUTABLE} run
+            ${SPHERE_RESOURCE_GENERATOR}
             ${REACTUI_RESOURCE_XML}
             ${REACTUI_GENERATED_RES_H}
             ${REACTUI_GENERATED_RES_CPP}
             InitReactUIResources
     DEPENDS ${REACTUI_RESOURCE_XML}
             ${REACTUI_BUNDLE_OUT}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/gen_resources.py
+            ${SPHERE_RESOURCE_GENERATOR}
     COMMENT "Embedding bundle.js into ReactUIResources.cpp"
 )
 

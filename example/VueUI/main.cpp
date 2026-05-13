@@ -26,7 +26,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
             "Resource not found: res://bundle.js",
             "The embedded JavaScript bundle could not be loaded from the resource pack.",
             "Run `bun run bundle:demo` in modules/vueui/ to build the JS bundle from example/App.vue, "
-            "then rebuild the CMake target so gen_resources.py embeds it."));
+            "then rebuild the CMake target so gen_resources.ts embeds it."));
         window.run();
         return 1;
     }

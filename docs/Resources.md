@@ -14,7 +14,7 @@ API:
 
 ## Generation
 
-`scripts/gen_resources.py` reads an XML manifest of `<file>relative/path</file>` entries and emits:
+`scripts/gen_resources.ts` reads an XML manifest of `<file>relative/path</file>` entries and emits:
 
 - `BinaryResources.hpp` / `BinaryResources.cpp` (or per-app names such as `ReactUIResources`)
 
@@ -24,7 +24,7 @@ The shared SVG bundle for icons is driven from `example/shared/resources/resrouc
 
 ## App pattern (ReactUI)
 
-`example/ReactUI/resource.xml` lists app assets such as `bundle.js`. CMake runs `gen_resources.py` with an init function name, compiles the generated `.cpp`, and `main.cpp` calls `InitReactUIResources()` before loading `res://bundle.js` into the JavaScript engine.
+`example/ReactUI/resource.xml` lists app assets such as `bundle.js`. CMake runs `gen_resources.ts` with an init function name, compiles the generated `.cpp`, and `main.cpp` calls `InitReactUIResources()` before loading `res://bundle.js` into the JavaScript engine.
 
 ## Icon / SVG usage
 

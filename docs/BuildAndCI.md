@@ -10,10 +10,18 @@ From the repo root:
 
 The script:
 
-1. Runs `vcvars64.bat` so MSVC + Ninja see the standard library correctly.
-2. Configures with **Ninja** if `build/` is missing, then builds.
+1. Delegates to `bun run build`.
+2. Runs `vcvars64.bat` when needed so MSVC + Ninja see the standard library correctly.
+3. Configures with **Ninja** if `build/` is missing, builds JS bundles, then builds CMake targets.
 
-Requirements: **Visual Studio 2022** (or compatible MSVC), **CMake**, **Ninja**, **Python 3**.
+Requirements: **Visual Studio 2022** (or compatible MSVC), **CMake**, **Ninja**, **Bun**.
+
+Useful commands:
+
+- `bun run fetch:deps`
+- `bun run build:framework`
+- `bun run build:example`
+- `bun run build`
 
 ## CMake prebuilts
 

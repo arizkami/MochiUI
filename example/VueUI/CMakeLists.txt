@@ -30,15 +30,15 @@ set(VUEUI_GENERATED_RES_CPP  ${CMAKE_CURRENT_BINARY_DIR}/generated/VueUIResource
 
 add_custom_command(
     OUTPUT  ${VUEUI_GENERATED_RES_H} ${VUEUI_GENERATED_RES_CPP}
-    COMMAND ${SPHX_PYTHON_CMD}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/gen_resources.py
+    COMMAND ${BUN_EXECUTABLE} run
+            ${SPHERE_RESOURCE_GENERATOR}
             ${VUEUI_RESOURCE_XML}
             ${VUEUI_GENERATED_RES_H}
             ${VUEUI_GENERATED_RES_CPP}
             InitVueUIResources
     DEPENDS ${VUEUI_RESOURCE_XML}
             ${VUEUI_BUNDLE_OUT}
-            ${CMAKE_CURRENT_SOURCE_DIR}/../../scripts/gen_resources.py
+            ${SPHERE_RESOURCE_GENERATOR}
     COMMENT "Embedding bundle.js into VueUIResources.cpp"
 )
 

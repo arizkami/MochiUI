@@ -150,16 +150,9 @@ set(YOGA_SOURCES
 )
 
 # ── Resource generation ───────────────────────────────────────────────────────
-if (WIN32)
-    find_program(SPHX_PYTHON_CMD NAMES py py.exe python python.exe)
-endif()
-if (NOT SPHX_PYTHON_CMD)
-    find_package(Python3 REQUIRED COMPONENTS Interpreter)
-    set(SPHX_PYTHON_CMD ${Python3_EXECUTABLE})
-endif()
-
 # ── Bun / JS workspace setup ─────────────────────────────────────────────────
 set(SPHERE_MODULES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/modules)
+set(SPHERE_RESOURCE_GENERATOR ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_resources.ts)
 
 find_program(BUN_EXECUTABLE
     NAMES bun bun.exe
@@ -221,10 +214,10 @@ set(GENERATED_RESOURCES_CPP ${CMAKE_CURRENT_BINARY_DIR}/generated/BinaryResource
 
 add_custom_command(
     OUTPUT ${GENERATED_RESOURCES_H} ${GENERATED_RESOURCES_CPP}
-    COMMAND ${SPHX_PYTHON_CMD}
-            ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_resources.py
+    COMMAND ${BUN_EXECUTABLE} run
+            ${SPHERE_RESOURCE_GENERATOR}
             ${RESOURCES_XML} ${GENERATED_RESOURCES_H} ${GENERATED_RESOURCES_CPP}
-    DEPENDS ${RESOURCES_XML} ${CMAKE_CURRENT_SOURCE_DIR}/scripts/gen_resources.py
+    DEPENDS ${RESOURCES_XML} ${SPHERE_RESOURCE_GENERATOR}
     COMMENT "Generating binary resources from ${RESOURCES_XML}"
 )
 

@@ -21,7 +21,7 @@ Welcome to the SphereUI documentation. SphereUI is a modern, high-performance C+
 - `modules/reactui/`: TypeScript React reconciler host with `src/` internals and `examples/` demo entrypoints.
 - `external/`: Third-party and prebuilt drops (Skia, Yoga, V8 under `external/prebuilt/v8`, …).
 - `docs/`: Markdown documentation; `docs/mdx/` holds **MDX** copies for site generators.
-- `scripts/`: Resource and tooling helpers (`gen_resources.py`, etc.).
+- `scripts/`: Resource and tooling helpers (`gen_resources.ts`, etc.).
 
 ## Getting Started
 

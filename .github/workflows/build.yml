@@ -12,35 +12,24 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # ── Source ───────────────────────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: true
 
-      # ── Toolchain ─────────────────────────────────────────────────────────────
       - name: Setup MSVC (x64)
         uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install JS modules (workspace)
-        working-directory: modules
-        run: bun install
+      - name: Fetch dependencies
+        run: bun run fetch:deps
 
-      # ── Skia prebuilt cache ───────────────────────────────────────────────────
-      # Cache the downloaded+extracted Skia binaries so we don't re-download
-      # on every run. Cache key is tied to CMakeLists.txt (URL lives there).
       - name: Cache Skia prebuilt
         id: cache-skia
         uses: actions/cache@v4
@@ -48,8 +37,6 @@ jobs:
           path: external/prebuilt/skia
           key: skia-${{ hashFiles('CMakeLists.txt') }}
 
-      # ── V8 prebuilt cache ────────────────────────────────────────────────────
-      # Same pattern as Skia: CMake downloads/extracts on cache miss only.
       - name: Cache V8 prebuilt
         id: cache-v8
         uses: actions/cache@v4
@@ -57,81 +44,15 @@ jobs:
           path: external/prebuilt/v8
           key: v8-${{ hashFiles('CMakeLists.txt') }}
 
-      # ── CMake configure ───────────────────────────────────────────────────────
-      # Prebuilt downloads (Skia/V8 if cache miss) happen via CMake file(DOWNLOAD …).
       - name: Configure CMake
-        run: >
-          cmake -B build -G "Ninja"
-          -DCMAKE_BUILD_TYPE=Release
+        run: bun run configure
 
-      # ── Build: libraries ───────────────────────────────────────────────────────
-      - name: Build SphereKit.Foundation
-        run: cmake --build build --target SphereKit_Foundation --config Release -j
+      - name: Build framework
+        run: bun run build:framework
 
-      - name: Build SphereKit.GraphicInterface
-        run: cmake --build build --target SphereKit_GraphicInterface --config Release -j
+      - name: Build examples
+        run: bun run build:example
 
-      - name: Build SphereKit.GraphicComponent
-        run: cmake --build build --target SphereKit_GraphicComponent --config Release -j
-
-      - name: Build SphereKit.DirectAudioEngine
-        run: cmake --build build --target SphereKit_DirectAudioEngine --config Release -j
-
-      - name: Build SphereKit.JavaScriptEngine
-        run: cmake --build build --target SphereKit_JavaScriptEngine --config Release -j
-
-      # ── Build: JS wrapper libraries ────────────────────────────────────────────
-      - name: Build @spherekit/react (npm package + types)
-        working-directory: modules/reactui
-        run: bun run build
-
-      - name: Build @spherekit/vue (npm package + types)
-        working-directory: modules/vueui
-        run: bun run build
-
-      - name: Bundle @spherekit/react (C++ embed)
-        working-directory: modules/reactui
-        run: bun run bundle
-
-      - name: Bundle @spherekit/vue (C++ embed)
-        working-directory: modules/vueui
-        run: bun run bundle
-
-      - name: Build Sphere.React
-        run: cmake --build build --target Sphere_React --config Release -j
-
-      - name: Build SphereKit.Vue
-        run: cmake --build build --target Sphere_Vue --config Release -j
-
-      # ── Build: JS frontends ────────────────────────────────────────────────────
-      - name: Bundle ReactUI demo
-        working-directory: modules/reactui
-        run: bun run bundle:demo
-
-      - name: Bundle VueUI demo
-        working-directory: modules/vueui
-        run: bun run bundle:demo
-
-      # ── Build: examples ─────────────────────────────────────────────────────────
-      - name: Build SphereExample
-        run: cmake --build build --target SphereExample --config Release -j
-
-      - name: Build ActivityMonitor
-        run: cmake --build build --target ActivityMonitor --config Release -j
-
-      - name: Build MixerConsole
-        run: cmake --build build --target MixerConsole --config Release -j
-
-      - name: Build BorderlessPlayer
-        run: cmake --build build --target BorderlessPlayer --config Release -j
-
-      - name: Build ReactUIDemo
-        run: cmake --build build --target ReactUIDemo --config Release -j
-
-      - name: Build VueUIDemo
-        run: cmake --build build --target VueUIDemo --config Release -j
-
-      # ── Artifacts: SDK (libs + public headers) ───────────────────────────────────
       - name: Upload SphereKit SDK
         uses: actions/upload-artifact@v4
         with:
@@ -172,7 +93,6 @@ jobs:
             framework/MikoUI/include/MikoUI.hpp
           retention-days: 30
 
-      # ── Artifacts: examples ───────────────────────────────────────────────────
       - name: Upload examples
         uses: actions/upload-artifact@v4
         with:
@@ -186,7 +106,6 @@ jobs:
             build/VueUIDemo.exe
           retention-days: 30
 
-      # ── Artifacts: failure logs ───────────────────────────────────────────────
       - name: Upload build logs on failure
         if: failure()
         uses: actions/upload-artifact@v4

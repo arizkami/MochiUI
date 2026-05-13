@@ -12,7 +12,7 @@ This is the central index for the SphereUI documentation.
 - [**Theming**](Theming.md): Guide to the theme system and customization.
 - [**Layout System**](Layout.md): Deep dive into the Flexbox-based layout system.
 - [**Audio Streaming**](Audio.md): High-level audio playback and streaming.
-- [**Resources**](Resources.md): `res://` URIs, `ResourceManager`, `gen_resources.py`.
+- [**Resources**](Resources.md): `res://` URIs, `ResourceManager`, `gen_resources.ts`.
 - [**JavaScript and React**](JavaScriptAndReact.md): `JavaScriptEngine`, `Sphere.React`, `SphereKit.Vue`, `globalThis.SphereUI`.
 - [**MikoUI**](MikoUI.md): Minimal framework helper (`framework/MikoUI`).
 

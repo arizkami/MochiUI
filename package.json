@@ -1,0 +1,16 @@
+{
+  "name": "sphereengine",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch:deps": "bun run fetchdeps.ts",
+    "build": "bun run build.ts all",
+    "build:all": "bun run build.ts all",
+    "build:framework": "bun run build.ts --framework",
+    "build:example": "bun run build.ts example",
+    "build:examples": "bun run build.ts example",
+    "build:js": "bun run build.ts js",
+    "configure": "bun run build.ts configure",
+    "gen:resources": "bun run scripts/gen_resources.ts"
+  }
+}

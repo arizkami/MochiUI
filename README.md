@@ -76,7 +76,7 @@ flowchart TB
   subgraph path2 [Path 2 · React Native Like / Vue]
     tsx["React or Vue components\n(.tsx/.vue — modules/reactui or modules/vueui/)"]
     bun["bun build → bundle.js\n(IIFE, node target)"]
-    genRes["gen_resources.py\n→ ReactUIResources.hpp / VueUIResources.hpp"]
+    genRes["gen_resources.ts\n→ ReactUIResources.hpp / VueUIResources.hpp"]
     jsBridge["JavaScriptEngine\ninstallSphereUIGlobal\neval bundle"]
     auBridge["globalThis.SphereUI\ncreateNode · appendChild\nsetStyle · setCallback · setRoot"]
     registry["UiRegistry\nNodeId ↔ FlexNode::Ptr"]
@@ -195,7 +195,7 @@ flowchart TB
 
 ### Windows ✅
 
-Recommended: **Visual Studio 2022** or newer (MSVC x64), **CMake**, **Ninja**, **Python 3**.
+Recommended: **Visual Studio 2022** or newer (MSVC x64), **CMake**, **Ninja**, **Bun**.
 
 ## Submodules (first-time setup)
 

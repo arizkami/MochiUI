@@ -8,6 +8,14 @@ project(Sphere)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(SPHERE_USE_PREBUILT "Use prebuilt third-party binaries for Skia/V8." ON)
+option(SPHERE_FETCH_PREBUILT "Download missing prebuilt third-party binaries during configure." ON)
+set(SPHERE_PREBUILT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt" CACHE PATH "Directory containing prebuilt third-party binaries.")
+
+if(NOT SPHERE_USE_PREBUILT)
+  message(FATAL_ERROR "SPHERE_USE_PREBUILT=OFF is not wired yet. Set USE_PREBUILT=ON in .env or provide a source-build CMake path first.")
+endif()
+
 # Match Skia's official build runtime / arch per platform
 if(MSVC)
   string(REPLACE "/MD"  "" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
@@ -20,15 +28,15 @@ elseif(UNIX AND NOT APPLE)
 endif()
 
 # ── Skia prebuilt binaries ────────────────────────────────────────────────────
-set(SKIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
+set(SKIA_DIR "${SPHERE_PREBUILT_DIR}/skia" CACHE PATH "Skia prebuilt root directory.")
 
 if(WIN32)
   set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-binary.zip)
-  set(SKIA_URL      "https://github.com/arizkami/SphereEngine/releases/download/2026.05/skia-prebuilt-binary.zip")
+  set(SKIA_URL      "https://github.com/arizkami/SphereEngine/releases/download/2026.05/skia-prebuilt-binary.zip" CACHE STRING "Skia prebuilt archive URL.")
   set(SKIA_SENTINEL ${SKIA_DIR}/lib/skia.lib)
 elseif(UNIX AND NOT APPLE)
   set(SKIA_ARCHIVE  ${CMAKE_CURRENT_SOURCE_DIR}/external/skia-prebuilt-linux.tar.gz)
-  set(SKIA_URL      "https://github.com/arizkami/SphereEngine/releases/download/2026.05/skia-prebuilt-linux.tar.gz")
+  set(SKIA_URL      "https://github.com/arizkami/SphereEngine/releases/download/2026.05/skia-prebuilt-linux.tar.gz" CACHE STRING "Skia prebuilt archive URL.")
   set(SKIA_SENTINEL ${SKIA_DIR}/lib/libskia.a)
 else()
   message(FATAL_ERROR "Sphere: unsupported platform '${CMAKE_SYSTEM_NAME}'. "
@@ -36,6 +44,9 @@ else()
 endif()
 
 if(NOT EXISTS ${SKIA_SENTINEL})
+  if(NOT SPHERE_FETCH_PREBUILT)
+    message(FATAL_ERROR "Skia binaries not found at ${SKIA_DIR}, and SPHERE_FETCH_PREBUILT=OFF.")
+  endif()
   message(STATUS "Skia binaries not found. Downloading from ${SKIA_URL}...")
   file(DOWNLOAD ${SKIA_URL} ${SKIA_ARCHIVE} SHOW_PROGRESS STATUS DOWNLOAD_STATUS)
   list(GET DOWNLOAD_STATUS 0 STATUS_CODE)
@@ -44,7 +55,7 @@ if(NOT EXISTS ${SKIA_SENTINEL})
   endif()
   message(STATUS "Extracting Skia binaries...")
   file(ARCHIVE_EXTRACT INPUT ${SKIA_ARCHIVE}
-         DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/skia)
+         DESTINATION ${SKIA_DIR})
   file(REMOVE ${SKIA_ARCHIVE})
   message(STATUS "Skia binaries installed successfully!")
 else()
@@ -54,9 +65,9 @@ endif()
 # ── V8 prebuilt (Windows x64 monolith) ────────────────────────────────────────
 set(V8_ROOT "")
 if(WIN32)
-  set(V8_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/prebuilt/v8)
+  set(V8_DIR "${SPHERE_PREBUILT_DIR}/v8" CACHE PATH "V8 prebuilt root directory.")
   set(V8_ARCHIVE ${CMAKE_CURRENT_SOURCE_DIR}/external/v8-windows_x64.zip)
-  set(V8_URL "https://github.com/arizkami/SphereEngine/releases/download/2026.04/v8-windows_x64.zip")
+  set(V8_URL "https://github.com/arizkami/SphereEngine/releases/download/2026.04/v8-windows_x64.zip" CACHE STRING "V8 prebuilt archive URL.")
   set(V8_SENTINEL ${V8_DIR}/lib/v8_monolith.lib)
 
   # If a previous configure extracted the zip into `external/prebuilt/{bin,include,lib,...}`
@@ -77,6 +88,9 @@ if(WIN32)
   endif()
 
   if(NOT EXISTS "${V8_DIR}/include/v8.h" OR NOT EXISTS "${V8_DIR}/lib/v8_monolith.lib")
+    if(NOT SPHERE_FETCH_PREBUILT)
+      message(FATAL_ERROR "V8 prebuilt not found at ${V8_DIR}, and SPHERE_FETCH_PREBUILT=OFF.")
+    endif()
     message(STATUS "V8 prebuilt not found at ${V8_DIR}. Downloading from ${V8_URL}...")
     file(DOWNLOAD ${V8_URL} ${V8_ARCHIVE} SHOW_PROGRESS STATUS V8_DOWNLOAD_STATUS)
     list(GET V8_DOWNLOAD_STATUS 0 V8_STATUS_CODE)
@@ -117,8 +131,8 @@ endif()
 
 include_directories(
     include
-    external/prebuilt/skia
-    external/prebuilt/skia/include
+    ${SKIA_DIR}
+    ${SKIA_DIR}/include
     external/yoga
     external/rtaudio
     external/nlohmann-json
@@ -304,56 +318,56 @@ endif()
 #    SVG text also pulls in SkShaper, so we compile the primitive (no
 #    harfbuzz/icu) shaper from the same Skia source drop. ──────────────────────
 set(SKIA_SVG_SOURCES
-    external/prebuilt/skia/modules/svg/src/SkSVGAttribute.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGAttributeParser.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGCircle.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGClipPath.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGContainer.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGDOM.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGEllipse.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFe.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeBlend.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeColorMatrix.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeComponentTransfer.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeComposite.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeDisplacementMap.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeFlood.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeGaussianBlur.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeImage.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeLightSource.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeLighting.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeMerge.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeMorphology.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeOffset.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFeTurbulence.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFilter.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGFilterContext.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGGradient.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGImage.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGLine.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGLinearGradient.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGMask.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGNode.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGOpenTypeSVGDecoder.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGPath.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGPattern.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGPoly.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGRadialGradient.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGRect.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGRenderContext.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGSVG.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGShape.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGStop.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGText.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGTransformableNode.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGUse.cpp
-    external/prebuilt/skia/modules/svg/src/SkSVGValue.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGAttribute.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGAttributeParser.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGCircle.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGClipPath.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGContainer.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGDOM.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGEllipse.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFe.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeBlend.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeColorMatrix.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeComponentTransfer.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeComposite.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeDisplacementMap.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeFlood.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeGaussianBlur.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeImage.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeLightSource.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeLighting.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeMerge.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeMorphology.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeOffset.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFeTurbulence.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFilter.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGFilterContext.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGGradient.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGImage.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGLine.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGLinearGradient.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGMask.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGNode.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGOpenTypeSVGDecoder.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGPath.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGPattern.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGPoly.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGRadialGradient.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGRect.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGRenderContext.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGSVG.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGShape.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGStop.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGText.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGTransformableNode.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGUse.cpp
+    ${SKIA_DIR}/modules/svg/src/SkSVGValue.cpp
 )
 
 set(SKIA_SHAPER_SOURCES
-    external/prebuilt/skia/modules/skshaper/src/SkShaper.cpp
-    external/prebuilt/skia/modules/skshaper/src/SkShaper_factory.cpp
-    external/prebuilt/skia/modules/skshaper/src/SkShaper_primitive.cpp
+    ${SKIA_DIR}/modules/skshaper/src/SkShaper.cpp
+    ${SKIA_DIR}/modules/skshaper/src/SkShaper_factory.cpp
+    ${SKIA_DIR}/modules/skshaper/src/SkShaper_primitive.cpp
 )
 
 add_library(skia_svg STATIC ${SKIA_SVG_SOURCES} ${SKIA_SHAPER_SOURCES})

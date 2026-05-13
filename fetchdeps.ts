@@ -1,7 +1,9 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { envFlag, loadDotEnv } from "./scripts/env.ts";
 
 const root = import.meta.dir;
+loadDotEnv(root);
 
 function hasArg(...names: string[]): boolean {
   return Bun.argv.slice(2).some((arg) => names.includes(arg));
@@ -25,12 +27,12 @@ async function main(): Promise<void> {
   const skipSubmodules = hasArg("--no-submodules");
   const skipModules = hasArg("--no-modules");
 
-  if (!skipSubmodules && existsSync(join(root, ".git"))) {
+  if (!skipSubmodules && envFlag("FETCH_SUBMODULES", true) && existsSync(join(root, ".git"))) {
     await run(["git", "submodule", "sync", "--recursive"]);
     await run(["git", "submodule", "update", "--init", "--recursive"]);
   }
 
-  if (!skipModules) {
+  if (!skipModules && envFlag("BUN_INSTALL_MODULES", true)) {
     await run(["bun", "install"], { cwd: join(root, "modules") });
   }
 }

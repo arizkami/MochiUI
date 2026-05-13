@@ -231,7 +231,9 @@ Build from the repo root:
 .\build.ps1
 ```
 
-The script sources MSVC via `vcvars64`, configures Ninja + Release if needed, and builds.
+The script delegates to Bun. Use `bun run fetch:deps`, `bun run build:framework`, `bun run build:example`, or `bun run build` directly when you want finer control.
+
+Copy `.env.example` to `.env` for local overrides such as `VS_PATH`, `USE_PREBUILT`, `FETCH_PREBUILT`, `PREBUILT_DIR`, `SKIA_DIR`, and `V8_DIR`.
 
 Prebuilts (Skia, optional V8) are downloaded or expected under `external/prebuilt/` — see [docs/BuildAndCI.md](docs/BuildAndCI.md).
 

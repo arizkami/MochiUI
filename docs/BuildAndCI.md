@@ -23,6 +23,21 @@ Useful commands:
 - `bun run build:example`
 - `bun run build`
 
+## Local configuration (`.env`)
+
+Copy `.env.example` to `.env` to override local build settings without changing tracked files.
+
+Common keys:
+
+- `VS_PATH`: Visual Studio install root or direct `vcvars64.bat` path.
+- `USE_PREBUILT`: `ON` by default. Uses Skia/V8 prebuilts.
+- `FETCH_PREBUILT`: `ON` by default. Downloads missing prebuilts during CMake configure.
+- `PREBUILT_DIR`: defaults to `external/prebuilt`.
+- `SKIA_DIR`, `V8_DIR`: optional prebuilt directory overrides.
+- `SKIA_URL`, `V8_URL`: optional archive URL overrides.
+- `BUILD_DIR`, `CMAKE_BUILD_TYPE`, `CMAKE_GENERATOR`, `CMAKE_PATH`: build tool overrides.
+- `FETCH_SUBMODULES`, `BUN_INSTALL_MODULES`: dependency setup toggles for `fetch:deps`.
+
 ## CMake prebuilts
 
 ### Skia

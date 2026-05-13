@@ -1,11 +1,14 @@
 import { existsSync } from "node:fs";
 import { cpus } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
+import { cmakeBool, envFlag, loadDotEnv } from "./scripts/env.ts";
 
 const root = import.meta.dir;
-const buildDir = join(root, process.env.SPHERE_BUILD_DIR ?? "build");
+loadDotEnv(root);
+
+const buildDir = join(root, process.env.SPHERE_BUILD_DIR ?? process.env.BUILD_DIR ?? "build");
 const config = process.env.CMAKE_BUILD_TYPE ?? (hasArg("--debug") ? "Debug" : "Release");
-const cmake = process.env.SPHERE_CMAKE ?? "cmake";
+const cmake = process.env.SPHERE_CMAKE ?? process.env.CMAKE_PATH ?? "cmake";
 
 const frameworkTargets = [
   "SphereKit_Foundation",
@@ -56,7 +59,15 @@ async function run(command: string[], options: { cwd?: string; env?: Record<stri
 async function importMsvcEnvironment(): Promise<void> {
   if (process.platform !== "win32" || process.env.VSCMD_ARG_TGT_ARCH) return;
 
+  const configuredVsPath = process.env.VS_PATH;
   const candidates = [
+    ...(configuredVsPath
+      ? [
+          configuredVsPath.endsWith(".bat")
+            ? configuredVsPath
+            : join(configuredVsPath, "VC", "Auxiliary", "Build", "vcvars64.bat"),
+        ]
+      : []),
     "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Auxiliary\\Build\\vcvars64.bat",
     "C:\\Program Files\\Microsoft Visual Studio\\2022\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
@@ -86,6 +97,27 @@ async function importMsvcEnvironment(): Promise<void> {
 async function configure(): Promise<void> {
   await importMsvcEnvironment();
   const generator = process.env.CMAKE_GENERATOR ?? "Ninja";
+  const cmakeDefinitions = [
+    `-DSPHERE_USE_PREBUILT=${cmakeBool(envFlag("USE_PREBUILT", true))}`,
+    `-DSPHERE_FETCH_PREBUILT=${cmakeBool(envFlag("FETCH_PREBUILT", true))}`,
+  ];
+
+  const envToCmake: Record<string, string> = {
+    PREBUILT_DIR: "SPHERE_PREBUILT_DIR",
+    SKIA_DIR: "SKIA_DIR",
+    V8_DIR: "V8_DIR",
+    SKIA_URL: "SKIA_URL",
+    V8_URL: "V8_URL",
+  };
+  for (const [envName, cmakeName] of Object.entries(envToCmake)) {
+    let value = process.env[envName];
+    if (!value) continue;
+    if (envName.endsWith("_DIR") && !isAbsolute(value)) {
+      value = join(root, value);
+    }
+    cmakeDefinitions.push(`-D${cmakeName}=${value}`);
+  }
+
   await run([
     cmake,
     "-S",
@@ -95,6 +127,7 @@ async function configure(): Promise<void> {
     "-G",
     generator,
     `-DCMAKE_BUILD_TYPE=${config}`,
+    ...cmakeDefinitions,
   ]);
 }
 
